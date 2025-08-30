@@ -1,0 +1,19 @@
+# Laravel
+backend/vendor
+backend/node_modules
+backend/.env
+
+# React
+frontend/node_modules
+frontend/build
+frontend/.env
+
+# Docker
+*.log
+*.pid
+*.sock
+
+# OS / IDE
+.DS_Store
+.idea
+.vscode
