@@ -4,7 +4,7 @@ This project provides a **full-stack boilerplate** with Laravel (backend), React
 
 ## 📦 Services
 - **Laravel** → PHP backend (http://localhost:8000)
-- **React (Dev)** → React with hot reload (http://localhost:3000)
+- **React (Dev)** → React + Vite with hot reload (http://localhost:5173)
 - **React (Prod)** → React built & served by Nginx (http://localhost:8081)
 - **MySQL** → Database (port 3306)
 - **phpMyAdmin** → DB admin (http://localhost:8080)
