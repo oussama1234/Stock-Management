@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, LogIn, Brain, BarChart3, Database, Shield } from 'lucide-react';
 
-const App = () => {
+const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -204,4 +204,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default Login;
