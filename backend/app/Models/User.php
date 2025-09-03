@@ -11,7 +11,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     //added HasApiTokens for Sanctum integration
-    
+
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasApiTokens;
 
@@ -24,6 +24,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -48,4 +49,17 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    // add relationship with purchases and sales
+    public function purchases()
+    {
+        return $this->hasMany(Purchase::class);
+    }
+
+    public function sales()
+    {
+        return $this->hasMany(Sale::class);
+    }
+
+    
 }
