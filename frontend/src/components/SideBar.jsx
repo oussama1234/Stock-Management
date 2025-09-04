@@ -11,12 +11,13 @@ import {
   BarChart3,
   ChevronDown,
   Database,
-  X
+  X,
 } from 'lucide-react';
-
+import { DashboardRoute } from '../router/Index';
+import {Link} from "react-router-dom"
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const menuItems = [
-    { id: 1, name: 'Dashboard', icon: Home, link: '#', active: true },
+    { id: 1, name: 'Dashboard', icon: Home, link: DashboardRoute, active: true },
     { id: 2, name: 'Products', icon: Package, link: '#', active: false, hasSubmenu: true },
     { id: 3, name: 'Users', icon: Users, link: '#', active: false },
     { id: 4, name: 'Sales', icon: TrendingUp, link: '#', active: false },
@@ -82,8 +83,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                 transition={{ delay: index * 0.1 }}
                 className="relative"
               >
-                <a
-                  href={item.link}
+                <Link
+                  to={item.link}
                   className={`flex items-center justify-between px-4 py-3 rounded-xl text-blue-100 hover:text-white hover:bg-indigo-700/40 transition-all duration-300 ${
                     item.active ? 'bg-indigo-600 text-white shadow-md' : ''
                   }`}
@@ -95,7 +96,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                   {item.hasSubmenu && (
                     <ChevronDown className="h-4 w-4" />
                   )}
-                </a>
+                </Link>
               </motion.div>
             ))}
           </nav>

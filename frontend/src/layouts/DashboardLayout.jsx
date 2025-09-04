@@ -1,5 +1,6 @@
 // Layout.jsx (Updated with improved colors)
 // DashboardLayout.jsx with improved colors and children prop
+// it contains navbar, sidebar, footer and main content area
 import React, { useState } from 'react';
 import Sidebar from '@/components/SideBar';
 import Navbar from '@/components/Navbar';

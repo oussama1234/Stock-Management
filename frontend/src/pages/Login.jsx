@@ -1,10 +1,31 @@
-import React, { useState } from 'react';
+import React, { use, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, LogIn, Brain, BarChart3, Database, Shield } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Brain, BarChart3, Database, Shield, CircleAlert } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import LoadingSpinner from '../components/Spinners/LoadingSpinner';
+import { useNavigate } from 'react-router-dom';
+import { DashboardRoute } from '../router/Index';
+import { useToast } from '../components/Toaster/ToastContext';
 
-const App = () => {
+const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const {handleLogin, error} = useAuth(); // Using the custom hook to access auth context
+  const navigate = useNavigate();
+  const [isLoading, setisLoading] = useState(false);
+  const Toast = useToast();
+
+  useEffect(() => {
+    
+  // make loading wait 5 seconds before authenticating
+
+    // set timeout 
+
+    
+     
+    
+  }, [isLoading])
+  
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -18,20 +39,49 @@ const App = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    // Simulate login process
-    setTimeout(() => {
-      setIsLoading(false);
-      alert('Login functionality would be implemented here');
-    }, 1500);
-  };
+            const handleSubmit = async (e) => {
+            e.preventDefault();
+            return new Promise((resolve) => {
+            setTimeout(async () => {
+
+            setisLoading(true);
+
+            try
+            {
+              const result = await handleLogin(formData.email, formData.password);
+
+              if (result.success && result.data?.user) {
+                
+                navigate(DashboardRoute);
+              }
+            }
+            catch(error)
+            {
+              console.log("Login failed:", error.message);
+              // optionally show toast or error message
+              resolve(null)
+            }
+            finally{
+              setisLoading(false);
+            }
+
+        }, 100);
+
+         });
+          
+          };
+
+  
+
+  
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-4">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
+    <>
+      
+
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-4">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden">
         {[...Array(5)].map((_, i) => (
           <motion.div
             key={i}
@@ -84,7 +134,7 @@ const App = () => {
                 </div>
               </motion.div>
               
-              <h1 className="text-3xl font-bold text-white mb-2">StockAI Manager</h1>
+              <h1 className="text-3xl font-bold text-white mb-2">Stock Manager</h1>
               <p className="text-blue-200">Intelligent inventory control system</p>
             </div>
 
@@ -166,6 +216,20 @@ const App = () => {
                     </>
                   )}
                 </button>
+
+               
+                            {error && (
+  <div className="mt-4 p-4 rounded-lg bg-red-500/10 border border-red-500/30">
+    <div className="flex items-center">
+      <CircleAlert className="h-5 w-5 text-red-500 mr-2" /> 
+      <p className="text-sm text-red-400 text-center">
+        {error}   {/* ✅ now it's always a string */}
+      </p>
+    </div>
+  </div>
+)}
+
+
               </motion.div>
             </form>
 
@@ -201,7 +265,8 @@ const App = () => {
         </motion.div>
       </motion.div>
     </div>
+    </>
   );
 };
 
-export default App;
+export default Login;

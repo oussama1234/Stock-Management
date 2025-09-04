@@ -5,6 +5,8 @@ import './App.css'
 import { Button } from "@/components/ui/button"
 import { RouterProvider } from "react-router-dom";
 import router from "@/router/Index.jsx";
+import { AuthProvider } from './context/AuthContext'
+import { ToastProvider } from './components/Toaster/ToastContext'
 
 function App() {
  
@@ -12,8 +14,14 @@ function App() {
 
   return (
     <>
-      <RouterProvider router={router} />
+      {/* Wrapping the RouterProvider with AuthProvider */}
+      <ToastProvider position="top-right">
+     
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
 
+      </ToastProvider>
     </>
   )
 }

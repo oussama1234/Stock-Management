@@ -2,10 +2,34 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Search, Menu, X, BarChart3, Settings, LogOut, User, HelpCircle } from 'lucide-react';
-
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { HomeRoute, MyProfileRoute } from '../router/Index';
+import { useToast } from './Toaster/ToastContext';
 const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
+  const {logoutUser, user} = useAuth();
+  const navigate = useNavigate();
+  const Toast = useToast();
+  
+
+  const handleLogout = async () => {
+    // Implement logout functionality here
+  
+    setIsProfileOpen(false);
+    
+    
+    // Call logout function from auth context
+    await logoutUser();
+    
+    // Optionally, you can redirect to login page or show a message
+    // For example, using window.location:
+    navigate(HomeRoute);
+
+    
+  }
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -69,7 +93,9 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
                   whileHover={{ scale: 1.1 }}
                   className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white font-semibold shadow-md"
                 >
-                  OM
+                  
+                 
+                  {user && user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
                 </motion.div>
               </button>
 
@@ -83,30 +109,31 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
                     className="origin-top-right absolute right-0 mt-2 w-64 rounded-2xl shadow-lg bg-gradient-to-b from-indigo-800 to-blue-900 border border-indigo-700/50 overflow-hidden z-50"
                   >
                     <div className="px-4 py-3 border-b border-indigo-700/50">
-                      <p className="text-sm font-medium text-white">Oussama Meqqadmi</p>
-                      <p className="text-sm text-blue-300">oussama@stockai.com</p>
+                      <p className="text-sm font-medium text-white">{user.name}</p>
+                      <p className="text-sm text-blue-300">{user.email}</p>
                     </div>
                     
                     <div className="py-1">
-                      <a href="#" className="flex items-center px-4 py-2 text-blue-200 hover:text-white hover:bg-indigo-700/40 transition-colors duration-300">
+                      <Link to={MyProfileRoute} className="flex items-center px-4 py-2 text-blue-200 hover:text-white hover:bg-indigo-700/40 transition-colors duration-300">
                         <User className="h-4 w-4 mr-2" />
                         My Profile
-                      </a>
-                      <a href="#" className="flex items-center px-4 py-2 text-blue-200 hover:text-white hover:bg-indigo-700/40 transition-colors duration-300">
+                      </Link>
+                      <Link href="#" className="flex items-center px-4 py-2 text-blue-200 hover:text-white hover:bg-indigo-700/40 transition-colors duration-300">
                         <Settings className="h-4 w-4 mr-2" />
                         Settings
-                      </a>
-                      <a href="#" className="flex items-center px-4 py-2 text-blue-200 hover:text-white hover:bg-indigo-700/40 transition-colors duration-300">
+                      </Link>
+                     
+                      <Link href="#" className="flex items-center px-4 py-2 text-blue-200 hover:text-white hover:bg-indigo-700/40 transition-colors duration-300">
                         <HelpCircle className="h-4 w-4 mr-2" />
                         Help & Support
-                      </a>
+                      </Link>
                     </div>
                     
                     <div className="py-1 border-t border-indigo-700/50">
-                      <a href="#" className="flex items-center px-4 py-2 text-blue-200 hover:text-white hover:bg-indigo-700/40 transition-colors duration-300">
+                      <Link onClick={handleLogout} className="flex items-center px-4 py-2 text-blue-200 hover:text-white hover:bg-indigo-700/40 transition-colors duration-300">
                         <LogOut className="h-4 w-4 mr-2" />
                         Sign out
-                      </a>
+                      </Link>
                     </div>
                   </motion.div>
                 )}
