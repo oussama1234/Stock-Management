@@ -1,11 +1,29 @@
 FROM php:8.2-fpm
 
-# Install dependencies
+# Set working directory
+WORKDIR /var/www/html
+
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    zip unzip git curl libpng-dev libonig-dev libxml2-dev \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    zip \
+    unzip \
+    git \
+    curl \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
 # Install Composer
-COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-WORKDIR /var/www/html
+# Set permissions (create storage structure)
+RUN mkdir -p storage/framework/{sessions,views,cache} \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html/storage
+
+# Expose PHP-FPM port
+EXPOSE 9000
+
+CMD ["php-fpm"]

@@ -1,0 +1,16 @@
+*
+!Dockerfile
+!*.php
+!composer.*
+!app/
+!bootstrap/
+!config/
+!database/
+!public/
+!resources/
+!routes/
+!vendor/
+.git/
+node_modules/
+storage/
+public/storage

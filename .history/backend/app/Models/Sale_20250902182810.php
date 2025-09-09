@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Sale extends Model
+{
+    /** @use HasFactory<\Database\Factories\SaleFactory> */
+    use HasFactory;
+
+    // Define the table name if it's not the plural of the model name
+    protected $table = 'sales';
+
+    protected $fillable = [
+        'user_id',
+        'total_amount',
+        'tax',
+        'discount',
+        'sale_date',
+    ];
+}

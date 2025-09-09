@@ -1,0 +1,19 @@
+// routing for all pages here for the frontend
+// export all routes as an array of objects
+// adding each route to its exported const roiutes names
+
+import { createBrowserRouter } from "react-router-dom";
+import Login from "@/pages/Login";
+import Dashboard from "@/pages/DashboardHome";
+import NotFound from "@/pages/NotFound";
+
+export const routes = [
+    { path: "/", element: <Login /> },
+  { path: "/login", element: <Login /> },
+  { path: "/dashboard", element: <Dashboard /> },
+  { path: "*", element: <NotFound /> },
+];
+
+const router = createBrowserRouter(routes);
+
+export default router;

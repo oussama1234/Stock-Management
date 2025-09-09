@@ -1,0 +1,8 @@
+// this is AUTH functions file for getCsrfToken AND Login
+
+import { AxiosClient, CsrfClient } from './AxiosClient';
+
+// Function to get CSRF token
+export const getCsrfToken = async () => {
+    return await CsrfClient.get('/sanctum/csrf-cookie');
+}

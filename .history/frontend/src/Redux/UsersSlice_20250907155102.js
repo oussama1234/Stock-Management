@@ -1,0 +1,55 @@
+// use UsersSlice fetch users and actions
+import { createSlice } from '@reduxjs/toolkit';
+import { fetchUsers } from './UsersThunks';
+
+const usersSlice = createSlice({
+
+    // intiialing the users st
+    name : "users",
+    initialState : {
+        users : [],
+        loading : false,
+        error : null,
+    },
+/*************  ✨ Windsurf Command 🌟  *************/
+    reducers : {},
+    /**
+     * Define the extra reducers for the users slice.
+     * These handle the pending, fulfilled and rejected states of the fetchUsers thunk.
+     * @param {Object} builder The builder object.
+     */
+    extraReducers : (builder) => {
+        builder
+        /**
+         * Handle the pending state of the fetchUsers thunk.
+         * Set the loading state to true and error to null.
+         * @param {Object} state The current state of the users slice.
+         */
+        .addCase(fetchUsers.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        })
+        /**
+         * Handle the fulfilled state of the fetchUsers thunk.
+         * Set the loading state to false and users to the payload of the action.
+         * @param {Object} state The current state of the users slice.
+         * @param {Object} action The action object.
+         */
+        .addCase(fetchUsers.fulfilled, (state, action) => {
+            state.loading = false;
+            state.users = action.payload;
+        })
+        /**
+         * Handle the rejected state of the fetchUsers thunk.
+         * Set the loading state to false and error to the payload of the action.
+         * @param {Object} state The current state of the users slice.
+         * @param {Object} action The action object.
+         */
+        .addCase(fetchUsers.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload;
+        })
+/*******  36735143-3b23-4612-9e18-f1e058f70e4f  *******/
+    }
+
+});
