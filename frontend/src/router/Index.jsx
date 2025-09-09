@@ -8,12 +8,14 @@ import Dashboard from "@/pages/DashboardHome";
 import NotFound from "@/pages/NotFound";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import MyProfile from "../pages/MyProfile";
+import MyProfile from "@/pages/MyProfile";
+import UsersPage from "../pages/Admin/UsersPage";
 
 export const HomeRoute = "/"; // home route
 export const LoginRoute = "/login"; // login route
 export const DashboardRoute = "/dashboard"; // dashboard route
 export const MyProfileRoute = DashboardRoute + "/profile";
+export const UsersRoute = DashboardRoute + "/users";
 
 
 // dashboard route needs to follow dashboard layout
@@ -23,6 +25,7 @@ export const routes = [
   { path: LoginRoute, element: <ProtectedRoute><Login /></ProtectedRoute> },
   { path: DashboardRoute, element: <ProtectedRoute><DashboardLayout><Dashboard /></DashboardLayout></ProtectedRoute> },
   { path : MyProfileRoute, element : <ProtectedRoute><DashboardLayout><MyProfile /></DashboardLayout></ProtectedRoute>},
+  {path: UsersRoute, element : <ProtectedRoute><DashboardLayout><UsersPage /></DashboardLayout></ProtectedRoute>},
   { path: "*", element: <NotFound /> },
 ];
 

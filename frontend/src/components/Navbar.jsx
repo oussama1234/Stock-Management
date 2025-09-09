@@ -89,14 +89,27 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center space-x-2 focus:outline-none"
               >
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white font-semibold shadow-md"
-                >
-                  
-                 
-                  {user && user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
-                </motion.div>
+
+
+<motion.div
+  whileHover={{ scale: 1.1 }}
+  className="h-10 w-10 rounded-full overflow-hidden flex items-center justify-center shadow-md bg-gradient-to-r from-blue-500 to-indigo-500"
+>
+  {user && user.profileImage ? (
+    <img
+      src={user.profileImage} // e.g., http://localhost:8000/storage/profile_images/filename.png
+      alt={user.name || "User"}
+      className="h-full w-full object-cover"
+    />
+  ) : (
+    <span className="text-white font-semibold">
+      {user && user.name
+        ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase()
+        : "U"}
+    </span>
+  )}
+</motion.div>
+
               </button>
 
               <AnimatePresence>

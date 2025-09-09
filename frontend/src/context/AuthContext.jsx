@@ -5,7 +5,7 @@
 // It also handles side effects like fetching user data and managing loading states
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { login, logout, GetUser } from '../api/AuthFunctions';
+import { login, logout, GetUser, PostUpdateProfile } from '../api/AuthFunctions';
 import { useToast } from '../components/Toaster/ToastContext';
 
 export const AuthContext = createContext();
@@ -65,6 +65,30 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+                    // AuthContext / Component
+                const updateProfile = async (userData, file) => {
+                setError(null);
+                Toast.info("Updating Profile Data, please wait...");
+
+                const result = await PostUpdateProfile(userData, file);
+
+                if (result.success) {
+                    Toast.success(result.message);
+                    if (result.data?.user) {
+                    setUser(result.data.user);
+                    }
+                } else {
+                    Toast.error(result.message);
+                    setError(result.message);
+                }
+
+                console.log("updateProfile result:", result);
+                return result;
+                };
+
+
+
+    // first fetch the user to determine if the user is logged in or not to control the protected routing
     useEffect(() => {
         const fetchUser = async () => {
             try {
@@ -86,12 +110,12 @@ export const AuthProvider = ({ children }) => {
     }, []);
         
     return (
-        <AuthContext.Provider value={{ user, loading, error, handleLogin, logoutUser }}>
+        <AuthContext.Provider value={{ user, loading, error, handleLogin, logoutUser, updateProfile }}>
             {children}
         </AuthContext.Provider>
     );
    
 };
 
-// ✅ Custom hook for cleaner usage
+// Custom hook for cleaner usage
 export const useAuth = () => useContext(AuthContext);

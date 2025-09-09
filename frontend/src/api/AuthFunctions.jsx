@@ -43,3 +43,45 @@ export const GetUser = async () => {
         throw error;
     }
 };
+
+
+// Function to update the profile
+
+// PostUpdateProfile.js
+export const PostUpdateProfile = async (userData, file) => {
+  try {
+    const formdata = new FormData();
+    formdata.append("name", userData.name);
+    formdata.append("email", userData.email);
+    formdata.append("currentPassword", userData.currentPassword);
+    formdata.append("newPassword", userData.newPassword);
+    formdata.append("newPassword_confirmation", userData.confirmPassword);
+    formdata.append("notifications", userData.notifications);
+    formdata.append("twoFactor", userData.twoFactor);
+
+    if (file) {
+      formdata.append("profileImage", file);
+    }
+
+    const response = await AxiosClient.post("/profile/update", formdata, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Accept: "application/json",
+      },
+    });
+
+    return {
+      success: true,
+      status: response.status,
+      message: response.data?.message || "Profile updated successfully",
+      data: response.data,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      status: error.response?.status || 500,
+      message: error.response?.data?.message || "Failed to update Profile",
+      data: error.response?.data || null,
+    };
+  }
+};

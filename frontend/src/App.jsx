@@ -8,6 +8,8 @@ import router from "@/router/Index.jsx";
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './components/Toaster/ToastContext'
 
+
+
 function App() {
  
   // adding routes to routes provided by router

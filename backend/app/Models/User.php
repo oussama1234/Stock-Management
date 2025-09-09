@@ -3,9 +3,13 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use App\Http\Requests\UserRequest;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -25,6 +29,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'profileImage',
     ];
 
     /**
@@ -59,6 +64,30 @@ class User extends Authenticatable
     public function sales()
     {
         return $this->hasMany(Sale::class);
+    }
+
+    public function uploadProfileImage(UserRequest $request)
+    {
+          //Handle profile image
+    if ($request->hasFile('profileImage')) {
+        // Optional: delete old image if exists
+        if ($this->profileImage) {
+            $relativePath = str_replace(asset('storage') . '/', '', $this->profileImage);
+            Storage::disk('public')->delete($relativePath);
+        }
+
+        $path = $request->file('profileImage')->store('profile_images', 'public');
+
+        return asset('storage/' . $path);
+    }
+    }
+
+    public function removeProfileImage()
+    {
+        if ($this->profileImage) {
+            $relativePath = str_replace(asset('storage') . '/', '', $this->profileImage);
+            Storage::disk('public')->delete($relativePath);
+        }
     }
 
     

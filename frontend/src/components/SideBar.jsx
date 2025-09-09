@@ -13,13 +13,13 @@ import {
   Database,
   X,
 } from 'lucide-react';
-import { DashboardRoute } from '../router/Index';
+import { DashboardRoute, UsersRoute } from '../router/Index';
 import {Link} from "react-router-dom"
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const menuItems = [
     { id: 1, name: 'Dashboard', icon: Home, link: DashboardRoute, active: true },
     { id: 2, name: 'Products', icon: Package, link: '#', active: false, hasSubmenu: true },
-    { id: 3, name: 'Users', icon: Users, link: '#', active: false },
+    { id: 3, name: 'Users', icon: Users, link: UsersRoute, active: false },
     { id: 4, name: 'Sales', icon: TrendingUp, link: '#', active: false },
     { id: 5, name: 'Purchases', icon: ShoppingCart, link: '#', active: false },
     { id: 6, name: 'Inventory', icon: Database, link: '#', active: false },

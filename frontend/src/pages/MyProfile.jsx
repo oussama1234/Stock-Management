@@ -17,15 +17,17 @@ import {
   BarChart3
 } from 'lucide-react';
 import { useToast } from '../components/Toaster/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 const MyProfile = () => {
+  const {user, updateProfile, error} = useAuth();
   const [userData, setUserData] = useState({
-    name: 'Oussama Meqqadmi',
-    email: 'oussama@stockai.com',
+    name: user?.name,
+    email: user?.email,
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
-    profileImage: null,
+    profileImage: user?.profileImage,
     notifications: true,
     twoFactor: false
   });
@@ -36,7 +38,9 @@ const MyProfile = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
-  const Toast = useToast();
+  const [file, setFile] = useState(null);
+ 
+
   const handleInputChange = (e) => {
     const { name, value, type, checked, files } = e.target;
     setUserData(prev => ({
@@ -57,6 +61,7 @@ const MyProfile = () => {
       const reader = new FileReader();
       reader.onload = (e) => setImagePreview(e.target.result);
       reader.readAsDataURL(files[0]);
+      setFile(files[0]);
     }
   };
 
@@ -96,13 +101,15 @@ const MyProfile = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (validateForm()) {
-      // Simulate API call
+      const result = await updateProfile(userData, file);
+      if(result.data?.user)
       setSuccess(true);
-      Toast.success("Profile Updated Successfully")
+      
+     
       setTimeout(() => setSuccess(false), 3000);
       
       // Here you would typically send the data to your backend
@@ -160,9 +167,9 @@ const MyProfile = () => {
           <motion.div variants={itemVariants} className="flex flex-col items-center mb-8">
             <div className="relative mb-4">
               <div className="w-32 h-32 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
-                {imagePreview ? (
+                {imagePreview || userData.profileImage ? (
                   <img 
-                    src={imagePreview} 
+                    src={imagePreview || userData.profileImage} 
                     alt="Profile preview" 
                     className="w-full h-full object-cover"
                   />
@@ -203,7 +210,7 @@ const MyProfile = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Name Input */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Full name</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <User className="h-5 w-5 text-gray-400" />
@@ -311,14 +318,14 @@ const MyProfile = () => {
                   </button>
                 </div>
                 <AnimatePresence>
-                  {errors.currentPassword && (
+                  {errors.currentPassword || error && (
                     <motion.p 
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                       className="text-red-500 text-sm mt-1 flex items-center"
                     >
-                      <XCircle className="h-4 w-4 mr-1" /> {errors.currentPassword}
+                      <XCircle className="h-4 w-4 mr-1" /> {errors.currentPassword || error}
                     </motion.p>
                   )}
                 </AnimatePresence>
