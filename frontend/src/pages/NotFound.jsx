@@ -1,8 +1,7 @@
 // NotFound.jsx
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { Home, ArrowLeft, AlertCircle, Search, BarChart3 } from 'lucide-react';
+import { motion } from "framer-motion";
+import { AlertCircle, ArrowLeft, BarChart3, Home, Search } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const NotFound = () => {
   return (
@@ -59,10 +58,10 @@ const NotFound = () => {
                 </div>
               </div>
             </motion.div>
-            
+
             {/* Text Content */}
             <div className="text-center mb-10">
-              <motion.h1 
+              <motion.h1
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
@@ -70,8 +69,8 @@ const NotFound = () => {
               >
                 404
               </motion.h1>
-              
-              <motion.h2 
+
+              <motion.h2
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
@@ -79,19 +78,20 @@ const NotFound = () => {
               >
                 Page Not Found
               </motion.h2>
-              
-              <motion.p 
+
+              <motion.p
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
                 className="text-gray-600 mb-8"
               >
-                Sorry, we couldn't find the page you're looking for. Perhaps you've mistyped the URL or the page has been moved.
+                Sorry, we couldn't find the page you're looking for. Perhaps
+                you've mistyped the URL or the page has been moved.
               </motion.p>
             </div>
 
             {/* Action Buttons */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
@@ -107,7 +107,7 @@ const NotFound = () => {
                   Go Home
                 </motion.button>
               </Link>
-              
+
               <button
                 onClick={() => window.history.back()}
                 className="flex items-center justify-center w-full sm:w-auto px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium shadow-sm hover:bg-gray-200 transition-all duration-300"
@@ -118,13 +118,15 @@ const NotFound = () => {
             </motion.div>
 
             {/* Search Suggestion */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7 }}
               className="mt-10"
             >
-              <p className="text-center text-gray-500 text-sm mb-3">Or try searching</p>
+              <p className="text-center text-gray-500 text-sm mb-3">
+                Or try searching
+              </p>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-5 w-5 text-gray-400" />
@@ -137,27 +139,32 @@ const NotFound = () => {
               </div>
             </motion.div>
           </div>
-          
+
           {/* Footer */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.9 }}
             className="px-8 py-4 bg-gray-50 border-t border-gray-200/80 flex items-center justify-center"
           >
             <BarChart3 className="h-5 w-5 text-indigo-500 mr-2" />
-            <span className="text-sm text-gray-600">Stock Manager • Intelligent Inventory System</span>
+            <span className="text-sm text-gray-600">
+              Stock Manager • Intelligent Inventory System
+            </span>
           </motion.div>
         </div>
 
         {/* Home Link */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
           className="text-center mt-6"
         >
-          <Link to="/" className="text-sm text-gray-500 hover:text-indigo-600 transition-colors duration-300">
+          <Link
+            to="/"
+            className="text-sm text-gray-500 hover:text-indigo-600 transition-colors duration-300"
+          >
             ← Return to Stock Manager
           </Link>
         </motion.div>

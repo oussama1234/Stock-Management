@@ -1,11 +1,10 @@
 // Footer.jsx
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Heart } from 'lucide-react';
+import { motion } from "framer-motion";
+import { Heart } from "lucide-react";
 
 const Footer = () => {
   return (
-    <motion.footer 
+    <motion.footer
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -17,25 +16,25 @@ const Footer = () => {
           <Heart className="h-4 w-4 mx-1 text-red-400 fill-current" />
           <span>by Oussama Meqqadmi</span>
         </div>
-        
+
         <div className="flex space-x-6 text-sm">
-          <motion.a 
+          <motion.a
             whileHover={{ scale: 1.05, color: "#ffffff" }}
-            href="#" 
+            href="#"
             className="text-blue-200 hover:text-white transition-colors duration-300"
           >
             Contact
           </motion.a>
-          <motion.a 
+          <motion.a
             whileHover={{ scale: 1.05, color: "#ffffff" }}
-            href="#" 
+            href="#"
             className="text-blue-200 hover:text-white transition-colors duration-300"
           >
             Privacy
           </motion.a>
-          <motion.a 
+          <motion.a
             whileHover={{ scale: 1.05, color: "#ffffff" }}
-            href="#" 
+            href="#"
             className="text-blue-200 hover:text-white transition-colors duration-300"
           >
             Terms

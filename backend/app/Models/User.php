@@ -71,10 +71,7 @@ class User extends Authenticatable
           //Handle profile image
     if ($request->hasFile('profileImage')) {
         // Optional: delete old image if exists
-        if ($this->profileImage) {
-            $relativePath = str_replace(asset('storage') . '/', '', $this->profileImage);
-            Storage::disk('public')->delete($relativePath);
-        }
+       $this->removeProfileImage();
 
         $path = $request->file('profileImage')->store('profile_images', 'public');
 

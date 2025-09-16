@@ -1,43 +1,49 @@
 // Users.jsx
-import React, { useState, useEffect, use } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Users, 
-  User,
-  Plus, 
-  Edit, 
-  Trash2, 
-  Search, 
-  Filter,
-  UserPlus,
-  Shield,
-  Mail,
-  Lock,
+import { AnimatePresence, motion } from "framer-motion";
+import {
   Camera,
-  X,
   Check,
+  Edit,
   Eye,
-  EyeOff
-} from 'lucide-react';
+  EyeOff,
+  Lock,
+  Mail,
+  Search,
+  Shield,
+  Trash2,
+  User,
+  UserPlus,
+  Users,
+  X,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 
-import { useToast } from '@/components/Toaster/ToastContext';
-import { selectError, selectLoading, selectUsers } from '../../Redux/UsersSelectors';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchUsers, addUser, deleteUser, updateUser } from '../../Redux/UsersThunks';
-import ContentSpinner from '../../components/Spinners/ContentSpinner';
-import { useConfirm, ConfirmProvider } from '../../components/ConfirmContext/ConfirmContext';
+import { useToast } from "@/components/Toaster/ToastContext";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectError,
+  selectLoading,
+  selectUsers,
+} from "../../Redux/UsersSelectors";
+import {
+  addUser,
+  deleteUser,
+  fetchUsers,
+  updateUser,
+} from "../../Redux/UsersThunks";
+import { useConfirm } from "../../components/ConfirmContext/ConfirmContext";
+import ContentSpinner from "../../components/Spinners/ContentSpinner";
+import { useAuth } from "../../context/AuthContext";
 
 const UsersPage = () => {
   const dispatch = useDispatch();
   const selectedUsers = useSelector(selectUsers);
   const selectedLoading = useSelector(selectLoading);
-  const selectedError = useSelector((selectError));
+  const selectedError = useSelector(selectError);
 
-
-  
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -45,105 +51,97 @@ const UsersPage = () => {
   const [file, setFile] = useState(null);
   const toast = useToast();
   const { confirm } = useConfirm();
+  const { user: currentUser, setUser } = useAuth();
 
-  
-    useEffect(() => {
+  useEffect(() => {
     // fetch from API
 
-    if(selectedUsers.length === 0) {
-    const fetchData = async () => {
-      const result = await dispatch(fetchUsers());
-      console.log("result:", result);
-    };
-    fetchData();
-  }
+    if (selectedUsers.length === 0) {
+      const fetchData = async () => {
+        const result = await dispatch(fetchUsers());
+        console.log("result:", result);
+      };
+      fetchData();
+    }
 
-    
-     //set users and filtiered users
-      if(selectedUsers.length > 0){
-        setUsers(selectedUsers);
-        setFilteredUsers(selectedUsers);
-      }
-      
-  }, [selectedUsers.length]);
-
-
-  
-
-  
-
+    //set users and filtiered users
+    if (selectedUsers.length > 0) {
+      setUsers(selectedUsers);
+      setFilteredUsers(selectedUsers);
+    }
+  }, [selectedUsers.length, currentUser]);
 
   // Filter users based on search term
   useEffect(() => {
-    const filtered = users.filter(user =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = users.filter(
+      (user) =>
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.role.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredUsers(filtered);
   }, [searchTerm, users]);
 
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    name: "",
+    email: "",
     profileImage: null,
-    role: 'user',
-    password: ''
+    role: "user",
+    password: "",
   });
 
   const [errors, setErrors] = useState({});
-const handleInputChange = (e) => {
-  const { name, value, files } = e.target;
+  const handleInputChange = (e) => {
+    const { name, value, files } = e.target;
 
-  if (name === 'profileImage' && files && files[0]) {
-    const file = files[0];
-    setFile(file); // for upload
+    if (name === "profileImage" && files && files[0]) {
+      const file = files[0];
+      setFile(file); // for upload
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setImagePreview(e.target.result); // for preview
-      // Optional: also set formData.profileImage for immediate preview submission
-      setFormData(prev => ({
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result); // for preview
+        // Optional: also set formData.profileImage for immediate preview submission
+        setFormData((prev) => ({
+          ...prev,
+          profileImage: e.target.result, // only for preview
+        }));
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // regular input
+      setFormData((prev) => ({
         ...prev,
-        profileImage: e.target.result // only for preview
+        [name]: value,
       }));
-    };
-    reader.readAsDataURL(file);
-  } else {
-    // regular input
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  }
+    }
 
-  // Clear error if any
-  if (errors[name]) {
-    setErrors(prev => ({
-      ...prev,
-      [name]: ''
-    }));
-  }
-};
-
+    // Clear error if any
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
+  };
 
   const validateForm = () => {
     const newErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = "Name is required";
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = "Email is invalid";
     }
 
     if (!editingUser && !formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
     } else if (formData.password && formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = "Password must be at least 6 characters";
     }
 
     setErrors(newErrors);
@@ -152,53 +150,55 @@ const handleInputChange = (e) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (validateForm()) {
       if (editingUser) {
         // Update existing user
-        const result = await dispatch(updateUser({userData: formData, file: file}));
-        if(updateUser.fulfilled.match(result)){
+        const result = await dispatch(
+          updateUser({ userData: formData, file: file })
+        );
+        if (updateUser.fulfilled.match(result)) {
           console.log("result updated:", result);
           const updatedUser = {
             ...formData,
-            id: result.payload.id
+            id: result.payload.id,
           };
-          const updatedUsers = users.map(user => (user.id === updatedUser.id ? updatedUser : user));
+          const updatedUsers = users.map((user) =>
+            user.id === updatedUser.id ? updatedUser : user
+          );
           setUsers(updatedUsers);
+          setUser(updatedUser);
           console.log("users:", users);
-          if(result.payload.message) {
+          if (result.payload.message) {
             toast.error(result.payload.message);
           }
-        toast.success('User updated successfully!');
-    
-    
+          toast.success("User updated successfully!");
         }
-        
       } else {
         // Add new user
         //simulate adding user from api response
-        const result = await dispatch(addUser({userdata: formData, file: file}));
-        if(addUser.fulfilled.match(result)){
+        const result = await dispatch(
+          addUser({ userdata: formData, file: file })
+        );
+        if (addUser.fulfilled.match(result)) {
           console.log("result added:", result);
           const newUser = {
-          ...formData,
-          id: result.payload.id
-        };
-        setUsers([...users, newUser]);
-        console.log("users:", users);
-        toast.success('User Created successfully!');
-        }
-        else {
+            ...formData,
+            id: result.payload.id,
+          };
+          setUsers([...users, newUser]);
+          console.log("users:", users);
+          toast.success("User Created successfully!");
+        } else {
           toast.error(result.payload);
-          setErrors(prev => ({
+          setErrors((prev) => ({
             ...prev,
-            email: result.payload || 'Error creating user'
+            email: result.payload || "Error creating user",
           }));
           console.log("error:", selectedError);
         }
-        
       }
-      
+
       closeModal();
     }
   };
@@ -207,21 +207,21 @@ const handleInputChange = (e) => {
     if (user) {
       setEditingUser(user);
       setFormData({
-        id : user.id,
+        id: user.id,
         name: user.name,
         email: user.email,
         profileImage: user.profileImage,
         role: user.role,
-        password: ''
+        password: "",
       });
     } else {
       setEditingUser(null);
       setFormData({
-        name: '',
-        email: '',
+        name: "",
+        email: "",
         profileImage: null,
-        role: 'user',
-        password: ''
+        role: "user",
+        password: "",
       });
     }
     setIsModalOpen(true);
@@ -231,77 +231,73 @@ const handleInputChange = (e) => {
     setIsModalOpen(false);
     setEditingUser(null);
     setFormData({
-      name: '',
-      email: '',
+      name: "",
+      email: "",
       profileImage: null,
-      role: 'user',
-      password: ''
+      role: "user",
+      password: "",
     });
     setErrors({});
     setImagePreview(null);
   };
 
   const deleteUserFunction = async (userObj) => {
-    
     try {
       const confirmResult = await confirm({
-      type: 'warning',
-      title: 'Are you sure?',
-      description: 'This action cannot be undone.',
-      confirmText: 'Yes, proceed',
-      cancelText: 'No, cancel'
-    });
+        type: "warning",
+        title: "Are you sure?",
+        description: "This action cannot be undone.",
+        confirmText: "Yes, proceed",
+        cancelText: "No, cancel",
+      });
 
-    if (confirmResult) {
-      // simulate deleting user from api response
-      const result = await dispatch(deleteUser(userObj));
-      if(deleteUser.fulfilled.match(result)){
-        console.log("result deleted:", result);
-        console.log("selectedUsers:", selectedUsers);
-      
-        toast.success('User deleted successfully!');
+      if (confirmResult) {
+        // simulate deleting user from api response
+        const result = await dispatch(deleteUser(userObj));
+        if (deleteUser.fulfilled.match(result)) {
+          console.log("result deleted:", result);
+          console.log("selectedUsers:", selectedUsers);
 
+          toast.success("User deleted successfully!");
+        } else if (deleteUser.rejected.match(result)) {
+          toast.error(result.payload);
+        }
       }
-      else if (deleteUser.rejected.match(result))
-      {
-        toast.error(result.payload);
-      }
-    } 
     } catch (error) {
       console.log("Error deleting user:", error);
     }
-      
-      
-      
-    
   };
 
   const getRoleColor = (role) => {
     switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800';
-      case 'manager': return 'bg-blue-100 text-blue-800';
-      case 'user': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "admin":
+        return "bg-red-100 text-red-800";
+      case "manager":
+        return "bg-blue-100 text-blue-800";
+      case "user":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getRoleIcon = (role) => {
     switch (role) {
-      case 'admin': return <Shield className="h-4 w-4" />;
-      case 'manager': return <Users className="h-4 w-4" />;
-      case 'user': return <User className="h-4 w-4" />;
-      default: return <User className="h-4 w-4" />;
+      case "admin":
+        return <Shield className="h-4 w-4" />;
+      case "manager":
+        return <Users className="h-4 w-4" />;
+      case "user":
+        return <User className="h-4 w-4" />;
+      default:
+        return <User className="h-4 w-4" />;
     }
   };
 
-    if (selectedLoading) {
+  if (selectedLoading) {
     return (
       <div className="max-w-7xl mx-auto p-4">
-        <ContentSpinner 
-          size="large" 
-          message="Loading users..." 
-          fullWidth 
-        />
+        <ContentSpinner size="large" message="Loading users..." fullWidth />
       </div>
     );
   }
@@ -318,8 +314,12 @@ const handleInputChange = (e) => {
         <div className="inline-flex items-center justify-center p-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl mb-4">
           <Users className="h-8 w-8 text-white" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">User Management</h1>
-        <p className="text-gray-600">Manage your team members and their permissions</p>
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          User Management
+        </h1>
+        <p className="text-gray-600">
+          Manage your team members and their permissions
+        </p>
       </motion.div>
 
       {/* Actions Bar */}
@@ -343,9 +343,6 @@ const handleInputChange = (e) => {
         </div>
 
         <div className="flex gap-3">
-        
-
-          
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -382,15 +379,25 @@ const handleInputChange = (e) => {
                 <div className="flex items-center justify-center mb-4">
                   <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 flex items-center justify-center border-4 border-white shadow-lg">
                     {user.profileImage ? (
-                      <img 
-                        src={user.profileImage} 
+                      <img
+                        src={user.profileImage}
                         alt={user.name}
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                    ) : currentUser.id === user.id &&
+                      currentUser.profileImage ? (
+                      <img
+                        src={currentUser.profileImage}
+                        alt={currentUser.name}
                         className="w-full h-full object-cover rounded-full"
                       />
                     ) : (
                       <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
                         <span className="text-2xl font-bold text-white">
-                          {user.name.split(' ').map(n => n[0]).join('')}
+                          {user.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
                         </span>
                       </div>
                     )}
@@ -399,7 +406,9 @@ const handleInputChange = (e) => {
 
                 {/* User Info */}
                 <div className="text-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-1">{user.name}</h3>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                    {user.name}
+                  </h3>
                   <p className="text-gray-600 flex items-center justify-center">
                     <Mail className="h-4 w-4 mr-1" />
                     {user.email}
@@ -408,7 +417,11 @@ const handleInputChange = (e) => {
 
                 {/* Role Badge */}
                 <div className="flex justify-center mb-6">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(user.role)}`}>
+                  <span
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(
+                      user.role
+                    )}`}
+                  >
                     {getRoleIcon(user.role)}
                     <span className="ml-1 capitalize">{user.role}</span>
                   </span>
@@ -424,7 +437,7 @@ const handleInputChange = (e) => {
                   >
                     <Edit className="h-4 w-4" />
                   </motion.button>
-                  
+
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
@@ -448,8 +461,12 @@ const handleInputChange = (e) => {
           className="text-center py-12"
         >
           <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-600 mb-2">No users found</h3>
-          <p className="text-gray-500">Try adjusting your search or add a new user</p>
+          <h3 className="text-lg font-medium text-gray-600 mb-2">
+            No users found
+          </h3>
+          <p className="text-gray-500">
+            Try adjusting your search or add a new user
+          </p>
         </motion.div>
       )}
 
@@ -474,7 +491,7 @@ const handleInputChange = (e) => {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-semibold text-gray-800">
-                    {editingUser ? 'Edit User' : 'Add New User'}
+                    {editingUser ? "Edit User" : "Add New User"}
                   </h2>
                   <button
                     onClick={closeModal}
@@ -490,15 +507,27 @@ const handleInputChange = (e) => {
                     <label className="relative cursor-pointer">
                       <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 flex items-center justify-center border-4 border-white shadow-lg">
                         {imagePreview || formData.profileImage ? (
-                          <img 
-                            src={imagePreview || formData.profileImage} 
+                          <img
+                            src={imagePreview || formData.profileImage}
                             alt="Preview"
+                            className="w-full h-full object-cover rounded-full"
+                          />
+                        ) : currentUser.id === formData.id &&
+                          currentUser.profileImage !== null ? (
+                          <img
+                            src={currentUser.profileImage}
+                            alt={currentUser.name}
                             className="w-full h-full object-cover rounded-full"
                           />
                         ) : (
                           <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
                             <span className="text-xl font-bold text-white">
-                              {formData.name ? formData.name.split(' ').map(n => n[0]).join('') : 'U'}
+                              {formData.name
+                                ? formData.name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")
+                                : "U"}
                             </span>
                           </div>
                         )}
@@ -528,9 +557,9 @@ const handleInputChange = (e) => {
                         value={formData.name}
                         onChange={handleInputChange}
                         className={`pl-10 pr-4 py-3 w-full rounded-xl border focus:ring-2 focus:outline-none transition-all duration-300 ${
-                          errors.name 
-                            ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
-                            : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/20'
+                          errors.name
+                            ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
+                            : "border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
                         }`}
                         placeholder="Enter full name"
                       />
@@ -553,30 +582,29 @@ const handleInputChange = (e) => {
                         value={formData.email}
                         onChange={handleInputChange}
                         className={`pl-10 pr-4 py-3 w-full rounded-xl border focus:ring-2 focus:outline-none transition-all duration-300 ${
-                          errors.email 
-                            ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
-                            : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/20'
+                          errors.email
+                            ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
+                            : "border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
                         }`}
                         placeholder="Enter email address"
                       />
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                     </div>
-                 
-                  
-                 
 
-                        {errors.email ||selectedError && (
-                      <p className="text-red-500 text-sm mt-1">{errors.email}{selectedError}</p>
-                    )}
-
-                        
+                    {errors.email ||
+                      (selectedError && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.email}
+                          {selectedError}
+                        </p>
+                      ))}
                   </div>
 
                   {/* Password */}
                   {(!editingUser || formData.password) && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {editingUser ? 'New Password' : 'Password'}
+                        {editingUser ? "New Password" : "Password"}
                       </label>
                       <div className="relative">
                         <input
@@ -585,9 +613,9 @@ const handleInputChange = (e) => {
                           value={formData.password}
                           onChange={handleInputChange}
                           className={`pl-10 pr-12 py-3 w-full rounded-xl border focus:ring-2 focus:outline-none transition-all duration-300 ${
-                            errors.password 
-                              ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
-                              : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/20'
+                            errors.password
+                              ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
+                              : "border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
                           }`}
                           placeholder="Enter password"
                         />
@@ -605,7 +633,9 @@ const handleInputChange = (e) => {
                         </button>
                       </div>
                       {errors.password && (
-                        <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.password}
+                        </p>
                       )}
                     </div>
                   )}
@@ -628,8 +658,18 @@ const handleInputChange = (e) => {
                       </select>
                       <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                       <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                        <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        <svg
+                          className="h-4 w-4 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 9l-7 7-7-7"
+                          />
                         </svg>
                       </div>
                     </div>
@@ -651,7 +691,7 @@ const handleInputChange = (e) => {
                       className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 flex items-center justify-center"
                     >
                       <Check className="h-5 w-5 mr-2" />
-                      {editingUser ? 'Update' : 'Create'} User
+                      {editingUser ? "Update" : "Create"} User
                     </motion.button>
                   </div>
                 </form>

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->decimal('tax', 5, 2)->default(0);
+            $table->string('customer_name')->nullable();
             $table->decimal('discount', 10, 2)->default(0);
             $table->decimal('total_amount', 10, 2);
             $table->timestamp('sale_date')->useCurrent();

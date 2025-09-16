@@ -1,16 +1,24 @@
 // Updated Navbar.jsx with improved colors
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Search, Menu, X, BarChart3, Settings, LogOut, User, HelpCircle } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
-import { HomeRoute, MyProfileRoute } from '../router/Index';
-import { useToast } from './Toaster/ToastContext';
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  Bell,
+  HelpCircle,
+  LogOut,
+  Menu,
+  Search,
+  Settings,
+  User,
+  X,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { HomeRoute, MyProfileRoute } from "../router/Index";
+import { useToast } from "./Toaster/ToastContext";
 const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
-  const {logoutUser, user} = useAuth();
+  const { logoutUser, user } = useAuth();
   const navigate = useNavigate();
   const Toast = useToast();
   const location = useLocation();
@@ -18,24 +26,20 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
   // set actvie link style for navbar
   const isActive = (link) => {
     return location.pathname === link;
-  }
-  
+  };
 
   const handleLogout = async () => {
     // Implement logout functionality here
-  
+
     setIsProfileOpen(false);
-    
-    
+
     // Call logout function from auth context
     await logoutUser();
-    
+
     // Optionally, you can redirect to login page or show a message
     // For example, using window.location:
     navigate(HomeRoute);
-
-    
-  }
+  };
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -45,9 +49,9 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -60,14 +64,17 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
               onClick={toggleSidebar}
               className="text-blue-100 p-2 rounded-md hover:bg-indigo-700/40 hover:text-white transition-all duration-300"
             >
-              {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isSidebarOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </button>
-            
           </div>
 
           <div className="flex items-center space-x-4">
             {/* Search Bar */}
-            <motion.div 
+            <motion.div
               whileHover={{ scale: 1.05 }}
               className="hidden md:block relative"
             >
@@ -91,31 +98,32 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
 
             {/* Profile Dropdown */}
             <motion.div className="relative" ref={profileRef}>
-              <button 
+              <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center space-x-2 focus:outline-none"
               >
-
-
-<motion.div
-  whileHover={{ scale: 1.1 }}
-  className="h-10 w-10 rounded-full overflow-hidden flex items-center justify-center shadow-md bg-gradient-to-r from-blue-500 to-indigo-500"
->
-  {user && user.profileImage ? (
-    <img
-      src={user.profileImage} // e.g., http://localhost:8000/storage/profile_images/filename.png
-      alt={user.name || "User"}
-      className="h-full w-full object-cover"
-    />
-  ) : (
-    <span className="text-white font-semibold">
-      {user && user.name
-        ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase()
-        : "U"}
-    </span>
-  )}
-</motion.div>
-
+                <motion.div
+                  whileHover={{ scale: 1.1 }}
+                  className="h-10 w-10 rounded-full overflow-hidden flex items-center justify-center shadow-md bg-gradient-to-r from-blue-500 to-indigo-500"
+                >
+                  {user && user.profileImage ? (
+                    <img
+                      src={user.profileImage} // e.g., http://localhost:8000/storage/profile_images/filename.png
+                      alt={user.name || "User"}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-white font-semibold">
+                      {user && user.name
+                        ? user.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()
+                        : "U"}
+                    </span>
+                  )}
+                </motion.div>
               </button>
 
               <AnimatePresence>
@@ -128,30 +136,48 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
                     className="origin-top-right absolute right-0 mt-2 w-64 rounded-2xl shadow-lg bg-gradient-to-b from-indigo-800 to-blue-900 border border-indigo-700/50 overflow-hidden z-50"
                   >
                     <div className="px-4 py-3 border-b border-indigo-700/50">
-                      <p className="text-sm font-medium text-white">{user.name}</p>
+                      <p className="text-sm font-medium text-white">
+                        {user.name}
+                      </p>
                       <p className="text-sm text-blue-300">{user.email}</p>
                     </div>
-                    
+
                     <div className="py-1">
-                      <Link to={MyProfileRoute} className={`flex items-center px-4 py-2 text-blue-200 hover:text-white hover:bg-indigo-700/40 transition-colors duration-300 
-                        ${isActive(MyProfileRoute) ? 'bg-indigo-600 text-white shadow-md' : ''}
-                        `}>
+                      <Link
+                        to={MyProfileRoute}
+                        className={`flex items-center px-4 py-2 text-blue-200 hover:text-white hover:bg-indigo-700/40 transition-colors duration-300 
+                        ${
+                          isActive(MyProfileRoute)
+                            ? "bg-indigo-600 text-white shadow-md"
+                            : ""
+                        }
+                        `}
+                      >
                         <User className="h-4 w-4 mr-2" />
                         My Profile
                       </Link>
-                      <Link href="#" className="flex items-center px-4 py-2 text-blue-200 hover:text-white hover:bg-indigo-700/40 transition-colors duration-300">
+                      <Link
+                        href="#"
+                        className="flex items-center px-4 py-2 text-blue-200 hover:text-white hover:bg-indigo-700/40 transition-colors duration-300"
+                      >
                         <Settings className="h-4 w-4 mr-2" />
                         Settings
                       </Link>
-                     
-                      <Link href="#" className="flex items-center px-4 py-2 text-blue-200 hover:text-white hover:bg-indigo-700/40 transition-colors duration-300">
+
+                      <Link
+                        href="#"
+                        className="flex items-center px-4 py-2 text-blue-200 hover:text-white hover:bg-indigo-700/40 transition-colors duration-300"
+                      >
                         <HelpCircle className="h-4 w-4 mr-2" />
                         Help & Support
                       </Link>
                     </div>
-                    
+
                     <div className="py-1 border-t border-indigo-700/50">
-                      <Link onClick={handleLogout} className="flex items-center px-4 py-2 text-blue-200 hover:text-white hover:bg-indigo-700/40 transition-colors duration-300">
+                      <Link
+                        onClick={handleLogout}
+                        className="flex items-center px-4 py-2 text-blue-200 hover:text-white hover:bg-indigo-700/40 transition-colors duration-300"
+                      >
                         <LogOut className="h-4 w-4 mr-2" />
                         Sign out
                       </Link>

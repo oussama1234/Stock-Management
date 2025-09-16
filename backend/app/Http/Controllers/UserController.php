@@ -121,10 +121,17 @@ class UserController extends Controller
         
     }
 
+    /**
+     * Delete a user by given ID
+     *
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function destroy($id)
     {
 
         $user = User::find($id);
+        //
         $user->delete();
         // remove any profile image if available
 
@@ -137,15 +144,27 @@ class UserController extends Controller
 
     public function update(UserRequest $request, $id)
     {
+
+        // validate the request
       
       $validated = $request->validated();
 
+      // find the user by its ID
+
       $user = User::find($id);
 
+      // update the user
       $user->name = $validated['name'];
       $user->email = $validated['email'];
       $user->role = $validated['role'];
 
+      // check if the user has a new password
+      if(!empty($validated['newPassword']))
+      {
+        $user->password = Hash::make($validated['newPassword']);
+      }
+
+      // check if the user has a new profile image
       if($request->hasFile('profileImage'))
       {
         
@@ -153,7 +172,7 @@ class UserController extends Controller
 
           $user->profileImage = $path;
       }
-
+      
       $user->save();
 
       return response()->json(

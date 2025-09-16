@@ -1,7 +1,6 @@
 // LoadingSpinner.jsx
-import React from 'react';
-import { motion } from 'framer-motion';
-import { BarChart3, Package, Database, TrendingUp } from 'lucide-react';
+import { motion } from "framer-motion";
+import { BarChart3, Database, Package, TrendingUp } from "lucide-react";
 
 const LoadingSpinner = ({ message = "Loading your stock data..." }) => {
   return (
@@ -50,32 +49,32 @@ const LoadingSpinner = ({ message = "Loading your stock data..." }) => {
               transition={{
                 duration: 3,
                 repeat: Infinity,
-                ease: "linear"
+                ease: "linear",
               }}
               className="w-28 h-28 rounded-full border-4 border-blue-100"
             />
-            
+
             {/* Inner pulsing circle */}
             <motion.div
-              animate={{ 
+              animate={{
                 scale: [1, 1.1, 1],
-                opacity: [0.7, 1, 0.7]
+                opacity: [0.7, 1, 0.7],
               }}
               transition={{
                 duration: 2,
                 repeat: Infinity,
-                ease: "easeInOut"
+                ease: "easeInOut",
               }}
               className="absolute inset-0 m-auto w-20 h-20 rounded-full border-4 border-indigo-300"
             />
-            
+
             {/* Rotating icons */}
             <motion.div
               animate={{ rotate: -360 }}
               transition={{
                 duration: 4,
                 repeat: Infinity,
-                ease: "linear"
+                ease: "linear",
               }}
               className="absolute inset-0 flex items-center justify-center"
             >
@@ -85,69 +84,69 @@ const LoadingSpinner = ({ message = "Loading your stock data..." }) => {
                   transition={{
                     duration: 3,
                     repeat: Infinity,
-                    ease: "linear"
+                    ease: "linear",
                   }}
                 >
                   <Package className="h-5 w-5 text-blue-500" />
                 </motion.div>
               </div>
-              
+
               <div className="absolute top-1/2 -right-2 transform -translate-y-1/2">
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{
                     duration: 3,
                     repeat: Infinity,
-                    ease: "linear"
+                    ease: "linear",
                   }}
                 >
                   <Database className="h-5 w-5 text-indigo-500" />
                 </motion.div>
               </div>
-              
+
               <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{
                     duration: 3,
                     repeat: Infinity,
-                    ease: "linear"
+                    ease: "linear",
                   }}
                 >
                   <TrendingUp className="h-5 w-5 text-purple-500" />
                 </motion.div>
               </div>
-              
+
               <div className="absolute top-1/2 -left-2 transform -translate-y-1/2">
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{
                     duration: 3,
                     repeat: Infinity,
-                    ease: "linear"
+                    ease: "linear",
                   }}
                 >
                   <BarChart3 className="h-5 w-5 text-blue-600" />
                 </motion.div>
               </div>
             </motion.div>
-            
+
             {/* Central icon */}
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ 
+              transition={{
                 delay: 0.2,
                 type: "spring",
                 stiffness: 200,
-                damping: 15
+                damping: 15,
               }}
               className="absolute inset-0 m-auto w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center shadow-lg"
             >
               <BarChart3 className="h-6 w-6 text-white" />
             </motion.div>
           </div>
-          
+
           {/* Loading text with animation */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -155,22 +154,24 @@ const LoadingSpinner = ({ message = "Loading your stock data..." }) => {
             transition={{ delay: 0.3 }}
             className="text-center"
           >
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Stock Manager</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Stock Manager
+            </h3>
             <p className="text-gray-600 mb-4">{message}</p>
-            
+
             {/* Animated dots */}
             <div className="flex justify-center space-x-1">
               {[0, 1, 2].map((i) => (
                 <motion.div
                   key={i}
-                  animate={{ 
+                  animate={{
                     scale: [1, 1.5, 1],
-                    opacity: [0.5, 1, 0.5]
+                    opacity: [0.5, 1, 0.5],
                   }}
                   transition={{
                     duration: 1.5,
                     repeat: Infinity,
-                    delay: i * 0.2
+                    delay: i * 0.2,
                   }}
                   className="w-2 h-2 bg-blue-500 rounded-full"
                 />
@@ -178,7 +179,7 @@ const LoadingSpinner = ({ message = "Loading your stock data..." }) => {
             </div>
           </motion.div>
         </motion.div>
-        
+
         {/* Footer note */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -198,16 +199,16 @@ export const MiniSpinner = ({ size = "medium" }) => {
   const sizeClasses = {
     small: "w-6 h-6",
     medium: "w-8 h-8",
-    large: "w-12 h-12"
+    large: "w-12 h-12",
   };
-  
+
   return (
     <motion.div
       animate={{ rotate: 360 }}
       transition={{
         duration: 1,
         repeat: Infinity,
-        ease: "linear"
+        ease: "linear",
       }}
       className={`${sizeClasses[size]} rounded-full border-2 border-blue-200 border-t-blue-500`}
     />

@@ -1,6 +1,5 @@
-import { configureStore } from "@reduxjs/toolkit";
 import usersReducer from "@/Redux/UsersSlice";
-
+import { configureStore } from "@reduxjs/toolkit";
 
 /**
  * Configures the Redux store with the given options.
@@ -10,8 +9,6 @@ import usersReducer from "@/Redux/UsersSlice";
  */
 export const store = configureStore({
   reducer: {
-    users: usersReducer
-  }
+    users: usersReducer,
+  },
 });
-
-

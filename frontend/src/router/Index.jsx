@@ -9,13 +9,17 @@ import NotFound from "@/pages/NotFound";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import MyProfile from "@/pages/MyProfile";
-import UsersPage from "../pages/Admin/UsersPage";
+import UsersPage from "@/pages/Admin/UsersPage";
+import Products from "@/pages/Admin/Products/Products";
+import ProductDetails from "@/pages/Admin/Products/ProductDetails";
 
 export const HomeRoute = "/"; // home route
 export const LoginRoute = "/login"; // login route
 export const DashboardRoute = "/dashboard"; // dashboard route
 export const MyProfileRoute = DashboardRoute + "/profile";
 export const UsersRoute = DashboardRoute + "/users";
+export const ProductsRoute = DashboardRoute + "/products";
+export const ProductDetailsRoute = DashboardRoute + "/products";
 
 
 // dashboard route needs to follow dashboard layout
@@ -26,6 +30,8 @@ export const routes = [
   { path: DashboardRoute, element: <ProtectedRoute><DashboardLayout><Dashboard /></DashboardLayout></ProtectedRoute> },
   { path : MyProfileRoute, element : <ProtectedRoute><DashboardLayout><MyProfile /></DashboardLayout></ProtectedRoute>},
   {path: UsersRoute, element : <ProtectedRoute><DashboardLayout><UsersPage /></DashboardLayout></ProtectedRoute>},
+  {path: ProductsRoute, element : <ProtectedRoute><DashboardLayout><Products /></DashboardLayout></ProtectedRoute>},
+  {path: ProductDetailsRoute + "/:id", element : <ProtectedRoute><DashboardLayout><ProductDetails /></DashboardLayout></ProtectedRoute>},
   { path: "*", element: <NotFound /> },
 ];
 

@@ -1,35 +1,33 @@
 // MyProfile.jsx
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  User, 
-  Mail, 
-  Lock, 
-  Camera, 
-  Save, 
-  Eye, 
-  EyeOff, 
-  CheckCircle, 
-  XCircle,
-  Shield,
+import { AnimatePresence, motion } from "framer-motion";
+import {
   Bell,
+  Camera,
+  CheckCircle,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  Save,
   Settings,
-  BarChart3
-} from 'lucide-react';
-import { useToast } from '../components/Toaster/ToastContext';
-import { useAuth } from '../context/AuthContext';
+  Shield,
+  User,
+  XCircle,
+} from "lucide-react";
+import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 const MyProfile = () => {
-  const {user, updateProfile, error} = useAuth();
+  const { user, updateProfile, error } = useAuth();
   const [userData, setUserData] = useState({
     name: user?.name,
     email: user?.email,
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
     profileImage: user?.profileImage,
     notifications: true,
-    twoFactor: false
+    twoFactor: false,
   });
 
   const [errors, setErrors] = useState({});
@@ -39,25 +37,24 @@ const MyProfile = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [file, setFile] = useState(null);
- 
 
   const handleInputChange = (e) => {
     const { name, value, type, checked, files } = e.target;
-    setUserData(prev => ({
+    setUserData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : files ? files[0] : value
+      [name]: type === "checkbox" ? checked : files ? files[0] : value,
     }));
 
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: "",
       }));
     }
 
     // Create image preview if image is selected
-    if (name === 'profileImage' && files && files[0]) {
+    if (name === "profileImage" && files && files[0]) {
       const reader = new FileReader();
       reader.onload = (e) => setImagePreview(e.target.result);
       reader.readAsDataURL(files[0]);
@@ -70,30 +67,35 @@ const MyProfile = () => {
 
     // Name validation
     if (!userData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = "Name is required";
     } else if (userData.name.trim().length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
+      newErrors.name = "Name must be at least 2 characters";
     }
 
     // Email validation
     if (!userData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(userData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = "Email is invalid";
     }
 
     // Password validation (only if any password field is filled)
-    if (userData.currentPassword || userData.newPassword || userData.confirmPassword) {
+    if (
+      userData.currentPassword ||
+      userData.newPassword ||
+      userData.confirmPassword
+    ) {
       if (!userData.currentPassword) {
-        newErrors.currentPassword = 'Current password is required to change password';
+        newErrors.currentPassword =
+          "Current password is required to change password";
       }
 
       if (userData.newPassword && userData.newPassword.length < 6) {
-        newErrors.newPassword = 'New password must be at least 6 characters';
+        newErrors.newPassword = "New password must be at least 6 characters";
       }
 
       if (userData.newPassword !== userData.confirmPassword) {
-        newErrors.confirmPassword = 'Passwords do not match';
+        newErrors.confirmPassword = "Passwords do not match";
       }
     }
 
@@ -103,17 +105,15 @@ const MyProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (validateForm()) {
       const result = await updateProfile(userData, file);
-      if(result.data?.user)
-      setSuccess(true);
-      
-     
+      if (result.data?.user) setSuccess(true);
+
       setTimeout(() => setSuccess(false), 3000);
-      
+
       // Here you would typically send the data to your backend
-      console.log('Profile data:', userData);
+      console.log("Profile data:", userData);
     }
   };
 
@@ -122,9 +122,9 @@ const MyProfile = () => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
-      }
-    }
+        staggerChildren: 0.1,
+      },
+    },
   };
 
   const itemVariants = {
@@ -134,9 +134,9 @@ const MyProfile = () => {
       opacity: 1,
       transition: {
         type: "spring",
-        stiffness: 100
-      }
-    }
+        stiffness: 100,
+      },
+    },
   };
 
   return (
@@ -152,7 +152,9 @@ const MyProfile = () => {
           <User className="h-8 w-8 text-white" />
         </div>
         <h1 className="text-3xl font-bold text-gray-800 mb-2">My Profile</h1>
-        <p className="text-gray-600">Manage your account settings and preferences</p>
+        <p className="text-gray-600">
+          Manage your account settings and preferences
+        </p>
       </motion.div>
 
       <motion.form
@@ -164,25 +166,31 @@ const MyProfile = () => {
       >
         <div className="p-6">
           {/* Profile Image Section */}
-          <motion.div variants={itemVariants} className="flex flex-col items-center mb-8">
+          <motion.div
+            variants={itemVariants}
+            className="flex flex-col items-center mb-8"
+          >
             <div className="relative mb-4">
               <div className="w-32 h-32 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
                 {imagePreview || userData.profileImage ? (
-                  <img 
-                    src={imagePreview || userData.profileImage} 
-                    alt="Profile preview" 
+                  <img
+                    src={imagePreview || userData.profileImage}
+                    alt="Profile preview"
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
                     <span className="text-2xl font-bold text-white">
-                      {userData.name.split(' ').map(n => n[0]).join('')}
+                      {userData.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
                     </span>
                   </div>
                 )}
               </div>
-              
-              <motion.label 
+
+              <motion.label
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 className="absolute bottom-0 right-0 bg-gradient-to-r from-blue-500 to-indigo-500 p-2 rounded-full shadow-md cursor-pointer"
@@ -197,7 +205,9 @@ const MyProfile = () => {
                 />
               </motion.label>
             </div>
-            <p className="text-sm text-gray-500">Click camera icon to change photo</p>
+            <p className="text-sm text-gray-500">
+              Click camera icon to change photo
+            </p>
           </motion.div>
 
           {/* Personal Information Section */}
@@ -206,11 +216,13 @@ const MyProfile = () => {
               <User className="h-5 w-5 mr-2 text-blue-500" />
               Personal Information
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Name Input */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Full name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Full name
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <User className="h-5 w-5 text-gray-400" />
@@ -221,18 +233,18 @@ const MyProfile = () => {
                     value={userData.name}
                     onChange={handleInputChange}
                     className={`pl-10 pr-4 py-3 w-full rounded-xl border focus:ring-2 focus:outline-none transition-all duration-300 ${
-                      errors.name 
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
-                        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/20'
+                      errors.name
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
+                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
                     }`}
                     placeholder="Enter your name"
                   />
                 </div>
                 <AnimatePresence>
                   {errors.name && (
-                    <motion.p 
+                    <motion.p
                       initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
+                      animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
                       className="text-red-500 text-sm mt-1 flex items-center"
                     >
@@ -244,7 +256,9 @@ const MyProfile = () => {
 
               {/* Email Input */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Mail className="h-5 w-5 text-gray-400" />
@@ -255,18 +269,18 @@ const MyProfile = () => {
                     value={userData.email}
                     onChange={handleInputChange}
                     className={`pl-10 pr-4 py-3 w-full rounded-xl border focus:ring-2 focus:outline-none transition-all duration-300 ${
-                      errors.email 
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
-                        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/20'
+                      errors.email
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
+                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
                     }`}
                     placeholder="Enter your email"
                   />
                 </div>
                 <AnimatePresence>
                   {errors.email && (
-                    <motion.p 
+                    <motion.p
                       initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
+                      animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
                       className="text-red-500 text-sm mt-1 flex items-center"
                     >
@@ -284,11 +298,13 @@ const MyProfile = () => {
               <Lock className="h-5 w-5 mr-2 text-blue-500" />
               Change Password
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Current Password */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Current Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Current Password
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Lock className="h-5 w-5 text-gray-400" />
@@ -299,9 +315,9 @@ const MyProfile = () => {
                     value={userData.currentPassword}
                     onChange={handleInputChange}
                     className={`pl-10 pr-12 py-3 w-full rounded-xl border focus:ring-2 focus:outline-none transition-all duration-300 ${
-                      errors.currentPassword 
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
-                        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/20'
+                      errors.currentPassword
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
+                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
                     }`}
                     placeholder="Enter current password"
                   />
@@ -318,22 +334,26 @@ const MyProfile = () => {
                   </button>
                 </div>
                 <AnimatePresence>
-                  {errors.currentPassword || error && (
-                    <motion.p 
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="text-red-500 text-sm mt-1 flex items-center"
-                    >
-                      <XCircle className="h-4 w-4 mr-1" /> {errors.currentPassword || error}
-                    </motion.p>
-                  )}
+                  {errors.currentPassword ||
+                    (error && (
+                      <motion.p
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="text-red-500 text-sm mt-1 flex items-center"
+                      >
+                        <XCircle className="h-4 w-4 mr-1" />{" "}
+                        {errors.currentPassword || error}
+                      </motion.p>
+                    ))}
                 </AnimatePresence>
               </div>
 
               {/* New Password */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  New Password
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Lock className="h-5 w-5 text-gray-400" />
@@ -344,9 +364,9 @@ const MyProfile = () => {
                     value={userData.newPassword}
                     onChange={handleInputChange}
                     className={`pl-10 pr-12 py-3 w-full rounded-xl border focus:ring-2 focus:outline-none transition-all duration-300 ${
-                      errors.newPassword 
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
-                        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/20'
+                      errors.newPassword
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
+                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
                     }`}
                     placeholder="Enter new password"
                   />
@@ -364,9 +384,9 @@ const MyProfile = () => {
                 </div>
                 <AnimatePresence>
                   {errors.newPassword && (
-                    <motion.p 
+                    <motion.p
                       initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
+                      animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
                       className="text-red-500 text-sm mt-1 flex items-center"
                     >
@@ -378,7 +398,9 @@ const MyProfile = () => {
 
               {/* Confirm Password */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm New Password
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Lock className="h-5 w-5 text-gray-400" />
@@ -389,9 +411,9 @@ const MyProfile = () => {
                     value={userData.confirmPassword}
                     onChange={handleInputChange}
                     className={`pl-10 pr-12 py-3 w-full rounded-xl border focus:ring-2 focus:outline-none transition-all duration-300 ${
-                      errors.confirmPassword 
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
-                        : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/20'
+                      errors.confirmPassword
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
+                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
                     }`}
                     placeholder="Confirm new password"
                   />
@@ -409,13 +431,14 @@ const MyProfile = () => {
                 </div>
                 <AnimatePresence>
                   {errors.confirmPassword && (
-                    <motion.p 
+                    <motion.p
                       initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
+                      animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
                       className="text-red-500 text-sm mt-1 flex items-center"
                     >
-                      <XCircle className="h-4 w-4 mr-1" /> {errors.confirmPassword}
+                      <XCircle className="h-4 w-4 mr-1" />{" "}
+                      {errors.confirmPassword}
                     </motion.p>
                   )}
                 </AnimatePresence>
@@ -429,7 +452,7 @@ const MyProfile = () => {
               <Settings className="h-5 w-5 mr-2 text-blue-500" />
               Preferences
             </h2>
-            
+
             <div className="space-y-4">
               <label className="flex items-center cursor-pointer">
                 <div className="relative">
@@ -440,8 +463,16 @@ const MyProfile = () => {
                     onChange={handleInputChange}
                     className="sr-only"
                   />
-                  <div className={`block w-14 h-8 rounded-full ${userData.notifications ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
-                  <div className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${userData.notifications ? 'transform translate-x-6' : ''}`}></div>
+                  <div
+                    className={`block w-14 h-8 rounded-full ${
+                      userData.notifications ? "bg-blue-500" : "bg-gray-300"
+                    }`}
+                  ></div>
+                  <div
+                    className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${
+                      userData.notifications ? "transform translate-x-6" : ""
+                    }`}
+                  ></div>
                 </div>
                 <div className="ml-3 flex items-center">
                   <Bell className="h-5 w-5 text-gray-600 mr-2" />
@@ -458,12 +489,22 @@ const MyProfile = () => {
                     onChange={handleInputChange}
                     className="sr-only"
                   />
-                  <div className={`block w-14 h-8 rounded-full ${userData.twoFactor ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
-                  <div className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${userData.twoFactor ? 'transform translate-x-6' : ''}`}></div>
+                  <div
+                    className={`block w-14 h-8 rounded-full ${
+                      userData.twoFactor ? "bg-blue-500" : "bg-gray-300"
+                    }`}
+                  ></div>
+                  <div
+                    className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${
+                      userData.twoFactor ? "transform translate-x-6" : ""
+                    }`}
+                  ></div>
                 </div>
                 <div className="ml-3 flex items-center">
                   <Shield className="h-5 w-5 text-gray-600 mr-2" />
-                  <span className="text-gray-700">Two-factor authentication</span>
+                  <span className="text-gray-700">
+                    Two-factor authentication
+                  </span>
                 </div>
               </label>
             </div>
