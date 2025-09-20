@@ -35,6 +35,12 @@ class User extends GraphQLType
             'profileImage' => [
                 'type' => Type::string(),
             ],
+            'created_at' => [
+                'type' => Type::string(),
+            ],
+            'updated_at' => [
+                'type' => Type::string(),
+            ],
 
             'purchases' => [
                 'type' => Type::listOf(GraphQL::type('Purchase')),

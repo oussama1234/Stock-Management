@@ -77,6 +77,10 @@ return [
             'query' => [
                 'products' => App\GraphQL\Queries\Products::class,
                 'categories' => App\GraphQL\Queries\Categories::class,
+                'productById' => App\GraphQL\Queries\ProductById::class,
+                'saleItemsByProduct' => App\GraphQL\Queries\SaleItemsByProduct::class,
+                'purchaseItemsByProduct' => App\GraphQL\Queries\PurchaseItemsByProduct::class,
+                'stockMovementsByProduct' => App\GraphQL\Queries\StockMovementsByProduct::class,
             ],
             'mutation' => [
                 'createProduct' => App\GraphQL\Mutations\Products\CreateProduct::class,
@@ -100,6 +104,7 @@ return [
                 'productInput' => App\GraphQL\Inputs\Products\ProductInput::class,
                 'Upload' => App\GraphQL\Scalars\Upload::class,
                 'Response' => App\GraphQL\Types\Response\Response::class,
+                'ProductPagination' => \Rebing\GraphQL\Support\PaginationType::class,
 
             ],
 

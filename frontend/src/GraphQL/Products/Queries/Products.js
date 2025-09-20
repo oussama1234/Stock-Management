@@ -4,8 +4,26 @@ import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
 import { PRODUCT_FRAGMENT } from "../Fragments/ProductFragments";
 export const PRODUCTS_QUERY = gql`
-  query GetProducts {
-    products {
+  query GetProducts($page: Int, $limit: Int, $search: String) {
+    products(page: $page, limit: $limit, search: $search) {
+      data {
+        ...ProductFragment
+      }
+      total
+      per_page
+      current_page
+      from
+      to
+      last_page
+      has_more_pages
+    }
+  }
+  ${PRODUCT_FRAGMENT}
+`;
+
+export const PRODUCT_QUERY = gql`
+  query GetProduct($id: Int!) {
+    productById(id: $id) {
       ...ProductFragment
     }
   }
@@ -14,7 +32,7 @@ export const PRODUCTS_QUERY = gql`
 
 /**
  * useGetProductsQuery
- *
+ *s
  * This hook runs a query to get all products and store them in the cache.
  * It uses the cache-and-network fetch policy to get products from the cache
  * and the network, and the cache-first policy for subsequent fetches.
@@ -24,8 +42,10 @@ export const PRODUCTS_QUERY = gql`
  * @returns {object} result object with the products in the data property
  *                   and other properties such as loading, error, networkStatus
  */
-export const useGetProductsQuery = () =>
-  useQuery(PRODUCTS_QUERY, {
+
+export const useGetProductQuery = (id) =>
+  useQuery(PRODUCT_QUERY, {
+    variables: { id },
     fetchPolicy: "cache-first",
     nextFetchPolicy: "cache-and-network",
     errorPolicy: "all",

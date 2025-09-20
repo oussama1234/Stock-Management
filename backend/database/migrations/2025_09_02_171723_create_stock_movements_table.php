@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->enum('type', ['in', 'out']);
             $table->integer('quantity');
-            $table->string('source_type'); // purchase or sale
-            $table->unsignedBigInteger('source_id'); // purchase_id or sale_id
+            $table->string('source_type'); // purchaseItem or saleItem
+            $table->unsignedBigInteger('source_id'); // purchaseItem_id or saleItem_id
             $table->timestamp('movement_date')->useCurrent();
             $table->timestamps();
         });

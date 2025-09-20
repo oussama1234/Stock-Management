@@ -37,6 +37,16 @@ class Sale extends GraphQLType
             'sale_date' => [
                 'type' => Type::string(),
             ],
+            'customer_name' => [
+                'type' => Type::string(),
+            ],
+
+            'created_at' => [
+                'type' => Type::string(),
+            ],
+            'updated_at' => [
+                'type' => Type::string(),
+            ],
 
             'user' => [
                 'type' => GraphQL::type('User'),

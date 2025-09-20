@@ -19,6 +19,7 @@ class Sale extends Model
         'tax',
         'discount',
         'sale_date',
+        'customer_name',
     ];
 
     // relationship with users
@@ -29,6 +30,12 @@ class Sale extends Model
 
     // relationship with sale items
     public function saleItems()
+    {
+        return $this->hasMany(SaleItem::class);
+    }
+
+    // alias for saleItems to match controller usage
+    public function items()
     {
         return $this->hasMany(SaleItem::class);
     }

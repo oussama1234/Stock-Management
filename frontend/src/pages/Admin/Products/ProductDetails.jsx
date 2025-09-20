@@ -19,194 +19,142 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ContentSpinner from "../../../components/Spinners/ContentSpinner";
 import { useToast } from "../../../components/Toaster/ToastContext";
+import { useGetProductQuery } from "../../../GraphQL/Products/Queries/Products";
+import { useGetPurchaseItemsByProductQuery } from "../../../GraphQL/PurchaseItem/Queries/PurchaseItemsByProduct";
+import { useGetSaleItemsByProductQuery } from "../../../GraphQL/SaleItem/Queries/SaleItemsByProduct";
+import { useGetStockMovementsByProductQuery } from "../../../GraphQL/StockMovement/Queries/StockMovementsQuery";
 const ProductDetails = () => {
   const { id } = useParams();
+
+  const {
+    data: productData,
+    loading: productLoading,
+    error: productError,
+  } = useGetProductQuery(parseInt(id));
+
+  const {
+    data: saleItemsData,
+    loading: saleItemsLoading,
+    error: saleItemsError,
+  } = useGetSaleItemsByProductQuery(parseInt(id));
+
+  const {
+    data: purchaseItemsData,
+    loading: purchaseItemsLoading,
+    error: purchaseItemsError,
+  } = useGetPurchaseItemsByProductQuery(parseInt(id));
+
+  const {
+    data: stockMovementsData,
+    loading: stockMovementsLoading,
+    error: stockMovementsError,
+  } = useGetStockMovementsByProductQuery(parseInt(id));
+
   const navigate = useNavigate();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState("overview");
-  const [isLoading, setIsLoading] = useState(true);
+
   const [product, setProduct] = useState(null);
   const [purchases, setPurchases] = useState([]);
   const [sales, setSales] = useState([]);
   const [stockHistory, setStockHistory] = useState([]);
 
-  // Sample data - replace with API calls
+  // Simulate data for purchases, sales, and stock history
+
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
+    if (productData?.productById) {
+      setProduct({
+        id: productData.productById.id,
+        name: productData.productById.name,
+        description: productData.productById.description,
+        image: productData.productById.image,
+        price: productData.productById.price,
+        stock: productData.productById.stock,
+        category: productData.productById.category.name,
+        createdAt: productData.productById.createdAt,
+        updatedAt: productData.productById.updatedAt,
+        // take 4 first letters of the category and join them with dashes
+        sku:
+          productData.productById.category.name
+            .split(" ")
+            .map((word) => word.substring(0, 4).toUpperCase())
+            .join("") +
+          "-" +
+          (productData.productById.id < 10
+            ? "00" + productData.productById.id
+            : productData.productById.id),
+      });
+    }
 
-      // Simulate API calls
-      setTimeout(() => {
-        const sampleProduct = {
-          id: parseInt(id),
-          name: "Wireless Headphones",
-          description:
-            "Premium wireless headphones with noise cancellation and 30-hour battery life",
-          image: null,
-          price: 199.99,
-          stock: 45,
-          category: "Electronics",
-          sku: "ELEC-001",
-          createdAt: "2023-01-15",
-          updatedAt: "2023-10-20",
-        };
+    if (purchaseItemsData?.purchaseItemsByProduct) {
+      const formattedPurchases = purchaseItemsData.purchaseItemsByProduct.map(
+        (item) => ({
+          id: item.id,
+          supplier: {
+            id: item.purchase.supplier.id,
+            name: item.purchase.supplier.name,
+          },
+          user: {
+            id: item.purchase.user.id,
+            name: item.purchase.user.name,
+            email: item.purchase.user.email,
+            role: item.purchase.user.role,
+          },
+          quantity: item.quantity,
+          price: item.price,
+          total_amount: item.quantity * item.price,
+          purchase_date: item.purchase.purchase_date,
+          createdAt: item.created_at,
+        })
+      );
+      setPurchases(formattedPurchases);
+    }
 
-        const samplePurchases = [
-          {
-            id: 1,
-            supplier: {
-              id: 1,
-              name: "Tech Supplies Inc.",
-              email: "contact@techsupplies.com",
-              phone: "+1-555-0123",
-              address: "123 Tech Street, San Francisco, CA",
-            },
-            user: {
-              id: 1,
-              name: "Oussama Meqqadmi",
-            },
-            quantity: 50,
-            price: 150.0,
-            total_amount: 7500.0,
-            purchase_date: "2023-10-15T10:30:00",
-            createdAt: "2023-10-15T10:30:00",
-          },
-          {
-            id: 2,
-            supplier: {
-              id: 2,
-              name: "Global Electronics",
-              email: "sales@globalelectronics.com",
-              phone: "+1-555-0456",
-              address: "456 Circuit Ave, Austin, TX",
-            },
-            user: {
-              id: 2,
-              name: "Sarah Johnson",
-            },
-            quantity: 30,
-            price: 145.0,
-            total_amount: 4350.0,
-            purchase_date: "2023-08-22T14:15:00",
-            createdAt: "2023-08-22T14:15:00",
-          },
-        ];
+    if (saleItemsData?.saleItemsByProduct) {
+      const formattedSales = saleItemsData.saleItemsByProduct.map((item) => ({
+        id: item.id,
+        customer_name: item.sale.customer_name,
+        user: {
+          id: item.sale.user.id,
+          name: item.sale.user.name,
+          email: item.sale.user.email,
+          role: item.sale.user.role,
+        },
+        quantity: item.quantity,
+        price: item.price,
+        total_amount: item.price * item.quantity,
+        tax: item.sale.tax,
+        discount: item.sale.discount,
+        sale_date: item.sale.sale_date,
+        createdAt: item.created_at,
+      }));
+      setSales(formattedSales);
+    }
 
-        const sampleSales = [
-          {
-            id: 1,
-            customer_name: "John Smith",
-            user: {
-              id: 1,
-              name: "Oussama Meqqadmi",
-            },
-            quantity: 2,
-            price: 199.99,
-            total_amount: 399.98,
-            tax: 28.0,
-            discount: 0.0,
-            sale_date: "2023-10-18T09:45:00",
-            createdAt: "2023-10-18T09:45:00",
-          },
-          {
-            id: 2,
-            customer_name: "Emma Wilson",
-            user: {
-              id: 3,
-              name: "Mike Chen",
-            },
-            quantity: 1,
-            price: 199.99,
-            total_amount: 199.99,
-            tax: 14.0,
-            discount: 10.0,
-            sale_date: "2023-10-12T16:20:00",
-            createdAt: "2023-10-12T16:20:00",
-          },
-          {
-            id: 3,
-            customer_name: "Retail Store #45",
-            user: {
-              id: 2,
-              name: "Sarah Johnson",
-            },
-            quantity: 10,
-            price: 180.0,
-            total_amount: 1800.0,
-            tax: 126.0,
-            discount: 0.0,
-            sale_date: "2023-09-30T11:30:00",
-            createdAt: "2023-09-30T11:30:00",
-          },
-        ];
+    if (stockMovementsData?.stockMovementsByProduct) {
+      const formattedStockHistory = stockMovementsData.stockMovementsByProduct.map(
+        (item) => {
+          // server-provided signed quantity? keep UI convention: out movements negative
+          const signedQty = item.type === "out" ? -Math.abs(item.quantity) : Math.abs(item.quantity);
+          // Prefer backend-provided previous/new stock; fallback to computed for backward compatibility
+          const prev = item.previous_stock ?? (item.type === "in" ? (item.new_stock != null ? item.new_stock - Math.abs(item.quantity) : null) : (item.new_stock != null ? item.new_stock + Math.abs(item.quantity) : null));
+          const next = item.new_stock ?? (prev != null ? prev + signedQty : null);
+          return {
+            id: item.id,
+            type: item.source?.__typename === "PurchaseItem" || item.type === "in" ? "purchase" : "sale",
+            quantity: signedQty,
+            previous_stock: prev,
+            new_stock: next,
+            date: item.movement_date,
+            reference: item.source_id < 10 ? "#00" + item.source_id : "#" + item.source_id,
+          };
+        }
+      );
+      setStockHistory(formattedStockHistory);
+    }
 
-        const sampleStockHistory = [
-          {
-            id: 1,
-            type: "purchase",
-            quantity: 50,
-            previous_stock: 0,
-            new_stock: 50,
-            date: "2023-10-15T10:30:00",
-            reference: "Purchase #001",
-          },
-          {
-            id: 2,
-            type: "sale",
-            quantity: -2,
-            previous_stock: 50,
-            new_stock: 48,
-            date: "2023-10-18T09:45:00",
-            reference: "Sale #001",
-          },
-          {
-            id: 3,
-            type: "sale",
-            quantity: -1,
-            previous_stock: 48,
-            new_stock: 47,
-            date: "2023-10-12T16:20:00",
-            reference: "Sale #002",
-          },
-          {
-            id: 4,
-            type: "purchase",
-            quantity: 30,
-            previous_stock: 47,
-            new_stock: 77,
-            date: "2023-08-22T14:15:00",
-            reference: "Purchase #002",
-          },
-          {
-            id: 5,
-            type: "sale",
-            quantity: -10,
-            previous_stock: 77,
-            new_stock: 67,
-            date: "2023-09-30T11:30:00",
-            reference: "Sale #003",
-          },
-          {
-            id: 6,
-            type: "adjustment",
-            quantity: -22,
-            previous_stock: 67,
-            new_stock: 45,
-            date: "2023-10-20T08:00:00",
-            reference: "Stock Adjustment",
-          },
-        ];
-
-        setProduct(sampleProduct);
-        setPurchases(samplePurchases);
-        setSales(sampleSales);
-        setStockHistory(sampleStockHistory);
-        setIsLoading(false);
-      }, 1500);
-    };
-
-    fetchData();
-  }, [id]);
+    // setPurchases(samplePurchases);
+  }, [productData, saleItemsData, purchaseItemsData, id, stockMovementsData]);
 
   const getStockStatus = (stock) => {
     if (stock === 0)
@@ -233,7 +181,41 @@ const ProductDetails = () => {
     });
   };
 
-  if (isLoading) {
+  const getSalesVelocity = (sales) => {
+    if (!sales || sales.length === 0) return 0;
+
+    const totalUnitsSold = sales.reduce(
+      (total, sale) => total + sale.quantity,
+      0
+    );
+
+    const firstSaleDate = new Date(
+      Math.min(...sales.map((s) => new Date(s.sale_date)))
+    );
+    const lastSaleDate = new Date(
+      Math.max(...sales.map((s) => new Date(s.sale_date)))
+    );
+
+    const diffMonths =
+      (lastSaleDate.getFullYear() - firstSaleDate.getFullYear()) * 12 +
+      (lastSaleDate.getMonth() - firstSaleDate.getMonth()) +
+      1; // avoid zero
+
+    return Math.round(totalUnitsSold / diffMonths);
+  };
+
+  const restockNeeded = (currentStock, sales) => {
+    const salesVelocity = getSalesVelocity(sales);
+    // Estimate how many units are needed per month
+    return salesVelocity > currentStock ? salesVelocity - currentStock : 0;
+  };
+
+  if (
+    productLoading ||
+    saleItemsLoading ||
+    purchaseItemsLoading ||
+    stockMovementsLoading
+  ) {
     return (
       <div className="max-w-6xl mx-auto p-6">
         <ContentSpinner message="Loading product details..." fullWidth />
@@ -475,6 +457,8 @@ const ProductDetails = () => {
               product={product}
               purchases={purchases}
               sales={sales}
+              restockNeeded={restockNeeded}
+              getSalesVelocity={getSalesVelocity}
             />
           )}
 
@@ -505,9 +489,13 @@ const ProductDetails = () => {
     </div>
   );
 };
-
-// Overview Tab Component
-const OverviewTab = ({ product, purchases, sales }) => {
+const OverviewTab = ({
+  product,
+  purchases,
+  sales,
+  restockNeeded,
+  getSalesVelocity,
+}) => {
   const totalPurchased = purchases.reduce(
     (total, purchase) => total + purchase.quantity,
     0
@@ -592,31 +580,51 @@ const OverviewTab = ({ product, purchases, sales }) => {
             Recent Activity
           </h4>
           <div className="space-y-3">
-            {[...purchases, ...sales]
-              .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-              .slice(0, 5)
-              .map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-3 bg-white rounded-lg"
-                >
-                  <div>
-                    <p className="font-medium text-gray-800">
-                      {item.quantity} units{" "}
-                      {item.total_amount ? "sold" : "purchased"}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {new Date(item.createdAt).toLocaleDateString()}
-                    </p>
+            {(() => {
+              const merged = [
+                ...purchases.map((p) => ({ ...p, type: "purchase" })),
+                ...sales.map((s) => ({ ...s, type: "sale" })),
+              ];
+              // You can now render merged items here, for example:
+              return merged
+                .sort(
+                  (a, b) =>
+                    new Date(b.createdAt || b.purchase_date || b.sale_date) -
+                    new Date(a.createdAt || a.purchase_date || a.sale_date)
+                )
+                .slice(0, 5)
+                .map((item, idx) => (
+                  <div key={idx} className="flex items-center space-x-3">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        item.type === "purchase"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-purple-100 text-purple-800"
+                      }`}
+                    >
+                      {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+                    </span>
+                    <span className="text-gray-700">
+                      {item.type === "purchase"
+                        ? `Purchased ${item.quantity} units from ${item.supplier.name}`
+                        : `Sold ${item.quantity} units to ${
+                            item.customer_name || "Customer"
+                          }`}
+                    </span>
+                    <span className="text-gray-500 text-xs">
+                      {new Date(
+                        item.createdAt || item.purchase_date || item.sale_date
+                      ).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
                   </div>
-                  <span className="font-bold text-gray-800">
-                    {new Intl.NumberFormat("en-US", {
-                      style: "currency",
-                      currency: "USD",
-                    }).format(item.total_amount)}
-                  </span>
-                </div>
-              ))}
+                ));
+            })()}
           </div>
         </div>
 
@@ -646,28 +654,35 @@ const OverviewTab = ({ product, purchases, sales }) => {
               <div className="flex justify-between mb-1">
                 <span className="text-sm text-gray-600">Sales Velocity</span>
                 <span className="text-sm font-medium text-gray-800">
-                  12 units/week
+                  {getSalesVelocity(sales)} units/month
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-green-500 h-2 rounded-full"
-                  style={{ width: "60%" }}
+                  style={{
+                    width: `${Math.min(getSalesVelocity(sales), 100)}%`,
+                  }}
                 ></div>
               </div>
             </div>
 
             <div>
               <div className="flex justify-between mb-1">
-                <span className="text-sm text-gray-600">Restock Need</span>
+                <span className="text-sm text-gray-600">Restock Needed</span>
                 <span className="text-sm font-medium text-gray-800">
-                  In 3 weeks
+                  {restockNeeded(product.stock, sales)} units/month
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-yellow-500 h-2 rounded-full"
-                  style={{ width: "30%" }}
+                  style={{
+                    width: `${Math.min(
+                      restockNeeded(product.stock, sales),
+                      100
+                    )}%`,
+                  }}
                 ></div>
               </div>
             </div>
@@ -766,9 +781,19 @@ const PurchasesTab = ({ purchases, formatCurrency, formatDate }) => {
                   <td className="px-4 py-3 text-sm font-medium text-gray-800">
                     {formatCurrency(purchase.total_amount)}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-700">
-                    {purchase.user.name}
+                  <td className="px-4 py-3 text-sm text-gray-700 flex items-center">
+                    {purchase.user.name}{" "}
+                    <span
+                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        purchase.user.role === "admin"
+                          ? "bg-red-100 text-red-600"
+                          : "bg-green-100 text-green-600"
+                      }`}
+                    >
+                      {purchase.user.role}
+                    </span>
                   </td>
+
                   <td className="px-4 py-3">
                     <div className="flex space-x-2">
                       <button className="p-1 text-blue-600 hover:text-blue-800">
@@ -878,8 +903,17 @@ const SalesTab = ({ sales, formatCurrency, formatDate }) => {
                   <td className="px-4 py-3 text-sm font-medium text-gray-800">
                     {formatCurrency(sale.total_amount)}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-700">
-                    {sale.user.name}
+                  <td className="px-4 py-3 text-sm text-gray-700 flex items-center">
+                    {sale.user.name}{" "}
+                    <span
+                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        sale.user.role === "admin"
+                          ? "bg-red-100 text-red-600"
+                          : "bg-green-100 text-green-600"
+                      }`}
+                    >
+                      {sale.user.role}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex space-x-2">
@@ -971,6 +1005,7 @@ const StockHistoryTab = ({ stockHistory, formatDate }) => {
                   className={`font-bold ${
                     history.quantity > 0 ? "text-green-600" : "text-red-600"
                   }`}
+                  title={`${history.quantity > 0 ? "+" : ""}${history.quantity} units`}
                 >
                   {history.quantity > 0 ? "+" : ""}
                   {history.quantity} units
@@ -983,13 +1018,13 @@ const StockHistoryTab = ({ stockHistory, formatDate }) => {
               <div className="text-center">
                 <p className="text-sm text-gray-600">Previous</p>
                 <p className="font-medium text-gray-800">
-                  {history.previous_stock}
+                  {history.previous_stock ?? "-"}
                 </p>
               </div>
 
               <div className="text-center">
                 <p className="text-sm text-gray-600">New</p>
-                <p className="font-medium text-gray-800">{history.new_stock}</p>
+                <p className="font-medium text-gray-800">{history.new_stock ?? "-"}</p>
               </div>
             </div>
           ))}

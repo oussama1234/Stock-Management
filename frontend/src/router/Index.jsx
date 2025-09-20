@@ -12,6 +12,8 @@ import MyProfile from "@/pages/MyProfile";
 import UsersPage from "@/pages/Admin/UsersPage";
 import Products from "@/pages/Admin/Products/Products";
 import ProductDetails from "@/pages/Admin/Products/ProductDetails";
+import Sales from "@/pages/Admin/Sales/Sales";
+import SalesAnalytics from "@/pages/Admin/Sales/SalesAnalytics";
 
 export const HomeRoute = "/"; // home route
 export const LoginRoute = "/login"; // login route
@@ -20,6 +22,8 @@ export const MyProfileRoute = DashboardRoute + "/profile";
 export const UsersRoute = DashboardRoute + "/users";
 export const ProductsRoute = DashboardRoute + "/products";
 export const ProductDetailsRoute = DashboardRoute + "/products";
+export const SalesRoute = DashboardRoute + "/sales";
+export const SalesAnalyticsRoute = DashboardRoute + "/sales/analytics";
 
 
 // dashboard route needs to follow dashboard layout
@@ -32,6 +36,8 @@ export const routes = [
   {path: UsersRoute, element : <ProtectedRoute><DashboardLayout><UsersPage /></DashboardLayout></ProtectedRoute>},
   {path: ProductsRoute, element : <ProtectedRoute><DashboardLayout><Products /></DashboardLayout></ProtectedRoute>},
   {path: ProductDetailsRoute + "/:id", element : <ProtectedRoute><DashboardLayout><ProductDetails /></DashboardLayout></ProtectedRoute>},
+  {path: SalesRoute, element : <ProtectedRoute><DashboardLayout><Sales /></DashboardLayout></ProtectedRoute>},
+  {path: SalesAnalyticsRoute, element : <ProtectedRoute><DashboardLayout><SalesAnalytics /></DashboardLayout></ProtectedRoute>},
   { path: "*", element: <NotFound /> },
 ];
 

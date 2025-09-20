@@ -12,6 +12,7 @@ class PurchaseSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        //persist data of purchase model
+        \App\Models\Purchase::factory()->count(20)->create();
     }
 }

@@ -34,6 +34,12 @@ class PurchaseItem extends GraphQLType
             'price' => [
                 'type' => Type::float(),
             ],
+            'created_at' => [
+                'type' => Type::string(),
+            ],
+            'updated_at' => [
+                'type' => Type::string(),
+            ],
 
             'product' => [
                 'type' => GraphQL::type('Product'),

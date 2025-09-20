@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UserRequest;
 use App\Models\User;
+use App\Support\CacheHelper; // Namespaced cache helper for invalidation
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache; // Laravel cache
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
@@ -58,6 +60,9 @@ class UserController extends Controller
 
         $user->save();
 
+        // Invalidate cached users list so next reads reflect the update
+        CacheHelper::bump('users');
+
         return response()->json(
             [
                 'message' => 'Profile Updated Successfully',
@@ -69,9 +74,13 @@ class UserController extends Controller
 
     public function index()
     {
-        return response()->json(
-            User::all()
-        );
+        // Cache the users list (API returns all users)
+        $key = CacheHelper::key('users', 'list');
+        $ttl = CacheHelper::ttlSeconds('API_USERS_TTL', 60);
+        $users = Cache::remember($key, now()->addSeconds($ttl), function () {
+            return User::all();
+        });
+        return response()->json($users);
     }
 
     // storing new User with its profileImage function that is already been created
@@ -115,6 +124,9 @@ class UserController extends Controller
 
         //returning the user
 
+        // Invalidate cached users list so next reads include the new user
+        CacheHelper::bump('users');
+
         return response()->json(
             $user, 200
         );
@@ -137,6 +149,9 @@ class UserController extends Controller
 
         $user->removeProfileImage();
        
+
+       // Invalidate cached users list so next reads reflect deletion
+       CacheHelper::bump('users');
 
        return response()->json($user->withoutRelations(), 200);
 
@@ -174,6 +189,9 @@ class UserController extends Controller
       }
       
       $user->save();
+
+      // Invalidate cached users list so next reads reflect the update
+      CacheHelper::bump('users');
 
       return response()->json(
         $user, 200

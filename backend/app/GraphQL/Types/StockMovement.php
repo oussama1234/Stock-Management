@@ -28,8 +28,16 @@ class StockMovement extends GraphQLType
             'type' => [
                 'type' => Type::string(),
             ],
-            'quantity' => [
+'quantity' => [
                 'type' => Type::int(),
+            ],
+            'previous_stock' => [
+                'type' => Type::int(),
+                'description' => 'Stock level before this movement',
+            ],
+            'new_stock' => [
+                'type' => Type::int(),
+                'description' => 'Stock level after this movement',
             ],
             'source_type' => [
                 'type' => Type::string(),
@@ -38,6 +46,12 @@ class StockMovement extends GraphQLType
                 'type' => Type::int(),
             ],
             'movement_date' => [
+                'type' => Type::string(),
+            ],
+            'created_at' => [
+                'type' => Type::string(),
+            ],
+            'updated_at' => [
                 'type' => Type::string(),
             ],
 

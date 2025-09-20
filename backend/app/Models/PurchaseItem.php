@@ -3,9 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 class PurchaseItem extends Model
 {
+    use hasFactory;
     // determine the table name
     protected $table = 'purchase_items';
 

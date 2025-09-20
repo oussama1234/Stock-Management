@@ -16,7 +16,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useToast } from "@/components/Toaster/ToastContext";
 import { useDispatch, useSelector } from "react-redux";
@@ -34,6 +34,9 @@ import {
 import { useConfirm } from "../../components/ConfirmContext/ConfirmContext";
 import ContentSpinner from "../../components/Spinners/ContentSpinner";
 import { useAuth } from "../../context/AuthContext";
+// Shared pagination hook and controls
+import usePagination from "@/components/pagination/usePagination";
+import PaginationControls from "@/components/pagination/PaginationControls";
 
 const UsersPage = () => {
   const dispatch = useDispatch();
@@ -50,6 +53,8 @@ const UsersPage = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [file, setFile] = useState(null);
   const toast = useToast();
+  // Client-side pagination shared hook
+  const { currentPage, perPage, setPage, setPerPage, generatePages } = usePagination({ initialPage: 1, initialPerPage: 9 });
   const { confirm } = useConfirm();
   const { user: currentUser, setUser } = useAuth();
 
@@ -81,6 +86,22 @@ const UsersPage = () => {
     );
     setFilteredUsers(filtered);
   }, [searchTerm, users]);
+
+  // When the filtered length changes, ensure current page is within bounds
+  const totalUserPages = useMemo(() => Math.max(1, Math.ceil(filteredUsers.length / perPage)), [filteredUsers.length, perPage]);
+  useEffect(() => {
+    if (currentPage > totalUserPages) setPage(totalUserPages);
+  }, [totalUserPages]);
+
+  // Client-side slice for current page
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * perPage;
+    const end = start + perPage;
+    return filteredUsers.slice(start, end);
+  }, [filteredUsers, currentPage, perPage]);
+
+  const pageList = useMemo(() => generatePages(totalUserPages), [generatePages, totalUserPages]);
+
 
   const [formData, setFormData] = useState({
     name: "",
@@ -363,7 +384,7 @@ const UsersPage = () => {
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
       >
         <AnimatePresence>
-          {filteredUsers.map((user) => (
+          {paginatedUsers.map((user) => (
             <motion.div
               key={user.id}
               layout
@@ -468,6 +489,21 @@ const UsersPage = () => {
             Try adjusting your search or add a new user
           </p>
         </motion.div>
+      )}
+
+      {/* Pagination */}
+      {filteredUsers.length > 0 && (
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalUserPages}
+          onPageChange={(p) => setPage(p, totalUserPages)}
+          perPage={perPage}
+          onPerPageChange={(v) => setPerPage(v)}
+          from={filteredUsers.length === 0 ? 0 : (currentPage - 1) * perPage + 1}
+          to={Math.min(currentPage * perPage, filteredUsers.length)}
+          total={filteredUsers.length}
+          pages={pageList}
+        />
       )}
 
       {/* Add/Edit User Modal */}

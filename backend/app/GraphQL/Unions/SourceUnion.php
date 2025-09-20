@@ -11,23 +11,23 @@ class SourceUnion extends UnionType
 {
     protected $attributes = [
         'name' => 'SourceUnion',
-        'description' => 'Can be purchase or sale',
+        'description' => 'Can be purchaseItem or saleItem',
     ];
 
     public function types(): array
     {
         return [
-            GraphQL::type('Purchase'),
-            GraphQL::type('Sale'),
+            GraphQL::type('PurchaseItem'),
+            GraphQL::type('SaleItem'),
         ];
     }
 
     public function resolveType($value)
     {
-        if($value instanceof \App\Models\Purchase) {
-            return GraphQL::type('Purchase');
-        } elseif ($value instanceof \App\Models\Sale) {
-            return GraphQL::type('Sale');
+        if($value instanceof \App\Models\PurchaseItem) {
+            return GraphQL::type('PurchaseItem');
+        } elseif ($value instanceof \App\Models\SaleItem) {
+            return GraphQL::type('SaleItem');
         }
 
         return null;

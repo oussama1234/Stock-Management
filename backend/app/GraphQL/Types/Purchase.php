@@ -34,6 +34,12 @@ class Purchase extends GraphQLType
             'purchase_date' => [
                 'type' => Type::string(),
             ],
+            'created_at' => [
+                'type' => Type::string(),
+            ],
+            'updated_at' => [
+                'type' => Type::string(),
+            ],
 
             'supplier' => [
                 'type' => GraphQL::type('Supplier'),

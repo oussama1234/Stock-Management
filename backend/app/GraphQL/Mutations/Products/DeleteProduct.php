@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\GraphQL\Mutations\Products;
 
 use App\Models\Product;
+use App\Support\CacheHelper; // Invalidate caches on writes
 use Closure;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
@@ -61,6 +62,10 @@ class DeleteProduct extends Mutation
         // check if the product has an image, then it should be deleted
         $product->productHasImage();
         $product->delete();
+
+        // Invalidate related caches so reads see fresh data
+        CacheHelper::bump('products');
+        CacheHelper::bump('dashboard_metrics');
 
         return [
             'success' => true,

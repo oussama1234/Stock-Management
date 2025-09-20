@@ -20,8 +20,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Customize the password reset URL to point to frontend
         ResetPassword::createUrlUsing(function (object $notifiable, string $token) {
             return config('app.frontend_url')."/password-reset/$token?email={$notifiable->getEmailForPasswordReset()}";
         });
+
+        // Domain event observers registration
+        \App\Models\SaleItem::observe(\App\Observers\SaleItemObserver::class);
     }
 }

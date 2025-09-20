@@ -40,9 +40,13 @@ class Product extends GraphQLType
             'stock' => [
                 'type' => Type::int(),
             ],
-            'sku' => [
+           'created_at' => [
                 'type' => Type::string(),
             ],
+              'updated_at' => [
+                 'type' => Type::string(),
+            ],
+
             'category' => [
                 'type' => GraphQl::type('Category'),
                 'resolve' => function ($product) {

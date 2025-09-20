@@ -1,4 +1,5 @@
 // Products.jsx
+import { useQuery } from "@apollo/client/react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   BarChart3,
@@ -27,15 +28,32 @@ import { useCategoriesQuery } from "../../../GraphQL/Categories/Queries/Categori
 import { useCreateProductMutation } from "../../../GraphQL/Products/Mutations/CreateProduct";
 import { useDeleteProductMutation } from "../../../GraphQL/Products/Mutations/DeleteProduct";
 import { useUpdateProductMutation } from "../../../GraphQL/Products/Mutations/UpdateProduct";
-import { useGetProductsQuery } from "../../../GraphQL/Products/Queries/Products";
+import { PRODUCTS_QUERY } from "../../../GraphQL/Products/Queries/Products";
 import { ProductDetailsRoute } from "../../../router/Index";
+// Shared pagination hook and controls
+import PaginationControls from "@/components/pagination/PaginationControls";
+import usePagination from "@/components/pagination/usePagination";
 
 const Products = () => {
+  // Centralized pagination state shared across pages via hook
+  const { currentPage, perPage, setPage, setPerPage, generatePages } =
+    usePagination({ initialPage: 1, initialPerPage: 9 });
+  const [productSearchFilter, setProductSearchFilter] = useState("");
   const {
     data: productsData,
     loading,
     refetch: refetchProducts,
-  } = useGetProductsQuery();
+  } = useQuery(PRODUCTS_QUERY, {
+    variables: {
+      page: currentPage,
+      limit: perPage,
+      search: productSearchFilter,
+    },
+    fetchPolicy: "cache-and-network",
+    nextFetchPolicy: "cache-first",
+    errorPolicy: "all",
+    notifyOnNetworkStatusChange: true,
+  });
 
   const [loadCategories, { data: categoriesData, loading: loadingCategories }] =
     useCategoriesQuery();
@@ -68,33 +86,43 @@ const Products = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [categories, setCategories] = useState([]);
   const [deletedProductId, setDeletedProductId] = useState(null);
+  const [metaData, setMetaData] = useState({});
 
   const toast = useToast();
   const navigate = useNavigate();
 
   // Sample initial data
   useEffect(() => {
-    if (productsData?.products) {
+    if (productsData?.products?.data) {
       console.log("productsData:", productsData);
       setProducts(
-        productsData?.products.map((product) => ({
+        productsData?.products.data.map((product) => ({
           ...product,
           price: product.price.toString(),
           stock: product.stock.toString(),
         }))
       );
       setFilteredProducts(
-        productsData?.products.map((product) => ({
+        productsData?.products.data.map((product) => ({
           ...product,
           price: product.price.toString(),
           stock: product.stock.toString(),
         }))
       );
+
+      setMetaData({
+        total: productsData?.products?.total,
+        perPage: productsData?.products?.per_page,
+        currentPage: productsData?.products?.current_page,
+        lastPage: productsData?.products?.last_page,
+        from: productsData?.products?.from,
+        to: productsData?.products?.to,
+        hasMorePages: productsData?.products?.has_more_pages,
+      });
     }
-  }, [productsData?.products]);
+  }, [productsData?.products?.data]);
 
   // loading Lazy data categories from GraphQL API
-
   useEffect(() => {
     if (categoriesData?.categories) {
       console.log("categories:", categoriesData);
@@ -102,7 +130,7 @@ const Products = () => {
     }
   }, [categoriesData?.categories]);
 
-  // Filter products based on search term
+  /*   // Filter products based on search term
   useEffect(() => {
     const filtered = products.filter(
       (product) =>
@@ -121,7 +149,7 @@ const Products = () => {
           .includes(searchTerm.toLowerCase())
     );
     setFilteredProducts(filtered);
-  }, [searchTerm, products]);
+  }, [searchTerm, products]); */
 
   const [formData, setFormData] = useState({
     id: null,
@@ -379,6 +407,14 @@ const Products = () => {
     return { text: "In Stock", color: "bg-green-100 text-green-800" };
   };
 
+  // Pagination: compute visible pages using shared generator
+  const pageList = generatePages(metaData?.lastPage || 1);
+
+  const handleSearch = (searchTerm) => {
+    setProductSearchFilter(searchTerm);
+    setPage(1);
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto p-6">
@@ -436,15 +472,18 @@ const Products = () => {
           </div>
           <input
             type="text"
-            placeholder="Search products..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search products..."
             className="pl-10 pr-4 py-3 w-full rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all duration-300"
           />
         </div>
 
         <div className="flex gap-3">
-          <button className="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors duration-300 flex items-center">
+          <button
+            onClick={(e) => handleSearch(searchTerm)}
+            className="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors duration-300 flex items-center"
+          >
             <Filter className="h-4 w-4 mr-2" />
             Filter
           </button>
@@ -625,6 +664,26 @@ const Products = () => {
         </motion.div>
       )}
 
+      {/* Pagination */}
+      {metaData.lastPage > 1 && (
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={metaData.lastPage}
+          onPageChange={(p) => {
+            setPage(p, metaData.lastPage);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          perPage={perPage}
+          onPerPageChange={(v) => {
+            setPerPage(v);
+          }}
+          from={metaData.from}
+          to={metaData.to}
+          total={metaData.total}
+          pages={pageList}
+        />
+      )}
+
       {/* Add/Edit Product Modal */}
       <AnimatePresence>
         {isModalOpen && (
@@ -658,7 +717,7 @@ const Products = () => {
 };
 
 // Product Modal Component
-const ProductModal = ({
+export const ProductModal = ({
   formData,
   errors,
   editingProduct,

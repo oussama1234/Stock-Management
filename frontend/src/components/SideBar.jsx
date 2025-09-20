@@ -13,7 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { DashboardRoute, ProductsRoute, UsersRoute } from "../router/Index";
+import { DashboardRoute, ProductsRoute, UsersRoute, SalesRoute } from "../router/Index";
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const location = useLocation();
@@ -34,7 +34,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       hasSubmenu: false,
     },
     { id: 3, name: "Users", icon: Users, link: UsersRoute, hasSubmenu: false },
-    { id: 4, name: "Sales", icon: TrendingUp, link: "#", hasSubmenu: false },
+    { id: 4, name: "Sales", icon: TrendingUp, link: SalesRoute, hasSubmenu: false },
     {
       id: 5,
       name: "Purchases",

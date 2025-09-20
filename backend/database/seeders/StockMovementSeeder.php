@@ -12,6 +12,7 @@ class StockMovementSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        //persist data of stock movement model
+        \App\Models\StockMovement::factory()->count(30)->create();
     }
 }

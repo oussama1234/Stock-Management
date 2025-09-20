@@ -18,6 +18,8 @@ class StockMovement extends Model
         'product_id',
         'type',
         'quantity',
+        'previous_stock', // stock before this movement
+        'new_stock',      // stock after this movement
         'source_type',
         'source_id',
         'movement_date',
