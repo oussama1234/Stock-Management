@@ -13,16 +13,24 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-       $this->call([
-        UserSeeder::class,
-        CategorySeeder::class,
-        ProductSeeder::class,
-        SaleSeeder::class,
-        SaleItemSeeder::class,
-        SupplierSeeder::class,
-        PurchaseSeeder::class,
-        PurchaseItemSeeder::class,
-        StockMovementSeeder::class,
-       ]);
+        // Seed in proper order to maintain foreign key relationships
+        $this->call([
+            // 1. Base entities first (no foreign keys)
+            UserSeeder::class,
+            CategorySeeder::class,
+            SupplierSeeder::class,
+            
+            // 2. Products (depends on categories)
+            ProductSeeder::class,
+            
+            // 3. Purchases and purchase items with stock management
+            AdvancedPurchaseSeeder::class,
+            
+            // 4. Sales and sale items with stock management  
+            AdvancedSaleSeeder::class,
+        ]);
+        
+        echo "\n=== Database seeding completed successfully! ===\n";
+        echo "Created realistic data with proper relationships and accurate stock management.\n";
     }
 }

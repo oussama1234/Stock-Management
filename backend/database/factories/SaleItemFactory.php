@@ -17,11 +17,10 @@ class SaleItemFactory extends Factory
     public function definition(): array
     {
         return [
-            // define the default state for the SaleItem model here.
-            'sale_id' => \App\Models\Sale::factory(),
-            'product_id' => \App\Models\Product::factory(),
-            'quantity' => $this->faker->numberBetween(1, 1000),
-            'price' => $this->faker->randomFloat(2, 1, 1000),
+            'sale_id' => 1, // Will be set by seeder
+            'product_id' => $this->faker->numberBetween(1, 64), // Reference existing products
+            'quantity' => $this->faker->numberBetween(1, 10), // Retail quantities
+            'price' => $this->faker->randomFloat(2, 20, 1500), // Retail prices
         ];
     }
 }

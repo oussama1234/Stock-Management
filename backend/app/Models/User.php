@@ -30,6 +30,16 @@ class User extends Authenticatable
         'password',
         'role',
         'profileImage',
+        // New profile fields
+        'phone',
+        'bio',
+        'location',
+        'website',
+        'job_title',
+        'description',
+        'two_factor_enabled',
+        'avatar',
+        'profile_updated_at',
     ];
 
     /**
@@ -40,6 +50,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret', // Hide 2FA secret
     ];
 
     /**
@@ -52,6 +63,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'two_factor_enabled' => 'boolean',
+            'profile_updated_at' => 'datetime',
         ];
     }
 
@@ -64,6 +77,27 @@ class User extends Authenticatable
     public function sales()
     {
         return $this->hasMany(Sale::class);
+    }
+
+    public function preferences()
+    {
+        return $this->hasOne(Preferences::class);
+    }
+
+    /**
+     * Get user preferences with default fallback
+     */
+    public function getPreferences()
+    {
+        return $this->preferences ?: Preferences::createForUser($this);
+    }
+
+    /**
+     * Check if user is admin (you can customize this logic)
+     */
+    public function getIsAdminAttribute()
+    {
+        return $this->role === 'admin' || $this->role === 'super_admin';
     }
 
     public function uploadProfileImage(UserRequest $request)

@@ -5,7 +5,7 @@
 // - Returns { data, loading, error, refetch }
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { getDashboardMetrics } from "@/api/Dashboard";
+import { getDashboardMetrics, getDashboardSalesOverview, getDashboardSalesTrends } from "@/api/Dashboard";
 
 // Simple in-memory cache for metrics by key
 const cache = new Map();
@@ -42,7 +42,40 @@ export const useDashboardMetrics = (params = { range_days: 30, low_stock_thresho
     try {
       setLoading(true);
       setError(null);
-      const res = await getDashboardMetrics(ctrlParams, { signal: controller.signal });
+      
+      // Fetch dashboard metrics and accurate sales data in parallel
+      const [dashboardRes, salesOverview, salesTrends] = await Promise.all([
+        getDashboardMetrics(ctrlParams, { signal: controller.signal }),
+        getDashboardSalesOverview({ period: ctrlParams.range_days?.toString() || "30" }),
+        getDashboardSalesTrends({ period: ctrlParams.range_days?.toString() || "30", interval: "day" })
+      ]);
+      
+      // Merge accurate sales data into dashboard response
+      const res = {
+        ...dashboardRes,
+        // Override with accurate sales data
+        counts: {
+          ...dashboardRes.counts,
+          sales: salesOverview.total_orders,
+          unique_customers: salesOverview.unique_customers,
+        },
+        financials: {
+          ...dashboardRes.financials,
+          total_sales_amount: salesOverview.total_sales,
+          avg_order_value: salesOverview.average_order_value,
+        },
+        // Override sales series with accurate trends data
+        series: {
+          ...dashboardRes.series,
+          sales: salesTrends.map(trend => ({
+            date: trend.period,
+            total: trend.revenue
+          }))
+        },
+        // Add separate accurate sales overview for direct access
+        accurate_sales: salesOverview
+      };
+      
       cache.set(key, { data: res, time: Date.now() });
       setData(res);
       return { fromCache: false, data: res };

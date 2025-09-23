@@ -70,6 +70,70 @@ class Product extends GraphQLType
                 'resolve' => function ($product) {
                     return $product->saleItems;
                 },
+            ],
+            // Analytics fields for print functionality
+            'total_sales_count' => [
+                'type' => Type::int(),
+                'resolve' => function ($product) {
+                    return $product->saleItems()->sum('quantity');
+                },
+            ],
+            'total_purchases_count' => [
+                'type' => Type::int(),
+                'resolve' => function ($product) {
+                    return $product->purchaseItems()->sum('quantity');
+                },
+            ],
+            'total_sales_value' => [
+                'type' => Type::float(),
+                'resolve' => function ($product) {
+                    return $product->saleItems()->selectRaw('SUM(quantity * price) as total')->value('total') ?? 0;
+                },
+            ],
+            'total_purchase_value' => [
+                'type' => Type::float(),
+                'resolve' => function ($product) {
+                    return $product->purchaseItems()->selectRaw('SUM(quantity * price) as total')->value('total') ?? 0;
+                },
+            ],
+            'profit_value' => [
+                'type' => Type::float(),
+                'resolve' => function ($product) {
+                    $totalSalesValue = $product->saleItems()->selectRaw('SUM(quantity * price) as total')->value('total') ?? 0;
+                    $totalPurchaseValue = $product->purchaseItems()->selectRaw('SUM(quantity * price) as total')->value('total') ?? 0;
+                    return $totalSalesValue - $totalPurchaseValue;
+                },
+            ],
+            'profit_percentage' => [
+                'type' => Type::float(),
+                'resolve' => function ($product) {
+                    $totalSalesValue = $product->saleItems()->selectRaw('SUM(quantity * price) as total')->value('total') ?? 0;
+                    $totalPurchaseValue = $product->purchaseItems()->selectRaw('SUM(quantity * price) as total')->value('total') ?? 0;
+                    $profitValue = $totalSalesValue - $totalPurchaseValue;
+                    return $totalSalesValue > 0 ? ($profitValue / $totalSalesValue) * 100 : 0;
+                },
+            ],
+            'sales_highlight' => [
+                'type' => Type::string(),
+                'resolve' => function ($product) {
+                    $totalSold = $product->saleItems()->sum('quantity');
+                    $highlight = '';
+                    
+                    if ($totalSold > 100) {
+                        $highlight = 'Best Seller';
+                    } elseif ($totalSold > 50) {
+                        $highlight = 'Popular Item';
+                    } elseif ($totalSold > 20) {
+                        $highlight = 'Regular Seller';
+                    }
+                    
+                    if ($totalSold > 0) {
+                        $highlight .= $highlight ? ' - ' : '';
+                        $highlight .= "Sold {$totalSold} units";
+                    }
+                    
+                    return $highlight;
+                },
             ]
 
         ];

@@ -14,6 +14,13 @@ import Products from "@/pages/Admin/Products/Products";
 import ProductDetails from "@/pages/Admin/Products/ProductDetails";
 import Sales from "@/pages/Admin/Sales/Sales";
 import SalesAnalytics from "@/pages/Admin/Sales/SalesAnalytics";
+import Purchases from "@/pages/Admin/Purchases/Purchases";
+import PurchasesSimple from "@/pages/Admin/Purchases/PurchasesSimple";
+import PurchasesDebug from "@/pages/Admin/Purchases/PurchasesDebug";
+import PurchasesTestHooks from "@/pages/Admin/Purchases/PurchasesTestHooks";
+import PurchasesMinimal from "@/pages/Admin/Purchases/PurchasesMinimal";
+import PurchasesAnalytics from "@/pages/Admin/Purchases/PurchasesAnalytics";
+import SupportPage from "@/pages/SupportPage";
 
 export const HomeRoute = "/"; // home route
 export const LoginRoute = "/login"; // login route
@@ -24,6 +31,9 @@ export const ProductsRoute = DashboardRoute + "/products";
 export const ProductDetailsRoute = DashboardRoute + "/products";
 export const SalesRoute = DashboardRoute + "/sales";
 export const SalesAnalyticsRoute = DashboardRoute + "/sales/analytics";
+export const PurchasesRoute = DashboardRoute + "/purchases";
+export const PurchasesAnalyticsRoute = DashboardRoute + "/purchases/analytics";
+export const SupportRoute = DashboardRoute + "/support";
 
 
 // dashboard route needs to follow dashboard layout
@@ -38,6 +48,9 @@ export const routes = [
   {path: ProductDetailsRoute + "/:id", element : <ProtectedRoute><DashboardLayout><ProductDetails /></DashboardLayout></ProtectedRoute>},
   {path: SalesRoute, element : <ProtectedRoute><DashboardLayout><Sales /></DashboardLayout></ProtectedRoute>},
   {path: SalesAnalyticsRoute, element : <ProtectedRoute><DashboardLayout><SalesAnalytics /></DashboardLayout></ProtectedRoute>},
+  {path: PurchasesRoute, element : <ProtectedRoute><DashboardLayout><Purchases /></DashboardLayout></ProtectedRoute>},
+  {path: PurchasesAnalyticsRoute, element : <ProtectedRoute><DashboardLayout><PurchasesAnalytics /></DashboardLayout></ProtectedRoute>},
+  {path: SupportRoute, element : <ProtectedRoute><DashboardLayout><SupportPage /></DashboardLayout></ProtectedRoute>},
   { path: "*", element: <NotFound /> },
 ];
 

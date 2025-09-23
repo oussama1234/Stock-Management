@@ -39,6 +39,7 @@ const cache = new InMemoryCache({
 const client = new ApolloClient({
   link: new UploadHttpLink({
     uri: import.meta.env.VITE_BACKEND_GRAPHQL_URL, // Use environment variable or default to localhost
+    credentials: "include", // Include cookies for authentication
   }),
   cache,
 });

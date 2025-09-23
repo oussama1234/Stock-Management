@@ -152,17 +152,25 @@ export default function SalesAnalytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
+          whileHover={{ 
+            y: -8, 
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" 
+          }}
+          className="group bg-gradient-to-br from-emerald-500 via-green-500 to-teal-600 rounded-3xl shadow-xl p-8 border border-emerald-200/20 backdrop-blur-sm transform transition-all duration-300 hover:scale-105"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Sales</p>
-              <p className="text-2xl font-bold text-gray-800">
+              <p className="text-sm font-semibold text-emerald-100 mb-2 tracking-wide uppercase">Total Sales</p>
+              <p className="text-3xl font-bold text-white mb-1">
                 {formatCurrency(data.overview.total_sales)}
               </p>
+              <div className="flex items-center text-emerald-100 text-xs">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                <span>Revenue Generated</span>
+              </div>
             </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <DollarSign className="h-6 w-6 text-green-600" />
+            <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+              <DollarSign className="h-8 w-8 text-white" />
             </div>
           </div>
         </motion.div>
@@ -171,17 +179,25 @@ export default function SalesAnalytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
+          whileHover={{ 
+            y: -8, 
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" 
+          }}
+          className="group bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-3xl shadow-xl p-8 border border-blue-200/20 backdrop-blur-sm transform transition-all duration-300 hover:scale-105"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Orders</p>
-              <p className="text-2xl font-bold text-gray-800">
+              <p className="text-sm font-semibold text-blue-100 mb-2 tracking-wide uppercase">Total Orders</p>
+              <p className="text-3xl font-bold text-white mb-1">
                 {formatNumber(data.overview.total_orders)}
               </p>
+              <div className="flex items-center text-blue-100 text-xs">
+                <Package className="h-3 w-3 mr-1" />
+                <span>Orders Completed</span>
+              </div>
             </div>
-            <div className="p-3 bg-blue-100 rounded-full">
-              <ShoppingCart className="h-6 w-6 text-blue-600" />
+            <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+              <ShoppingCart className="h-8 w-8 text-white" />
             </div>
           </div>
         </motion.div>
@@ -190,17 +206,25 @@ export default function SalesAnalytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
+          whileHover={{ 
+            y: -8, 
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" 
+          }}
+          className="group bg-gradient-to-br from-purple-500 via-pink-500 to-rose-600 rounded-3xl shadow-xl p-8 border border-purple-200/20 backdrop-blur-sm transform transition-all duration-300 hover:scale-105"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Avg Order Value</p>
-              <p className="text-2xl font-bold text-gray-800">
+              <p className="text-sm font-semibold text-purple-100 mb-2 tracking-wide uppercase">Avg Order Value</p>
+              <p className="text-3xl font-bold text-white mb-1">
                 {formatCurrency(data.overview.average_order_value)}
               </p>
+              <div className="flex items-center text-purple-100 text-xs">
+                <BarChart3 className="h-3 w-3 mr-1" />
+                <span>Per Transaction</span>
+              </div>
             </div>
-            <div className="p-3 bg-purple-100 rounded-full">
-              <TrendingUp className="h-6 w-6 text-purple-600" />
+            <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+              <TrendingUp className="h-8 w-8 text-white" />
             </div>
           </div>
         </motion.div>
@@ -209,17 +233,25 @@ export default function SalesAnalytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
+          whileHover={{ 
+            y: -8, 
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" 
+          }}
+          className="group bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-600 rounded-3xl shadow-xl p-8 border border-orange-200/20 backdrop-blur-sm transform transition-all duration-300 hover:scale-105"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Items Sold</p>
-              <p className="text-2xl font-bold text-gray-800">
+              <p className="text-sm font-semibold text-orange-100 mb-2 tracking-wide uppercase">Items Sold</p>
+              <p className="text-3xl font-bold text-white mb-1">
                 {formatNumber(data.overview.total_items_sold)}
               </p>
+              <div className="flex items-center text-orange-100 text-xs">
+                <Users className="h-3 w-3 mr-1" />
+                <span>Units Moved</span>
+              </div>
             </div>
-            <div className="p-3 bg-orange-100 rounded-full">
-              <Package className="h-6 w-6 text-orange-600" />
+            <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm group-hover:bg-white/30 transition-all duration-300">
+              <Package className="h-8 w-8 text-white" />
             </div>
           </div>
         </motion.div>
@@ -232,28 +264,43 @@ export default function SalesAnalytics() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
+          className="bg-gradient-to-br from-white via-yellow-50/30 to-amber-50/50 rounded-3xl shadow-2xl p-8 border border-yellow-200/30 backdrop-blur-sm"
         >
-          <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-            <Crown className="h-5 w-5 text-yellow-500 mr-2" />
-            Top Products
-          </h3>
+          <div className="flex items-center mb-6">
+            <div className="bg-gradient-to-r from-yellow-400 to-amber-500 p-3 rounded-2xl mr-4 shadow-lg">
+              <Crown className="h-6 w-6 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+              Top Products
+            </h3>
+          </div>
           <div className="space-y-4">
             {data.topProducts.slice(0, 5).map((product, index) => (
-              <div key={product.product_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <motion.div 
+                key={product.product_id} 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 + index * 0.1 }}
+                whileHover={{ x: 8, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                className="flex items-center justify-between p-5 bg-gradient-to-r from-white to-yellow-50/50 rounded-2xl border border-yellow-100 shadow-sm hover:shadow-lg transition-all duration-300"
+              >
                 <div className="flex items-center">
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-4 shadow-md">
                     {index + 1}
                   </div>
                   <div>
-                    <p className="font-medium text-gray-800">{product.product?.name || 'Unknown'}</p>
-                    <p className="text-sm text-gray-600">{formatNumber(product.total_quantity)} sold</p>
+                    <p className="font-semibold text-gray-800 text-lg">{product.product?.name || 'Unknown'}</p>
+                    <p className="text-sm text-gray-600 flex items-center">
+                      <Package className="h-3 w-3 mr-1" />
+                      {formatNumber(product.total_quantity)} units sold
+                    </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-gray-800">{formatCurrency(product.total_revenue)}</p>
+                  <p className="font-bold text-xl text-gray-800">{formatCurrency(product.total_revenue)}</p>
+                  <p className="text-xs text-gray-500">Revenue</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </motion.div>
@@ -263,28 +310,43 @@ export default function SalesAnalytics() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
+          className="bg-gradient-to-br from-white via-indigo-50/30 to-purple-50/50 rounded-3xl shadow-2xl p-8 border border-indigo-200/30 backdrop-blur-sm"
         >
-          <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-            <Users className="h-5 w-5 text-indigo-500 mr-2" />
-            Top Customers
-          </h3>
+          <div className="flex items-center mb-6">
+            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-3 rounded-2xl mr-4 shadow-lg">
+              <Users className="h-6 w-6 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+              Top Customers
+            </h3>
+          </div>
           <div className="space-y-4">
             {data.topCustomers.slice(0, 5).map((customer, index) => (
-              <div key={customer.customer_name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <motion.div 
+                key={customer.customer_name} 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.7 + index * 0.1 }}
+                whileHover={{ x: -8, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                className="flex items-center justify-between p-5 bg-gradient-to-r from-white to-indigo-50/50 rounded-2xl border border-indigo-100 shadow-sm hover:shadow-lg transition-all duration-300"
+              >
                 <div className="flex items-center">
-                  <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-4 shadow-md">
                     {index + 1}
                   </div>
                   <div>
-                    <p className="font-medium text-gray-800">{customer.customer_name}</p>
-                    <p className="text-sm text-gray-600">{formatNumber(customer.total_orders)} orders</p>
+                    <p className="font-semibold text-gray-800 text-lg">{customer.customer_name}</p>
+                    <p className="text-sm text-gray-600 flex items-center">
+                      <ShoppingCart className="h-3 w-3 mr-1" />
+                      {formatNumber(customer.total_orders)} orders placed
+                    </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-gray-800">{formatCurrency(customer.total_spent)}</p>
+                  <p className="font-bold text-xl text-gray-800">{formatCurrency(customer.total_spent)}</p>
+                  <p className="text-xs text-gray-500">Total Spent</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </motion.div>
@@ -297,24 +359,43 @@ export default function SalesAnalytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
+          className="bg-gradient-to-br from-white via-green-50/30 to-emerald-50/50 rounded-3xl shadow-2xl p-8 border border-green-200/30 backdrop-blur-sm"
         >
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Sales by Category</h3>
+          <div className="flex items-center mb-6">
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-3 rounded-2xl mr-4 shadow-lg">
+              <BarChart3 className="h-6 w-6 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+              Sales by Category
+            </h3>
+          </div>
           <div className="space-y-4">
             {data.categories.slice(0, 5).map((category, index) => (
-              <div key={category.category_id} className="flex items-center justify-between">
+              <motion.div 
+                key={category.category_id} 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.8 + index * 0.1 }}
+                whileHover={{ scale: 1.02, boxShadow: "0 8px 25px -8px rgba(0, 0, 0, 0.1)" }}
+                className="flex items-center justify-between p-5 bg-gradient-to-r from-white to-green-50/50 rounded-2xl border border-green-100 shadow-sm hover:shadow-lg transition-all duration-300"
+              >
                 <div className="flex items-center">
                   <div 
-                    className="w-4 h-4 rounded-full mr-3"
-                    style={{ backgroundColor: `hsl(${index * 72}, 70%, 50%)` }}
-                  ></div>
-                  <span className="text-gray-800 font-medium">{category.category_name}</span>
+                    className="w-6 h-6 rounded-2xl mr-4 shadow-md flex items-center justify-center"
+                    style={{ backgroundColor: `hsl(${index * 72}, 70%, 55%)` }}
+                  >
+                    <div className="w-3 h-3 bg-white rounded-full"></div>
+                  </div>
+                  <span className="text-gray-800 font-semibold text-lg">{category.category_name}</span>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-gray-800">{formatCurrency(category.total_revenue)}</p>
-                  <p className="text-sm text-gray-600">{formatNumber(category.total_quantity)} items</p>
+                  <p className="font-bold text-xl text-gray-800">{formatCurrency(category.total_revenue)}</p>
+                  <p className="text-sm text-gray-600 flex items-center justify-end">
+                    <Package className="h-3 w-3 mr-1" />
+                    {formatNumber(category.total_quantity)} items
+                  </p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </motion.div>
@@ -324,29 +405,56 @@ export default function SalesAnalytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
-          className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
+          className="bg-gradient-to-br from-white via-red-50/30 to-rose-50/50 rounded-3xl shadow-2xl p-8 border border-red-200/30 backdrop-blur-sm"
         >
-          <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-            <AlertTriangle className="h-5 w-5 text-red-500 mr-2" />
-            Low Stock Alerts
-          </h3>
+          <div className="flex items-center mb-6">
+            <div className="bg-gradient-to-r from-red-500 to-rose-600 p-3 rounded-2xl mr-4 shadow-lg">
+              <AlertTriangle className="h-6 w-6 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+              Low Stock Alerts
+            </h3>
+          </div>
           <div className="space-y-4">
-            {data.lowStock.slice(0, 5).map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
-                <div>
-                  <p className="font-medium text-gray-800">{item.name}</p>
-                  <p className="text-sm text-gray-600">{item.category_name}</p>
+            {data.lowStock.slice(0, 5).map((item, index) => (
+              <motion.div 
+                key={item.id} 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.9 + index * 0.1 }}
+                whileHover={{ x: -4, boxShadow: "0 10px 25px -5px rgba(239, 68, 68, 0.2)" }}
+                className="flex items-center justify-between p-5 bg-gradient-to-r from-red-50/80 to-rose-50/80 rounded-2xl border border-red-200 shadow-sm hover:shadow-lg transition-all duration-300"
+              >
+                <div className="flex items-center">
+                  <div className="bg-gradient-to-br from-red-500 to-rose-600 p-2 rounded-full mr-4 shadow-md">
+                    <AlertTriangle className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-800 text-lg">{item.name}</p>
+                    <p className="text-sm text-gray-600">{item.category_name}</p>
+                  </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-red-600 font-semibold">{item.stock} left</p>
+                  <p className="text-red-600 font-bold text-xl">{item.stock} left</p>
                   <p className="text-xs text-gray-500">
                     {item.daily_velocity > 0 ? `${Math.ceil(item.days_remaining)} days left` : 'No recent sales'}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             ))}
             {data.lowStock.length === 0 && (
-              <p className="text-gray-500 text-center py-4">No low stock alerts</p>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.9 }}
+                className="text-center py-8"
+              >
+                <div className="bg-gradient-to-r from-green-100 to-emerald-100 p-4 rounded-2xl inline-block mb-4">
+                  <Package className="h-8 w-8 text-green-600" />
+                </div>
+                <p className="text-gray-500 text-lg font-medium">No low stock alerts</p>
+                <p className="text-gray-400 text-sm">All products are well stocked!</p>
+              </motion.div>
             )}
           </div>
         </motion.div>

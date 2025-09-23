@@ -36,5 +36,10 @@ class UserSeeder extends Seeder
             'password' => bcrypt('password'),
             'role' => 'staff',
         ]);
+        
+        // Create 7 additional users with random roles
+        User::factory(7)->create();
+        
+        echo "Created 10 users (3 specific + 7 random)\n";
     }
 }

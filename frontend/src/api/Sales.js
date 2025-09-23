@@ -80,3 +80,42 @@ export const deleteSale = async (id) => {
   const res = await AxiosClient.delete(`/sales/${id}`);
   return res.data;
 };
+
+/**
+ * exportSales
+ * @param {{ search?: string, format?: string }} params
+ */
+export const exportSales = async (params = {}) => {
+  const cleanParams = {
+    format: params.format || 'csv'
+  };
+  
+  // Add search and filters if provided
+  if (params.search && params.search.trim()) cleanParams.search = params.search.trim();
+  if (params.sortBy) cleanParams.sort_by = params.sortBy;
+  if (params.sortOrder) cleanParams.sort_order = params.sortOrder;
+  if (params.dateFrom && params.dateFrom.trim()) cleanParams.date_from = params.dateFrom;
+  if (params.dateTo && params.dateTo.trim()) cleanParams.date_to = params.dateTo;
+  if (params.minAmount && params.minAmount.trim()) cleanParams.min_amount = params.minAmount;
+  if (params.maxAmount && params.maxAmount.trim()) cleanParams.max_amount = params.maxAmount;
+  if (params.customerId) cleanParams.customer_id = params.customerId;
+  if (params.userId) cleanParams.user_id = params.userId;
+
+  const res = await AxiosClient.get("/sales/export", {
+    params: cleanParams,
+    responseType: 'blob'
+  });
+  
+  // Create download link
+  const blob = new Blob([res.data], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `sales-export-${new Date().toISOString().split('T')[0]}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+  
+  return res.data;
+};

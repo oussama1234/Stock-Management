@@ -29,13 +29,17 @@ export default function useSalesData(params) {
   
   const cacheKey = key(normalizedParams);
 
-  const fetchData = useCallback(async (p = params) => {
+  const invalidateCache = useCallback(() => {
+    salesCache.clear();
+  }, []);
+
+  const fetchData = useCallback(async (p = params, forceRefresh = false) => {
     const k = key(p);
     const cached = salesCache.get(k);
     const now = Date.now();
     
-    // Check cache first
-    if (cached && now - cached.time < CACHE_TTL_MS) {
+    // Check cache first (unless force refresh)
+    if (!forceRefresh && cached && now - cached.time < CACHE_TTL_MS) {
       setData(cached.data);
       setLoading(false);
       setError(null);
@@ -102,6 +106,7 @@ export default function useSalesData(params) {
     meta, 
     loading, 
     error, 
-    refetch: () => fetchData(normalizedParams) 
+    refetch: () => fetchData(normalizedParams, true), // Force refresh on manual refetch
+    invalidateCache
   };
 }

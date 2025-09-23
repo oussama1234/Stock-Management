@@ -17,12 +17,10 @@ class PurchaseFactory extends Factory
     public function definition(): array
     {
         return [
-            //define the factory fields for Purchase model
-            'user_id' => \App\Models\User::factory(),
-            'supplier_id' => \App\Models\Supplier::factory(),
-            'total_amount' => $this->faker->randomFloat(2, 10,
-            1000),
-            'purchase_date' => $this->faker->dateTimeBetween('-1 year', 'now')->format('Y-m-d'),
+            'user_id' => $this->faker->numberBetween(1, 10), // Reference existing users
+            'supplier_id' => $this->faker->numberBetween(1, 10), // Reference existing suppliers
+            'total_amount' => 0, // Will be calculated based on purchase items
+            'purchase_date' => $this->faker->dateTimeBetween('-6 months', 'now'),
         ];
     }
 }

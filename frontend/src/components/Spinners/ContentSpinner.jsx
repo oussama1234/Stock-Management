@@ -1,35 +1,331 @@
-// ContentSpinner.jsx
-import { motion } from "framer-motion";
-import { BarChart3, Database, Package, TrendingUp } from "lucide-react";
+// ContentSpinner.jsx - Ultra-modern, dynamic loading component
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  BarChart3, 
+  Database, 
+  Package, 
+  TrendingUp, 
+  ShoppingCart, 
+  Users, 
+  DollarSign,
+  Activity,
+  Zap,
+  Sparkles,
+  ArrowRight,
+  Loader,
+  RefreshCw
+} from "lucide-react";
+import { useState, useEffect } from "react";
 
 const ContentSpinner = ({
   size = "medium",
   message = "Loading data...",
   fullWidth = false,
+  theme = "default", // default, sales, inventory, analytics, users
+  showProgress = false,
+  variant = "modern", // modern, minimal, classic, orbital
 }) => {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [progress, setProgress] = useState(0);
+
+  // Dynamic loading steps based on theme
+  const loadingSteps = {
+    default: ["Initializing...", "Loading data...", "Almost ready..."],
+    sales: ["Loading sales data...", "Processing transactions...", "Finalizing reports..."],
+    inventory: ["Scanning inventory...", "Checking stock levels...", "Updating records..."],
+    analytics: ["Analyzing data...", "Computing metrics...", "Generating insights..."],
+    users: ["Loading users...", "Checking permissions...", "Preparing dashboard..."]
+  };
+
+  const steps = loadingSteps[theme] || loadingSteps.default;
+
+  // Auto-progress through steps
+  useEffect(() => {
+    const stepInterval = setInterval(() => {
+      setCurrentStep(prev => (prev + 1) % steps.length);
+    }, 2000);
+
+    return () => clearInterval(stepInterval);
+  }, [steps.length]);
+
+  // Simulate progress
+  useEffect(() => {
+    if (showProgress) {
+      const progressInterval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 100) return 0;
+          return prev + Math.random() * 15;
+        });
+      }, 300);
+
+      return () => clearInterval(progressInterval);
+    }
+  }, [showProgress]);
+
   const sizeClasses = {
     small: {
-      container: "h-16 w-16",
-      icon: "h-6 w-6",
+      container: "h-20 w-20",
+      orbit: "h-32 w-32",
+      icon: "h-5 w-5",
+      centerIcon: "h-6 w-6",
       text: "text-sm",
+      padding: "p-6"
     },
     medium: {
-      container: "h-24 w-24",
-      icon: "h-8 w-8",
+      container: "h-28 w-28",
+      orbit: "h-44 w-44",
+      icon: "h-6 w-6",
+      centerIcon: "h-8 w-8",
       text: "text-base",
+      padding: "p-8"
     },
     large: {
-      container: "h-32 w-32",
-      icon: "h-10 w-10",
+      container: "h-40 w-40",
+      orbit: "h-56 w-56",
+      icon: "h-8 w-8",
+      centerIcon: "h-12 w-12",
       text: "text-lg",
+      padding: "p-10"
     },
   };
 
+  // Theme-based icon sets
+  const themeIcons = {
+    default: [Package, Database, TrendingUp, BarChart3],
+    sales: [ShoppingCart, DollarSign, TrendingUp, BarChart3],
+    inventory: [Package, Database, Activity, Zap],
+    analytics: [BarChart3, TrendingUp, Activity, Sparkles],
+    users: [Users, Database, Activity, BarChart3]
+  };
+
+  const icons = themeIcons[theme] || themeIcons.default;
+
   const {
     container: containerSize,
+    orbit: orbitSize,
     icon: iconSize,
+    centerIcon: centerIconSize,
     text: textSize,
+    padding
   } = sizeClasses[size];
+
+  // Render different variants
+  const renderModernSpinner = () => (
+    <div className="relative">
+      {/* Gradient background glow */}
+      <motion.div
+        animate={{ 
+          scale: [1, 1.2, 1],
+          opacity: [0.3, 0.6, 0.3]
+        }}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+        className={`absolute inset-0 ${orbitSize} bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-pink-400/20 rounded-full blur-xl -z-10`}
+      />
+
+      {/* Outer orbital ring */}
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "linear"
+        }}
+        className={`${orbitSize} rounded-full relative`}
+      >
+        <div className="absolute inset-0 rounded-full border-2 border-gradient-to-r from-blue-400/40 via-purple-400/40 to-pink-400/40" />
+        
+        {/* Orbital particles */}
+        {[0, 1, 2].map((index) => {
+          const angle = (index * 120);
+          return (
+            <motion.div
+              key={index}
+              className="absolute w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg"
+              style={{
+                top: '50%',
+                left: '50%',
+                transformOrigin: '0 0'
+              }}
+              animate={{
+                rotate: 360 + angle,
+                scale: [1, 1.5, 1]
+              }}
+              transition={{
+                rotate: {
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "linear"
+                },
+                scale: {
+                  duration: 2,
+                  repeat: Infinity,
+                  delay: index * 0.3
+                }
+              }}
+            />
+          );
+        })}
+      </motion.div>
+
+      {/* Middle rotating ring with icons */}
+      <motion.div
+        animate={{ rotate: -360 }}
+        transition={{
+          duration: 6,
+          repeat: Infinity,
+          ease: "linear"
+        }}
+        className={`absolute inset-0 ${containerSize} m-auto`}
+      >
+        {icons.map((Icon, index) => {
+          const angle = (index * 90);
+          const radius = size === 'small' ? 40 : size === 'medium' ? 50 : 70;
+          const x = Math.cos((angle * Math.PI) / 180) * radius;
+          const y = Math.sin((angle * Math.PI) / 180) * radius;
+          
+          return (
+            <motion.div
+              key={index}
+              className="absolute"
+              style={{
+                left: `calc(50% + ${x}px)`,
+                top: `calc(50% + ${y}px)`,
+                transform: 'translate(-50%, -50%)'
+              }}
+              animate={{
+                rotate: 360,
+                scale: [1, 1.3, 1]
+              }}
+              transition={{
+                rotate: {
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "linear"
+                },
+                scale: {
+                  duration: 2,
+                  repeat: Infinity,
+                  delay: index * 0.2
+                }
+              }}
+            >
+              <div className="p-2 rounded-xl bg-white/90 backdrop-blur-sm shadow-lg border border-white/50">
+                <Icon className={`${iconSize} text-gradient bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text`} style={{
+                  color: `hsl(${200 + index * 40}, 70%, 55%)`
+                }} />
+              </div>
+            </motion.div>
+          );
+        })}
+      </motion.div>
+
+      {/* Central pulsing core */}
+      <motion.div
+        initial={{ scale: 0, rotate: 0 }}
+        animate={{ 
+          scale: [1, 1.1, 1],
+          rotate: 360
+        }}
+        transition={{
+          scale: {
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          },
+          rotate: {
+            duration: 4,
+            repeat: Infinity,
+            ease: "linear"
+          }
+        }}
+        className={`absolute inset-0 m-auto w-16 h-16 ${size === 'large' ? 'w-20 h-20' : size === 'small' ? 'w-12 h-12' : ''} rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-2xl`}
+      >
+        <motion.div
+          animate={{ rotate: -360 }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        >
+          <Sparkles className={`${centerIconSize} text-white drop-shadow-lg`} />
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+
+  const renderMinimalSpinner = () => (
+    <div className="relative">
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{
+          duration: 1.5,
+          repeat: Infinity,
+          ease: "linear"
+        }}
+        className={`${containerSize} rounded-full border-4 border-gray-200 border-t-blue-500`}
+      />
+    </div>
+  );
+
+  const renderOrbitalSpinner = () => (
+    <div className="relative">
+      {/* Multiple orbital rings */}
+      {[0, 1, 2].map((ringIndex) => (
+        <motion.div
+          key={ringIndex}
+          animate={{ rotate: ringIndex % 2 === 0 ? 360 : -360 }}
+          transition={{
+            duration: 3 + ringIndex,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+          className={`absolute inset-0 rounded-full border-2 opacity-60`}
+          style={{
+            width: `${100 + ringIndex * 20}%`,
+            height: `${100 + ringIndex * 20}%`,
+            margin: 'auto',
+            borderColor: `hsl(${220 + ringIndex * 30}, 70%, 60%)`
+          }}
+        >
+          <motion.div
+            className="absolute w-2 h-2 rounded-full shadow-lg"
+            style={{
+              top: -4,
+              left: '50%',
+              backgroundColor: `hsl(${220 + ringIndex * 30}, 70%, 60%)`
+            }}
+            animate={{
+              scale: [1, 1.5, 1]
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              delay: ringIndex * 0.2
+            }}
+          />
+        </motion.div>
+      ))}
+      
+      {/* Center icon */}
+      <div className={`${containerSize} flex items-center justify-center`}>
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        >
+          <RefreshCw className={`${centerIconSize} text-blue-500`} />
+        </motion.div>
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -37,154 +333,75 @@ const ContentSpinner = ({
         fullWidth ? "w-full py-16" : "py-8"
       }`}
     >
-      <div className="relative">
-        {/* Outer rotating circle */}
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{
-            duration: 2.5,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-          className={`${containerSize} rounded-full border-4 border-blue-100`}
-        />
-
-        {/* Inner pulsing circle */}
-        <motion.div
-          animate={{
-            scale: [1, 1.1, 1],
-            opacity: [0.7, 1, 0.7],
-          }}
-          transition={{
-            duration: 1.5,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className={`absolute inset-0 m-auto ${
-            size === "small"
-              ? "h-12 w-12"
-              : size === "medium"
-              ? "h-16 w-16"
-              : "h-24 w-24"
-          } rounded-full border-4 border-indigo-200`}
-        />
-
-        {/* Rotating icons */}
-        <motion.div
-          animate={{ rotate: -360 }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-          className="absolute inset-0 flex items-center justify-center"
-        >
-          <div className="absolute -top-1 left-1/2 transform -translate-x-1/2">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            >
-              <Package className={`${iconSize} text-blue-500`} />
-            </motion.div>
-          </div>
-
-          <div className="absolute top-1/2 -right-1 transform -translate-y-1/2">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            >
-              <Database className={`${iconSize} text-indigo-500`} />
-            </motion.div>
-          </div>
-
-          <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            >
-              <TrendingUp className={`${iconSize} text-purple-500`} />
-            </motion.div>
-          </div>
-
-          <div className="absolute top-1/2 -left-1 transform -translate-y-1/2">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            >
-              <BarChart3 className={`${iconSize} text-blue-600`} />
-            </motion.div>
-          </div>
-        </motion.div>
-
-        {/* Central icon */}
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{
-            type: "spring",
-            stiffness: 200,
-            damping: 15,
-          }}
-          className={`absolute inset-0 m-auto ${
-            size === "small"
-              ? "h-8 w-8"
-              : size === "medium"
-              ? "h-10 w-10"
-              : "h-14 w-14"
-          } rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center shadow-lg`}
-        >
-          <BarChart3
-            className={`${
-              size === "small"
-                ? "h-4 w-4"
-                : size === "medium"
-                ? "h-5 w-5"
-                : "h-6 w-6"
-            } text-white`}
-          />
-        </motion.div>
-      </div>
-
-      {/* Loading text with animation */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="text-center mt-6"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="relative"
       >
-        <p className={`text-gray-600 ${textSize} font-medium`}>{message}</p>
+        {variant === "modern" && renderModernSpinner()}
+        {variant === "minimal" && renderMinimalSpinner()}
+        {variant === "orbital" && renderOrbitalSpinner()}
+        {variant === "classic" && renderModernSpinner()} {/* fallback to modern */}
+      </motion.div>
+
+      {/* Dynamic loading text */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.5 }}
+        className="text-center mt-8"
+      >
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={currentStep}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className={`text-gray-700 ${textSize} font-medium mb-2 flex items-center justify-center gap-2`}
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            >
+              <ArrowRight className="h-4 w-4 text-blue-500" />
+            </motion.div>
+            {steps[currentStep] || message}
+          </motion.p>
+        </AnimatePresence>
+
+        {/* Progress bar */}
+        {showProgress && (
+          <div className="w-48 h-1.5 bg-gray-200 rounded-full overflow-hidden mb-4">
+            <motion.div
+              className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min(progress, 100)}%` }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
+        )}
 
         {/* Animated dots */}
-        <div className="flex justify-center space-x-1 mt-2">
-          {[0, 1, 2].map((i) => (
+        <div className="flex justify-center space-x-1.5">
+          {[0, 1, 2, 3].map((i) => (
             <motion.div
               key={i}
               animate={{
-                scale: [1, 1.5, 1],
-                opacity: [0.5, 1, 0.5],
+                scale: [1, 1.4, 1],
+                opacity: [0.4, 1, 0.4],
               }}
               transition={{
-                duration: 1.5,
+                duration: 1.2,
                 repeat: Infinity,
-                delay: i * 0.2,
+                delay: i * 0.15,
+                ease: "easeInOut"
               }}
-              className="w-2 h-2 bg-blue-500 rounded-full"
+              className="w-2 h-2 rounded-full"
+              style={{
+                background: `linear-gradient(45deg, hsl(${200 + i * 20}, 70%, 60%), hsl(${220 + i * 20}, 70%, 50%))`
+              }}
             />
           ))}
         </div>

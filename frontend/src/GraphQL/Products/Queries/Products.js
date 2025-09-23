@@ -2,7 +2,7 @@
 // importing the fragments
 import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
-import { PRODUCT_FRAGMENT } from "../Fragments/ProductFragments";
+import { PRODUCT_FRAGMENT, PRODUCT_ANALYTICS_FRAGMENT } from "../Fragments/ProductFragments";
 export const PRODUCTS_QUERY = gql`
   query GetProducts($page: Int, $limit: Int, $search: String) {
     products(page: $page, limit: $limit, search: $search) {
@@ -43,8 +43,26 @@ export const PRODUCT_QUERY = gql`
  *                   and other properties such as loading, error, networkStatus
  */
 
+export const PRODUCT_ANALYTICS_QUERY = gql`
+  query GetProductWithAnalytics($id: Int!) {
+    productById(id: $id) {
+      ...ProductAnalyticsFragment
+    }
+  }
+  ${PRODUCT_ANALYTICS_FRAGMENT}
+`;
+
 export const useGetProductQuery = (id) =>
   useQuery(PRODUCT_QUERY, {
+    variables: { id },
+    fetchPolicy: "cache-first",
+    nextFetchPolicy: "cache-and-network",
+    errorPolicy: "all",
+    notifyOnNetworkStatusChange: true,
+  });
+
+export const useGetProductWithAnalyticsQuery = (id) =>
+  useQuery(PRODUCT_ANALYTICS_QUERY, {
     variables: { id },
     fetchPolicy: "cache-first",
     nextFetchPolicy: "cache-and-network",

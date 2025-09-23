@@ -81,12 +81,15 @@ return [
                 'saleItemsByProduct' => App\GraphQL\Queries\SaleItemsByProduct::class,
                 'purchaseItemsByProduct' => App\GraphQL\Queries\PurchaseItemsByProduct::class,
                 'stockMovementsByProduct' => App\GraphQL\Queries\StockMovementsByProduct::class,
+                'paginatedSaleItemsByProduct' => App\GraphQL\Queries\PaginatedSaleItemsByProduct::class,
+                'paginatedPurchaseItemsByProduct' => App\GraphQL\Queries\PaginatedPurchaseItemsByProduct::class,
+                'paginatedStockMovementsByProduct' => App\GraphQL\Queries\PaginatedStockMovementsByProduct::class,
             ],
             'mutation' => [
                 'createProduct' => App\GraphQL\Mutations\Products\CreateProduct::class,
                 'updateProduct' => App\GraphQL\Mutations\Products\UpdateProduct::class,
                 'deleteProduct' => App\GraphQL\Mutations\Products\DeleteProduct::class,
-
+                'createSaleByProduct' => App\GraphQL\Mutations\Sales\CreateSaleByProduct::class,
             ],
             // The types only available in this schema
             'types' => [
@@ -102,9 +105,15 @@ return [
                 'User' => App\GraphQL\Types\User::class,
                 'Supplier' => App\GraphQL\Types\Supplier::class,
                 'productInput' => App\GraphQL\Inputs\Products\ProductInput::class,
+                'saleItemInput' => App\GraphQL\Inputs\Sales\SaleItemInput::class,
                 'Upload' => App\GraphQL\Scalars\Upload::class,
                 'Response' => App\GraphQL\Types\Response\Response::class,
                 'ProductPagination' => \Rebing\GraphQL\Support\PaginationType::class,
+                'PaginationMeta' => App\GraphQL\Types\PaginationMeta::class,
+                'SaleItemsPaginated' => App\GraphQL\Types\SaleItemsPaginated::class,
+                'PurchaseItemsPaginated' => App\GraphQL\Types\PurchaseItemsPaginated::class,
+                'StockMovementsPaginated' => App\GraphQL\Types\StockMovementsPaginated::class,
+                
 
             ],
 
@@ -116,7 +125,7 @@ return [
            
 
             // Laravel HTTP middleware
-            'middleware' => null,
+            'middleware' => ['web', 'auth:sanctum'],
 
             // Which HTTP methods to support; must be given in UPPERCASE!
             'method' => ['GET', 'POST'],
@@ -136,6 +145,7 @@ return [
     // ]
     //
     'types' => [
+        
         // ExampleType::class,
         // ExampleRelationType::class,
         // \Rebing\GraphQL\Support\UploadType::class,

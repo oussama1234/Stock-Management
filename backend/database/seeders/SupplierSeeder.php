@@ -12,7 +12,9 @@ class SupplierSeeder extends Seeder
      */
     public function run(): void
     {
-        //persist data of supplier model
-        \App\Models\Supplier::factory()->count(20)->create();
+        // Create 10 realistic suppliers
+        \App\Models\Supplier::factory()->count(10)->create();
+        
+        echo "Created 10 realistic suppliers\n";
     }
 }

@@ -19,27 +19,16 @@ class StockMovementFactory extends Factory
 
     public function definition(): array
     {
-
-        $sourceType = $this->faker->randomElement([
-            \App\Models\PurchaseItem::class,
-            \App\Models\SaleItem::class,
-        ]);
-
-        $type = $sourceType === \App\Models\PurchaseItem::class ? 'in' : 'out';
-
-        // Create the actual record depending on type
-
-        $source = $sourceType::factory()->create();
-
+        // Simple stock movement - will be created by advanced seeders
         return [
-            //define the stock movement factory fields
-
-            'product_id' => \App\Models\Product::factory(),
-            'type' => $type,
+            'product_id' => 1, // Will be set by seeder
+            'type' => $this->faker->randomElement(['in', 'out']),
             'quantity' => $this->faker->numberBetween(1, 100),
-            'source_type' => $sourceType,
-            'source_id' => $source->id,
-            'movement_date' => $this->faker->dateTimeBetween('-1 year', 'now')->format('Y-m-d'),
+            'previous_stock' => 0, // Will be set by seeder
+            'new_stock' => 0, // Will be set by seeder
+            'source_type' => null, // Will be set by seeder
+            'source_id' => null, // Will be set by seeder
+            'movement_date' => $this->faker->dateTimeBetween('-1 year', 'now'),
         ];
     }
 }

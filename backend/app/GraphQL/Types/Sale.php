@@ -61,6 +61,12 @@ class Sale extends GraphQLType
                     return $sale->saleItems;
                 },
             ],
+            'items' => [
+                'type' => Type::listOf(GraphQL::type('SaleItem')),
+                'resolve' => function ($sale) {
+                    return $sale->items;
+                },
+            ],
         ];
     }
 }

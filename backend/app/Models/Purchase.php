@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Purchase extends Model
 {
@@ -19,26 +20,83 @@ class Purchase extends Model
         'purchase_date',
     ];
 
-    // relationship with suppliers
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'purchase_date' => 'datetime',
+        'total_amount' => 'decimal:2',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 
+    /**
+     * Relationship with suppliers
+     * Each purchase belongs to one supplier
+     */
     public function supplier()
     {
         return $this->belongsTo(Supplier::class);
     }
 
-    // relationship with users
-
+    /**
+     * Relationship with users
+     * Each purchase belongs to one user (purchaser)
+     */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // relationship with purchase items
-
+    /**
+     * Relationship with purchase items
+     * Each purchase can have multiple line items
+     */
     public function purchaseItems()
     {
         return $this->hasMany(PurchaseItem::class);
     }
 
-    
+    /**
+     * Alternative accessor for items (to match the API response structure)
+     * This makes the relationship more consistent with the Sales model
+     */
+    public function items()
+    {
+        return $this->hasMany(PurchaseItem::class);
+    }
+
+    /**
+     * Accessor for formatted purchase date
+     */
+    public function getFormattedDateAttribute()
+    {
+        return $this->purchase_date ? $this->purchase_date->format('Y-m-d H:i:s') : null;
+    }
+
+    /**
+     * Scope for filtering by date range
+     */
+    public function scopeDateRange($query, $startDate, $endDate)
+    {
+        return $query->whereBetween('purchase_date', [$startDate, $endDate]);
+    }
+
+    /**
+     * Scope for filtering by supplier
+     */
+    public function scopeForSupplier($query, $supplierId)
+    {
+        return $query->where('supplier_id', $supplierId);
+    }
+
+    /**
+     * Scope for filtering by user/purchaser
+     */
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
+    }
 }

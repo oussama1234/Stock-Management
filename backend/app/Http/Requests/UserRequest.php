@@ -25,10 +25,18 @@ class UserRequest extends FormRequest
         'name'          => 'required|string|min:3|max:40',
         'email'         => 'required|email|string|max:255',
         'profileImage'  => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        'avatar'        => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         'password'      => 'nullable|string|min:6',
         'currentPassword' => 'nullable|string|min:6',
         'role'          => 'sometimes|string|in:admin,manager,user',
         'newPassword'   => 'nullable|string|min:6|confirmed',
+        // Profile fields
+        'phone'         => 'nullable|string|max:20',
+        'bio'           => 'nullable|string|max:1000',
+        'location'      => 'nullable|string|max:100',
+        'website'       => 'nullable|url|max:255',
+        'job_title'     => 'nullable|string|max:100',
+        'two_factor_enabled' => 'nullable|boolean',
     ];
 }
 

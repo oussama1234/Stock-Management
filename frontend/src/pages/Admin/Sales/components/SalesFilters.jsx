@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import { Filter, Plus, Search, Download, Calendar, X, DollarSign } from "lucide-react";
 import { AxiosClient } from "@/api/AxiosClient";
 
-export default function SalesFilters({ onSearch, onNewSale, onFiltersChange }) {
+export default function SalesFilters({ onSearch, onNewSale, onFiltersChange, onExport, isExporting }) {
   const [text, setText] = useState("");
   const [appliedText, setAppliedText] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -29,7 +29,6 @@ export default function SalesFilters({ onSearch, onNewSale, onFiltersChange }) {
     sortBy: 'sale_date',
     sortOrder: 'desc'
   });
-  const [exporting, setExporting] = useState(false);
 
   // Apply search and filters
   const applyFilters = useCallback(() => {
@@ -67,36 +66,6 @@ export default function SalesFilters({ onSearch, onNewSale, onFiltersChange }) {
     onFiltersChange?.(defaultFilters);
   }, [onSearch, onFiltersChange]);
 
-  const handleExport = useCallback(async () => {
-    try {
-      setExporting(true);
-      const params = new URLSearchParams({
-        search: appliedText,
-        date_from: appliedFilters.dateFrom,
-        date_to: appliedFilters.dateTo,
-        format: 'csv'
-      });
-      
-      const response = await AxiosClient.get(`/sales/export?${params}`, {
-        responseType: 'blob'
-      });
-      
-      // Create download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `sales_export_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Export failed:', error);
-      alert('Export failed. Please try again.');
-    } finally {
-      setExporting(false);
-    }
-  }, [appliedText, appliedFilters.dateFrom, appliedFilters.dateTo]);
 
   return (
     <div className="mb-6 space-y-4">
@@ -136,12 +105,12 @@ export default function SalesFilters({ onSearch, onNewSale, onFiltersChange }) {
           </button>
 
           <button
-            onClick={handleExport}
-            disabled={exporting}
+            onClick={onExport}
+            disabled={isExporting}
             className="px-4 py-3 bg-emerald-100 text-emerald-700 rounded-xl hover:bg-emerald-200 transition-colors duration-300 flex items-center disabled:opacity-50"
           >
             <Download className="h-4 w-4 mr-2" />
-            {exporting ? 'Exporting...' : 'Export'}
+            {isExporting ? 'Exporting...' : 'Export'}
           </button>
 
           <motion.button

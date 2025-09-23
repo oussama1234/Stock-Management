@@ -17,11 +17,10 @@ class PurchaseItemFactory extends Factory
     public function definition(): array
     {
         return [
-            //define the factory fields for PurchaseItem model
-            'purchase_id' => \App\Models\Purchase::factory(),
-            'product_id' => \App\Models\Product::factory(),
-            'quantity' => $this->faker->numberBetween(1, 100),
-            'price' => $this->faker->randomFloat(2, 1, 1000),
+            'purchase_id' => 1, // Will be set by seeder
+            'product_id' => $this->faker->numberBetween(1, 64), // Reference existing products
+            'quantity' => $this->faker->numberBetween(5, 50),
+            'price' => $this->faker->randomFloat(2, 10, 500), // Wholesale prices
         ];
     }
 }

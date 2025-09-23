@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class SaleController extends Controller
 {
@@ -22,7 +23,7 @@ class SaleController extends Controller
     public function index(Request $request)
     {
         // Debug: Log all request parameters
-        \Log::info('Sales API Request', ['all_params' => $request->all()]);
+        Log::info('Sales API Request', ['all_params' => $request->all()]);
         
         $page = max(1, (int) $request->input('page', 1));
         $perPage = max(1, min(100, (int) $request->input('per_page', 20)));
@@ -37,7 +38,7 @@ class SaleController extends Controller
         $userId = $request->input('user_id');
         
         // Debug: Log parsed parameters
-        \Log::info('Sales API Parsed', [
+        Log::info('Sales API Parsed', [
             'dateFrom' => $dateFrom,
             'dateTo' => $dateTo,
             'minAmount' => $minAmount,
@@ -144,18 +145,21 @@ class SaleController extends Controller
 
     /**
      * Show a single sale with related items and product details.
+     * Optimized with caching for better performance on repeated requests.
      */
     public function show($id)
     {
+        // Create cache key for individual sale lookup
         $key = CacheHelper::key('sales', 'by_id', ['id' => (int) $id]);
-        $ttl = CacheHelper::ttlSeconds('API_SALES_TTL', 60);
+        $ttl = CacheHelper::ttlSeconds('API_SALES_TTL', 60); // Default 1 minute cache
 
+        // Cache the sale data with all relationships to reduce database queries
         $sale = Cache::remember($key, now()->addSeconds($ttl), function () use ($id) {
             return Sale::with([
-                'user:id,name,email,role',
-                'items:id,sale_id,product_id,quantity,price,created_at',
-                'items.product:id,name,price,category_id,image,stock',
-                'items.product.category:id,name',
+                'user:id,name,email,role', // Only essential user fields
+                'items:id,sale_id,product_id,quantity,price,created_at', // Sale item details
+                'items.product:id,name,price,category_id,image,stock', // Product info
+                'items.product.category:id,name', // Category name for display
             ])->findOrFail($id);
         });
 
@@ -246,39 +250,102 @@ class SaleController extends Controller
     }
 
     /**
-     * Update a sale (basic fields) - items update could be done similarly or via dedicated endpoints.
+     * Update a sale with full editing capability including items.
+     * Supports both basic field updates and complete sale reconstruction.
+     * Optimized with caching and transaction safety.
+     * 
+     * Expected JSON payloads:
+     * Basic update: { customer_name?, tax?, discount?, sale_date? }
+     * Full update: { customer_name?, tax?, discount?, sale_date?, items: [{ product_id, quantity, price }] }
      */
     public function update(Request $request, $id)
     {
+        // Comprehensive validation for both basic and full updates
         $validated = $request->validate([
             'customer_name' => ['nullable','string','max:255'],
             'tax' => ['nullable','numeric','min:0'],
             'discount' => ['nullable','numeric','min:0'],
-            'sale_date' => ['nullable','string'], // Accept string and parse manually
+            'sale_date' => ['nullable','string'], // Accept ISO string and parse manually
+            'items' => ['sometimes','array','min:1'], // Optional but if provided must be valid
+            'items.*.product_id' => ['required_with:items','integer','exists:products,id'],
+            'items.*.quantity' => ['required_with:items','integer','min:1'],
+            'items.*.price' => ['required_with:items','numeric','min:0'],
         ]);
 
-        $sale = Sale::findOrFail($id);
-        
-        // Handle datetime fields with proper parsing
-        $sale->customer_name = $validated['customer_name'] ?? $sale->customer_name;
-        $sale->tax = isset($validated['tax']) ? (float) $validated['tax'] : $sale->tax;
-        $sale->discount = isset($validated['discount']) ? (float) $validated['discount'] : $sale->discount;
-        
-        // Handle sale_date with proper timezone parsing
-        if (!empty($validated['sale_date'])) {
-            try {
-                $sale->sale_date = Carbon::parse($validated['sale_date'])->setTimezone(config('app.timezone'));
-            } catch (\Exception $e) {
-                // Keep existing sale_date if parsing fails
+        // Use database transaction for data integrity
+        $sale = DB::transaction(function () use ($validated, $id) {
+            // Find sale with items for potential updates
+            $sale = Sale::with('items')->findOrFail($id);
+            
+            // Update basic sale fields
+            $sale->customer_name = $validated['customer_name'] ?? $sale->customer_name;
+            $sale->tax = isset($validated['tax']) ? (float) $validated['tax'] : $sale->tax;
+            $sale->discount = isset($validated['discount']) ? (float) $validated['discount'] : $sale->discount;
+            
+            // Handle sale_date with proper timezone parsing and error handling
+            if (!empty($validated['sale_date'])) {
+                try {
+                    $sale->sale_date = Carbon::parse($validated['sale_date'])->setTimezone(config('app.timezone'));
+                } catch (\Exception $e) {
+                    Log::warning('Failed to parse sale_date in update', [
+                        'sale_id' => $id,
+                        'sale_date' => $validated['sale_date'],
+                        'error' => $e->getMessage()
+                    ]);
+                    // Keep existing sale_date if parsing fails
+                }
             }
-        }
-        
-        $sale->save();
+            
+            // Handle items update if provided (complete replacement strategy)
+            if (isset($validated['items'])) {
+                // Delete existing items (triggers stock restoration via observer)
+                $sale->items()->delete();
+                
+                // Create new items and calculate new total
+                $total = 0.0;
+                foreach ($validated['items'] as $item) {
+                    $lineTotal = (float) $item['price'] * (int) $item['quantity'];
+                    $total += $lineTotal;
 
-        CacheHelper::bump('sales');
-        CacheHelper::bump('dashboard_metrics');
+                    SaleItem::create([
+                        'sale_id' => $sale->id,
+                        'product_id' => (int) $item['product_id'],
+                        'quantity' => (int) $item['quantity'],
+                        'price' => (float) $item['price'],
+                    ]);
+                }
+                
+                // Recalculate total with tax and discount
+                $totalWithTax = $total + $sale->tax - $sale->discount;
+                $sale->total_amount = max(0, $totalWithTax);
+            } else {
+                // If no items updated, just recalculate total with new tax/discount
+                $itemsTotal = $sale->items->sum(function($item) {
+                    return $item->quantity * $item->price;
+                });
+                $totalWithTax = $itemsTotal + $sale->tax - $sale->discount;
+                $sale->total_amount = max(0, $totalWithTax);
+            }
+            
+            // Save the updated sale
+            $sale->save();
+            
+            // Return sale with fresh relationships
+            return $sale->load([
+                'user:id,name,email,role',
+                'items:id,sale_id,product_id,quantity,price,created_at',
+                'items.product:id,name,price,category_id,image,stock',
+                'items.product.category:id,name',
+            ]);
+        });
 
-        return response()->json($sale->fresh());
+        // Invalidate relevant caches for performance consistency
+        CacheHelper::bump('sales'); // Clear all sale-related caches
+        CacheHelper::bump('products'); // Product stock may have changed
+        CacheHelper::bump('stock_movements'); // Stock movements affected
+        CacheHelper::bump('dashboard_metrics'); // Dashboard data needs refresh
+
+        return response()->json($sale);
     }
 
     /**
@@ -420,5 +487,70 @@ class SaleController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+    
+    /**
+     * Get sales for a specific product - used by ProductDetails page.
+     * Optimized with caching for performance.
+     * 
+     * @param int $productId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getByProduct($productId)
+    {
+        // Validate product ID
+        $productId = (int) $productId;
+        if ($productId <= 0) {
+            return response()->json(['error' => 'Invalid product ID'], 400);
+        }
+        
+        // Create cache key for product-specific sales
+        $key = CacheHelper::key('sales', 'by_product', ['product_id' => $productId]);
+        $ttl = CacheHelper::ttlSeconds('API_SALES_TTL', 60); // 1 minute cache
+        
+        // Cache the sales data to reduce database load
+        $sales = Cache::remember($key, now()->addSeconds($ttl), function () use ($productId) {
+            return Sale::with([
+                'user:id,name,email,role',
+                'items' => function ($query) use ($productId) {
+                    // Only get items for this specific product
+                    $query->where('product_id', $productId)
+                          ->select('id', 'sale_id', 'product_id', 'quantity', 'price', 'created_at');
+                },
+                'items.product:id,name,price,category_id,image',
+                'items.product.category:id,name',
+            ])
+            ->whereHas('items', function ($query) use ($productId) {
+                // Only sales that contain this product
+                $query->where('product_id', $productId);
+            })
+            ->orderByDesc('sale_date')
+            ->limit(50) // Limit to recent 50 sales for performance
+            ->get()
+            ->map(function ($sale) {
+                // Transform data for frontend compatibility
+                return [
+                    'id' => $sale->id,
+                    'customer_name' => $sale->customer_name,
+                    'sale_date' => $sale->sale_date,
+                    'tax' => $sale->tax,
+                    'discount' => $sale->discount,
+                    'total_amount' => $sale->total_amount,
+                    'user' => $sale->user,
+                    'created_at' => $sale->created_at,
+                    // Only include items for this product
+                    'items' => $sale->items->map(function ($item) {
+                        return [
+                            'id' => $item->id,
+                            'quantity' => $item->quantity,
+                            'price' => $item->price,
+                            'created_at' => $item->created_at,
+                        ];
+                    })
+                ];
+            });
+        });
+        
+        return response()->json($sales);
     }
 }

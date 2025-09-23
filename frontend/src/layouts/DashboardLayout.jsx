@@ -20,14 +20,14 @@ const DashboardLayout = ({ children }) => {
     };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100 via-blue-50 overflow-hidden">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100 via-blue-50 dark:from-gray-900 dark:to-gray-800 dark:via-gray-900 overflow-hidden">
       <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <Navbar toggleSidebar={toggleSidebar} isSidebarOpen={sidebarOpen} />
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200/80 p-6 min-h-full">
+        <main className="flex-1 overflow-y-auto p-2 md:p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200/80 dark:border-gray-700/80 p-4 min-h-full">
             {children}
           </div>
         </main>

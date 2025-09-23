@@ -4,16 +4,31 @@
 import { AxiosClient } from "./AxiosClient";
 
 /**
- * getSalesOverview - Get sales overview statistics
+ * Get sales overview statistics
  * @param {{ period?: string }} params
+ * @returns {Promise<{
+ *   total_sales: number,
+ *   total_orders: number,
+ *   average_order_value: number,
+ *   total_items_sold: number,
+ *   unique_customers: number
+ * }>}
  */
 export const getSalesOverview = async (params = {}) => {
   const { period = "30" } = params;
-  const res = await AxiosClient.get("/sales/analytics/overview", { 
-    params: { period } 
+  const res = await AxiosClient.get("/sales/analytics/overview", {
+    params: { period },
   });
   return res.data;
 };
+
+/**
+ * Returns an object with sales overview statistics
+ * - total_sales: total sales value
+ * - total_orders: total number of orders
+ * - average_order_value: average order value
+ * - total_items_sold: total number of items sold
+ * - unique_customers: total number of unique customers
 
 /**
  * getSalesTrends - Get sales trends over time
@@ -22,7 +37,7 @@ export const getSalesOverview = async (params = {}) => {
 export const getSalesTrends = async (params = {}) => {
   const { period = "30", interval = "day" } = params;
   const res = await AxiosClient.get("/sales/analytics/trends", {
-    params: { period, interval }
+    params: { period, interval },
   });
   return res.data;
 };
@@ -34,7 +49,7 @@ export const getSalesTrends = async (params = {}) => {
 export const getTopProducts = async (params = {}) => {
   const { period = "30", limit = 10 } = params;
   const res = await AxiosClient.get("/sales/analytics/top-products", {
-    params: { period, limit }
+    params: { period, limit },
   });
   return res.data;
 };
@@ -46,7 +61,7 @@ export const getTopProducts = async (params = {}) => {
 export const getTopCustomers = async (params = {}) => {
   const { period = "30", limit = 10 } = params;
   const res = await AxiosClient.get("/sales/analytics/customers", {
-    params: { period, limit }
+    params: { period, limit },
   });
   return res.data;
 };
@@ -58,7 +73,7 @@ export const getTopCustomers = async (params = {}) => {
 export const getSalesByCategory = async (params = {}) => {
   const { period = "30" } = params;
   const res = await AxiosClient.get("/sales/analytics/categories", {
-    params: { period }
+    params: { period },
   });
   return res.data;
 };
@@ -70,7 +85,7 @@ export const getSalesByCategory = async (params = {}) => {
 export const getSalesPeople = async (params = {}) => {
   const { period = "30" } = params;
   const res = await AxiosClient.get("/sales/analytics/sales-people", {
-    params: { period }
+    params: { period },
   });
   return res.data;
 };
@@ -82,7 +97,7 @@ export const getSalesPeople = async (params = {}) => {
 export const getLowStockAlerts = async (params = {}) => {
   const { days = 30, threshold = 10 } = params;
   const res = await AxiosClient.get("/sales/analytics/low-stock-alerts", {
-    params: { days, threshold }
+    params: { days, threshold },
   });
   return res.data;
 };
