@@ -227,13 +227,14 @@ export default function SaleModal({ open, onClose, onSubmit, initial }) {
                   >
                     <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
                       <DollarSign className="h-4 w-4 text-emerald-500 mr-2" />
-                      Tax Amount
+                      Tax (%)
                     </label>
                     <div className="relative">
                       <input
                         type="number"
                         step="0.01"
                         min="0"
+                        max="100"
                         value={form.tax}
                         onChange={(e) => update({ tax: e.target.value })}
                         className="px-6 py-4 w-full rounded-2xl border-2 border-gray-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 focus:outline-none transition-all duration-300 bg-gradient-to-r from-white to-emerald-50/30 placeholder-gray-400"
@@ -249,13 +250,14 @@ export default function SaleModal({ open, onClose, onSubmit, initial }) {
                   >
                     <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
                       <DollarSign className="h-4 w-4 text-rose-500 mr-2" />
-                      Discount Amount
+                      Discount (%)
                     </label>
                     <div className="relative">
                       <input
                         type="number"
                         step="0.01"
                         min="0"
+                        max="100"
                         value={form.discount}
                         onChange={(e) => update({ discount: e.target.value })}
                         className="px-6 py-4 w-full rounded-2xl border-2 border-gray-200 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 focus:outline-none transition-all duration-300 bg-gradient-to-r from-white to-rose-50/30 placeholder-gray-400"

@@ -5,12 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
-use App\Support\CacheHelper; // Namespaced cache helper
+use App\Support\CacheHelper;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class SaleController extends Controller
@@ -171,8 +171,8 @@ class SaleController extends Controller
      * Expected JSON:
      * {
      *   customer_name?: string,
-     *   tax?: number,
-     *   discount?: number,
+     *   tax?: number (percentage 0-100),
+     *   discount?: number (percentage 0-100),
      *   sale_date?: datetime (ISO string),
      *   items: [{ product_id:int, quantity:int>0, price:number>0 }]
      * }
@@ -182,8 +182,8 @@ class SaleController extends Controller
     {
         $validated = $request->validate([
             'customer_name' => ['nullable','string','max:255'],
-            'tax' => ['nullable','numeric','min:0'],
-            'discount' => ['nullable','numeric','min:0'],
+            'tax' => ['nullable','numeric','min:0','max:100'], // Tax as percentage (0-100)
+            'discount' => ['nullable','numeric','min:0','max:100'], // Discount as percentage (0-100)
             'sale_date' => ['nullable','string'], // Accept string and parse manually
             'items' => ['required','array','min:1'],
             'items.*.product_id' => ['required','integer','exists:products,id'],
@@ -227,9 +227,11 @@ class SaleController extends Controller
                 ]);
             }
 
-            // Apply tax and discount to total_amount if needed
-            $totalWithTax = $total + $sale->tax - $sale->discount;
-            $sale->total_amount = max(0, $totalWithTax);
+            // Calculate tax and discount amounts from percentages
+            $taxAmount = ($sale->tax / 100) * $total;
+            $discountAmount = ($sale->discount / 100) * $total;
+            $totalWithTaxDiscount = $total + $taxAmount - $discountAmount;
+            $sale->total_amount = max(0, $totalWithTaxDiscount);
             $sale->save();
 
             return $sale->load([
@@ -255,16 +257,16 @@ class SaleController extends Controller
      * Optimized with caching and transaction safety.
      * 
      * Expected JSON payloads:
-     * Basic update: { customer_name?, tax?, discount?, sale_date? }
-     * Full update: { customer_name?, tax?, discount?, sale_date?, items: [{ product_id, quantity, price }] }
+     * Basic update: { customer_name?, tax?(percentage 0-100), discount?(percentage 0-100), sale_date? }
+     * Full update: { customer_name?, tax?(percentage 0-100), discount?(percentage 0-100), sale_date?, items: [{ product_id, quantity, price }] }
      */
     public function update(Request $request, $id)
     {
         // Comprehensive validation for both basic and full updates
         $validated = $request->validate([
             'customer_name' => ['nullable','string','max:255'],
-            'tax' => ['nullable','numeric','min:0'],
-            'discount' => ['nullable','numeric','min:0'],
+            'tax' => ['nullable','numeric','min:0','max:100'], // Tax as percentage (0-100)
+            'discount' => ['nullable','numeric','min:0','max:100'], // Discount as percentage (0-100)
             'sale_date' => ['nullable','string'], // Accept ISO string and parse manually
             'items' => ['sometimes','array','min:1'], // Optional but if provided must be valid
             'items.*.product_id' => ['required_with:items','integer','exists:products,id'],
@@ -315,16 +317,20 @@ class SaleController extends Controller
                     ]);
                 }
                 
-                // Recalculate total with tax and discount
-                $totalWithTax = $total + $sale->tax - $sale->discount;
-                $sale->total_amount = max(0, $totalWithTax);
+                // Recalculate total with tax and discount percentages
+                $taxAmount = ($sale->tax / 100) * $total;
+                $discountAmount = ($sale->discount / 100) * $total;
+                $totalWithTaxDiscount = $total + $taxAmount - $discountAmount;
+                $sale->total_amount = max(0, $totalWithTaxDiscount);
             } else {
-                // If no items updated, just recalculate total with new tax/discount
+                // If no items updated, just recalculate total with new tax/discount percentages
                 $itemsTotal = $sale->items->sum(function($item) {
                     return $item->quantity * $item->price;
                 });
-                $totalWithTax = $itemsTotal + $sale->tax - $sale->discount;
-                $sale->total_amount = max(0, $totalWithTax);
+                $taxAmount = ($sale->tax / 100) * $itemsTotal;
+                $discountAmount = ($sale->discount / 100) * $itemsTotal;
+                $totalWithTaxDiscount = $itemsTotal + $taxAmount - $discountAmount;
+                $sale->total_amount = max(0, $totalWithTaxDiscount);
             }
             
             // Save the updated sale

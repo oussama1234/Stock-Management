@@ -353,7 +353,7 @@ const ContentSpinner = ({
         className="text-center mt-8"
       >
         <AnimatePresence mode="wait">
-          <motion.p
+          <motion.div
             key={currentStep}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -368,7 +368,7 @@ const ContentSpinner = ({
               <ArrowRight className="h-4 w-4 text-blue-500" />
             </motion.div>
             {steps[currentStep] || message}
-          </motion.p>
+          </motion.div>
         </AnimatePresence>
 
         {/* Progress bar */}

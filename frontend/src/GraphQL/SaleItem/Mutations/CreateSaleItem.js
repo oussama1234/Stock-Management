@@ -25,8 +25,58 @@ export const CREATE_SALE_ITEM_MUTATION = gql`
  */
 
 export const useCreateSaleItemMutation = () => {
-  const [createSaleItem, { data, loading, error }] = useMutation(
-    CREATE_SALE_ITEM_MUTATION
+  const [createSaleItem, { data, loading, error, client }] = useMutation(
+    CREATE_SALE_ITEM_MUTATION,
+    {
+      // Use update function to manually clear cache
+      update: (cache, { data }) => {
+        if (data?.createSaleByProduct) {
+          console.log('🗑️ Clearing Apollo cache after sale creation...');
+          
+          // Clear all cached queries related to this product
+          const productId = data.createSaleByProduct.product_id;
+          
+          // Evict all product-related cache entries
+          cache.evict({ 
+            id: `Product:${productId}` 
+          });
+          
+          // Evict paginated queries for this product
+          cache.evict({ 
+            fieldName: 'paginatedSaleItemsByProduct',
+            args: { productId }
+          });
+          
+          cache.evict({ 
+            fieldName: 'paginatedStockMovementsByProduct', 
+            args: { productId }
+          });
+          
+          cache.evict({ 
+            fieldName: 'paginatedPurchaseItemsByProduct',
+            args: { productId }
+          });
+          
+          cache.evict({ 
+            fieldName: 'productById',
+            args: { id: productId }
+          });
+          
+          // Garbage collect evicted entries
+          cache.gc();
+          
+          // As a last resort, clear the entire store to force fresh data
+          setTimeout(() => {
+            cache.reset();
+            console.log('🗑️ Complete Apollo cache reset performed');
+          }, 100);
+          
+          console.log('✅ Apollo cache cleared successfully');
+        }
+      },
+      // Force network-only fetch policy for next queries
+      fetchPolicy: 'network-only'
+    }
   );
-  return { createSaleItem, data, loading, error };
+  return { createSaleItem, data, loading, error, client };
 };

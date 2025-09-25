@@ -21,6 +21,7 @@ import PurchasesTestHooks from "@/pages/Admin/Purchases/PurchasesTestHooks";
 import PurchasesMinimal from "@/pages/Admin/Purchases/PurchasesMinimal";
 import PurchasesAnalytics from "@/pages/Admin/Purchases/PurchasesAnalytics";
 import SupportPage from "@/pages/SupportPage";
+import NotificationsPage from "@/pages/NotificationsPage";
 
 export const HomeRoute = "/"; // home route
 export const LoginRoute = "/login"; // login route
@@ -33,6 +34,7 @@ export const SalesRoute = DashboardRoute + "/sales";
 export const SalesAnalyticsRoute = DashboardRoute + "/sales/analytics";
 export const PurchasesRoute = DashboardRoute + "/purchases";
 export const PurchasesAnalyticsRoute = DashboardRoute + "/purchases/analytics";
+export const NotificationsRoute = DashboardRoute + "/notifications";
 export const SupportRoute = DashboardRoute + "/support";
 
 
@@ -50,6 +52,7 @@ export const routes = [
   {path: SalesAnalyticsRoute, element : <ProtectedRoute><DashboardLayout><SalesAnalytics /></DashboardLayout></ProtectedRoute>},
   {path: PurchasesRoute, element : <ProtectedRoute><DashboardLayout><Purchases /></DashboardLayout></ProtectedRoute>},
   {path: PurchasesAnalyticsRoute, element : <ProtectedRoute><DashboardLayout><PurchasesAnalytics /></DashboardLayout></ProtectedRoute>},
+  {path: NotificationsRoute, element : <ProtectedRoute><DashboardLayout><NotificationsPage /></DashboardLayout></ProtectedRoute>},
   {path: SupportRoute, element : <ProtectedRoute><DashboardLayout><SupportPage /></DashboardLayout></ProtectedRoute>},
   { path: "*", element: <NotFound /> },
 ];

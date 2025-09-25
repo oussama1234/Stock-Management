@@ -26,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Domain event observers registration
+        \App\Models\Purchase::observe(\App\Observers\PurchaseObserver::class);
         \App\Models\SaleItem::observe(\App\Observers\SaleItemObserver::class);
     }
 }

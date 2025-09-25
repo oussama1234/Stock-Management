@@ -87,8 +87,8 @@ export default function SalesAnalytics() {
               <BarChart3 className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">Sales Analytics</h1>
-              <p className="text-gray-600">Sales performance insights and trends</p>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Sales Analytics</h1>
+              <p className="text-gray-600 dark:text-gray-300">Sales performance insights and trends</p>
             </div>
           </div>
         </div>
@@ -128,8 +128,8 @@ export default function SalesAnalytics() {
             <BarChart3 className="h-8 w-8 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Sales Analytics</h1>
-            <p className="text-gray-600">Sales performance insights and trends</p>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Sales Analytics</h1>
+            <p className="text-gray-600 dark:text-gray-300">Sales performance insights and trends</p>
           </div>
         </div>
         
@@ -270,7 +270,7 @@ export default function SalesAnalytics() {
             <div className="bg-gradient-to-r from-yellow-400 to-amber-500 p-3 rounded-2xl mr-4 shadow-lg">
               <Crown className="h-6 w-6 text-white" />
             </div>
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
               Top Products
             </h3>
           </div>
@@ -289,16 +289,16 @@ export default function SalesAnalytics() {
                     {index + 1}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-800 text-lg">{product.product?.name || 'Unknown'}</p>
-                    <p className="text-sm text-gray-600 flex items-center">
+                    <p className="font-semibold text-gray-800 dark:text-gray-200 text-lg">{product.product?.name || 'Unknown'}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
                       <Package className="h-3 w-3 mr-1" />
                       {formatNumber(product.total_quantity)} units sold
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-xl text-gray-800">{formatCurrency(product.total_revenue)}</p>
-                  <p className="text-xs text-gray-500">Revenue</p>
+                  <p className="font-bold text-xl text-gray-800 dark:text-gray-200">{formatCurrency(product.total_revenue)}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Revenue</p>
                 </div>
               </motion.div>
             ))}
@@ -316,7 +316,7 @@ export default function SalesAnalytics() {
             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-3 rounded-2xl mr-4 shadow-lg">
               <Users className="h-6 w-6 text-white" />
             </div>
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
               Top Customers
             </h3>
           </div>
@@ -335,16 +335,16 @@ export default function SalesAnalytics() {
                     {index + 1}
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-800 text-lg">{customer.customer_name}</p>
-                    <p className="text-sm text-gray-600 flex items-center">
+                    <p className="font-semibold text-gray-800 dark:text-gray-200 text-lg">{customer.customer_name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
                       <ShoppingCart className="h-3 w-3 mr-1" />
                       {formatNumber(customer.total_orders)} orders placed
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-xl text-gray-800">{formatCurrency(customer.total_spent)}</p>
-                  <p className="text-xs text-gray-500">Total Spent</p>
+                  <p className="font-bold text-xl text-gray-800 dark:text-gray-200">{formatCurrency(customer.total_spent)}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Total Spent</p>
                 </div>
               </motion.div>
             ))}
@@ -365,7 +365,7 @@ export default function SalesAnalytics() {
             <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-3 rounded-2xl mr-4 shadow-lg">
               <BarChart3 className="h-6 w-6 text-white" />
             </div>
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
               Sales by Category
             </h3>
           </div>
@@ -386,11 +386,11 @@ export default function SalesAnalytics() {
                   >
                     <div className="w-3 h-3 bg-white rounded-full"></div>
                   </div>
-                  <span className="text-gray-800 font-semibold text-lg">{category.category_name}</span>
+                  <span className="text-gray-800 dark:text-gray-200 font-semibold text-lg">{category.category_name}</span>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-xl text-gray-800">{formatCurrency(category.total_revenue)}</p>
-                  <p className="text-sm text-gray-600 flex items-center justify-end">
+                  <p className="font-bold text-xl text-gray-800 dark:text-gray-200">{formatCurrency(category.total_revenue)}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center justify-end">
                     <Package className="h-3 w-3 mr-1" />
                     {formatNumber(category.total_quantity)} items
                   </p>
@@ -411,7 +411,7 @@ export default function SalesAnalytics() {
             <div className="bg-gradient-to-r from-red-500 to-rose-600 p-3 rounded-2xl mr-4 shadow-lg">
               <AlertTriangle className="h-6 w-6 text-white" />
             </div>
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
               Low Stock Alerts
             </h3>
           </div>
@@ -430,13 +430,13 @@ export default function SalesAnalytics() {
                     <AlertTriangle className="h-4 w-4 text-white" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-800 text-lg">{item.name}</p>
-                    <p className="text-sm text-gray-600">{item.category_name}</p>
+                    <p className="font-semibold text-gray-800 dark:text-gray-200 text-lg">{item.name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{item.category_name}</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-red-600 font-bold text-xl">{item.stock} left</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {item.daily_velocity > 0 ? `${Math.ceil(item.days_remaining)} days left` : 'No recent sales'}
                   </p>
                 </div>

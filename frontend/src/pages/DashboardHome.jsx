@@ -638,10 +638,11 @@ export default function DashboardHome() {
       {/* Low Stock & Categories */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <motion.div
+          id="low-stock-alerts"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 1.3 }}
-          className="bg-gradient-to-br from-white via-red-50/30 to-rose-50/50 rounded-3xl shadow-2xl p-8 border border-red-200/30 backdrop-blur-sm"
+          className="bg-gradient-to-br from-white via-red-50/30 to-rose-50/50 rounded-3xl shadow-2xl p-8 border border-red-200/30 backdrop-blur-sm scroll-mt-20"
         >
           <div className="flex items-center mb-6">
             <div className="bg-gradient-to-r from-red-500 to-rose-600 p-3 rounded-2xl mr-4 shadow-lg">

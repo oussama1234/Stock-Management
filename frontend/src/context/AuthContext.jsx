@@ -30,12 +30,9 @@ export const AuthProvider = ({ children }) => {
       const userData = await login(email, password);
 
       setUser(userData.user);
-      console.log("userData:", userData);
       Toast.success("Logged in successfully");
       return { success: true, data: userData };
     } catch (error) {
-      console.log("Login error:", error);
-
       // If Laravel sends error response
       const message =
         error.response?.data?.message || error.message || "Login failed";
@@ -82,7 +79,6 @@ export const AuthProvider = ({ children }) => {
       setError(result.message);
     }
 
-    console.log("updateProfile result:", result);
     return result;
   };
 
@@ -90,10 +86,17 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        console.log('🔐 AuthContext: Fetching user...');
         const userData = await GetUser();
+        console.log('🔐 AuthContext: User fetched successfully', { userData: !!userData, userName: userData?.name });
         setUser(userData);
-        console.log("Fetched user data:", userData);
       } catch (error) {
+        console.error('🔐 AuthContext: Error fetching user', error);
+        console.log('🔐 AuthContext: Error details', {
+          status: error.response?.status,
+          message: error.response?.data?.message,
+          url: error.config?.url
+        });
         setError(
           error.response?.data?.message || "Failed to Load initial data"
         );
@@ -106,12 +109,24 @@ export const AuthProvider = ({ children }) => {
     fetchUser();
   }, []);
 
+  // Computed authentication state
+  const isAuthenticated = user !== null && !loading;
+  
+  // Debug logging
+  console.log('🔐 AuthContext: State', { 
+    user: !!user, 
+    loading, 
+    isAuthenticated,
+    userName: user?.name || 'Not set'
+  });
+
   return (
     <AuthContext.Provider
       value={{
         user,
         loading,
         error,
+        isAuthenticated,
         handleLogin,
         logoutUser,
         updateProfile,

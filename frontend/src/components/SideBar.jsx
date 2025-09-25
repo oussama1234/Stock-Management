@@ -6,8 +6,10 @@ import {
   ChevronDown,
   Database,
   FileText,
+  Heart,
   Home,
   Package,
+  Phone,
   Settings,
   ShoppingCart,
   Sparkles,
@@ -530,48 +532,87 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           </nav>
 
           {/* Enhanced Footer */}
-          <div className="p-4 border-t border-gray-200/50 dark:border-gray-700/50">
+          <div className="p-4 border-t border-gray-200/50 dark:border-gray-700/50 space-y-3">
+            {/* Made with Love & Contact */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.5 }}
-              className="bg-gradient-to-r from-gray-50/80 to-gray-100/60 dark:from-gray-700/80 dark:to-gray-600/60 p-4 rounded-xl border border-gray-200/50 dark:border-gray-600/50 backdrop-blur-sm shadow-sm"
+              transition={{ delay: 0.6, duration: 0.5 }}
+              className="bg-gradient-to-br from-rose-50/80 via-pink-50/60 to-red-50/80 dark:from-rose-900/20 dark:via-pink-900/20 dark:to-red-900/20 p-4 rounded-xl border border-rose-200/50 dark:border-rose-700/50 backdrop-blur-sm shadow-sm"
             >
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-gray-700 dark:text-gray-300 text-sm font-semibold">
-                  Stock Manager v2.0
-                </h3>
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              </div>
-              <p className="text-gray-500 dark:text-gray-400 text-xs mb-3">
-                Inventory Management System
-              </p>
-
-              {/* Mini stats */}
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center space-x-1">
-                  <div
-                    className={`w-1.5 h-1.5 ${currentTheme.accent} rounded-full`}
-                  />
-                  <span className="text-gray-600 dark:text-gray-300">
-                    Online
+              {/* Made with Love Header */}
+              <div className="flex items-center justify-center mb-3">
+                <motion.div
+                  animate={{
+                    scale: [1, 1.2, 1],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  className="flex items-center space-x-2"
+                >
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                    Made with
                   </span>
-                </div>
-                <span className="text-gray-400 dark:text-gray-500 font-mono">
-                  24/7
-                </span>
+                  <Heart className="h-3 w-3 text-rose-500 fill-rose-500" />
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                    by
+                  </span>
+                </motion.div>
               </div>
+
+              {/* Developer Name */}
+              <div className="text-center mb-3">
+                <p className="text-sm font-semibold bg-gradient-to-r from-rose-600 via-pink-600 to-red-600 dark:from-rose-400 dark:via-pink-400 dark:to-red-400 bg-clip-text text-transparent">
+                  Oussama Meqqadmi
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Full Stack Developer
+                </p>
+              </div>
+
+              {/* Contact Info */}
+              <motion.a
+                href="tel:+212637510285"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="group flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 dark:from-blue-400/20 dark:to-indigo-400/20 hover:from-blue-500/20 hover:to-indigo-500/20 dark:hover:from-blue-400/30 dark:hover:to-indigo-400/30 p-3 rounded-lg border border-blue-200/50 dark:border-blue-700/50 transition-all duration-300 cursor-pointer"
+              >
+                <motion.div
+                  animate={{
+                    rotate: [0, 5, -5, 0],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-sm group-hover:shadow-md transition-shadow duration-300"
+                >
+                  <Phone className="h-3 w-3 text-white" />
+                </motion.div>
+                <div className="text-center">
+                  <p className="text-xs font-medium text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
+                    +212 637 510 285
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    Let's connect!
+                  </p>
+                </div>
+              </motion.a>
             </motion.div>
 
-            {/* Additional info */}
+            {/* Copyright */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.5 }}
-              className="mt-3 text-center"
+              transition={{ delay: 0.7, duration: 0.5 }}
+              className="text-center"
             >
               <p className="text-xs text-gray-400 dark:text-gray-500">
-                © 2025 Oussama Meqqadmi
+                © 2025 • All rights reserved
               </p>
             </motion.div>
           </div>

@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 
 class Product extends Model
 {
     /** @use HasFactory<\Database\Factories\ProductFactory> */
-    use HasFactory;
+    use HasFactory, Notifiable;
 
     protected $table = 'products';
 
@@ -21,6 +22,7 @@ class Product extends Model
         'image',
         'price',
         'stock',
+        'low_stock_threshold',
         'category_id',
     ];
 

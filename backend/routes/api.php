@@ -78,6 +78,24 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/purchases/analytics/categories', [\App\Http\Controllers\PurchasesAnalyticsController::class, 'categories']);
     Route::get('/purchases/analytics/purchasing-team', [\App\Http\Controllers\PurchasesAnalyticsController::class, 'purchasingTeam']);
     Route::get('/purchases/analytics/cost-analysis', [\App\Http\Controllers\PurchasesAnalyticsController::class, 'costAnalysis']);
+
+    // Notification endpoints - Clean and organized routes
+    Route::prefix('notifications')->group(function () {
+        // Main notification CRUD operations
+        Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index']); // Get user notifications with pagination
+        Route::get('/unread-count', [\App\Http\Controllers\NotificationController::class, 'unreadCount']); // Get unread count
+        Route::get('/low-stock', [\App\Http\Controllers\NotificationController::class, 'lowStock']); // Get low stock notifications
+        Route::get('/stats', [\App\Http\Controllers\NotificationController::class, 'stats']); // Admin: Get statistics
+        Route::get('/{id}', [\App\Http\Controllers\NotificationController::class, 'show']); // Get specific notification
+        
+        // Notification actions
+        Route::patch('/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead']); // Mark as read
+        Route::patch('/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead']); // Mark all as read
+        
+        // Admin operations
+        Route::post('/', [\App\Http\Controllers\NotificationController::class, 'store']); // Create notification (admin)
+        Route::delete('/{id}', [\App\Http\Controllers\NotificationController::class, 'destroy']); // Delete notification
+    });
 });
 
     // Add your protected routes here

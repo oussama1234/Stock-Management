@@ -10,18 +10,17 @@ import {
   Settings,
   User,
   X,
-  Zap,
-  MessageSquare,
-  Shield,
   Sun,
   Moon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { usePreferences } from "../context/PreferencesContext";
-import { HomeRoute, MyProfileRoute, SupportRoute } from "../router/Index";
+import { HomeRoute, MyProfileRoute, SupportRoute, DashboardRoute } from "../router/Index";
 import { useToast } from "./Toaster/ToastContext";
+import { useNotificationContext } from "@/context/NotificationContext";
+import NotificationDropdown from "./Notifications/NotificationDropdown";
 const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -34,35 +33,23 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
   const Toast = useToast();
   const location = useLocation();
 
-  // Mock notifications data
-  const notifications = [
-    {
-      id: 1,
-      type: 'warning',
-      title: 'Low Stock Alert',
-      message: '5 products are running low on stock',
-      time: '2 min ago',
-      unread: true,
-    },
-    {
-      id: 2,
-      type: 'success',
-      title: 'Order Completed',
-      message: 'Purchase order #1234 has been delivered',
-      time: '1 hour ago',
-      unread: true,
-    },
-    {
-      id: 3,
-      type: 'info',
-      title: 'System Update',
-      message: 'New features are available',
-      time: '3 hours ago',
-      unread: false,
-    },
-  ];
+  // Use shared notification context for real-time updates
+  const { unreadCount } = useNotificationContext();
 
-  const unreadCount = notifications.filter(n => n.unread).length;
+  // Navigate to low stock alerts in dashboard
+  const handleNavigateToLowStock = useCallback(() => {
+    navigate(DashboardRoute);
+    // Wait for navigation then scroll to low stock section
+    setTimeout(() => {
+      const lowStockElement = document.getElementById('low-stock-alerts');
+      if (lowStockElement) {
+        lowStockElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }
+    }, 100);
+  }, [navigate]);
 
   // Set active link style for navbar
   const isActive = (link) => {
@@ -229,71 +216,13 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
                 )}
               </motion.button>
 
-            {/* Notifications Dropdown */}
+            {/* Real Notifications Dropdown */}
             <AnimatePresence>
-              {isNotificationsOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute top-full right-0 mt-2 w-80 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden z-[9999]"
-                >
-                  <div className="p-4 border-b border-gray-100 dark:border-gray-700">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">🔔 Notifications</h3>
-                      {unreadCount > 0 && (
-                        <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-medium rounded-full">
-                          {unreadCount} new
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="max-h-80 overflow-y-auto">
-                    {notifications.map((notification) => (
-                      <motion.div
-                        key={notification.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className={`p-4 border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${
-                          notification.unread ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''
-                        }`}
-                      >
-                        <div className="flex items-start space-x-3">
-                          <div className={`p-2 rounded-lg ${
-                            notification.type === 'warning' ? 'bg-amber-100 text-amber-600' :
-                            notification.type === 'success' ? 'bg-green-100 text-green-600' :
-                            'bg-blue-100 text-blue-600'
-                          }`}>
-                            {notification.type === 'warning' ? (
-                              <Zap className="h-4 w-4" />
-                            ) : notification.type === 'success' ? (
-                              <Shield className="h-4 w-4" />
-                            ) : (
-                              <MessageSquare className="h-4 w-4" />
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="text-sm font-medium text-gray-800 dark:text-gray-200">{notification.title}</h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{notification.message}</p>
-                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{notification.time}</p>
-                          </div>
-                          {notification.unread && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                  
-                  <div className="p-4 border-t border-gray-100 dark:border-gray-700">
-                    <button className="w-full text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors">
-                      View all notifications
-                    </button>
-                  </div>
-                </motion.div>
-              )}
+              <NotificationDropdown 
+                isOpen={isNotificationsOpen}
+                onClose={() => setIsNotificationsOpen(false)}
+                onNavigateToLowStock={handleNavigateToLowStock}
+              />
             </AnimatePresence>
           </motion.div>
 

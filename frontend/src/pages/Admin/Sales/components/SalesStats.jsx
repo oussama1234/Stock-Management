@@ -83,8 +83,22 @@ export default function SalesStats({ sales = [], meta = {} }) {
     );
     const uniqueCustomers = customerNames.size;
 
-    const totalTax = sales.reduce((sum, sale) => sum + Number(sale.tax || 0), 0);
-    const totalDiscount = sales.reduce((sum, sale) => sum + Number(sale.discount || 0), 0);
+    // Calculate actual tax and discount amounts from percentages
+    // Note: sale.tax and sale.discount are now percentages (0-100)
+    const totalTax = sales.reduce((sum, sale) => {
+      const saleSubtotal = sale.items?.reduce((itemSum, item) => 
+        itemSum + (item.quantity * item.price), 0) || 0;
+      const taxAmount = (Number(sale.tax || 0) / 100) * saleSubtotal;
+      return sum + taxAmount;
+    }, 0);
+    
+    const totalDiscount = sales.reduce((sum, sale) => {
+      const saleSubtotal = sale.items?.reduce((itemSum, item) => 
+        itemSum + (item.quantity * item.price), 0) || 0;
+      const discountAmount = (Number(sale.discount || 0) / 100) * saleSubtotal;
+      return sum + discountAmount;
+    }, 0);
+    
     const netRevenue = totalRevenue - totalDiscount;
 
     return {

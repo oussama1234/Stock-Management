@@ -17,15 +17,15 @@ import {
   Truck,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useCategoriesQuery } from "../../../GraphQL/Categories/Queries/Categories";
 import { useUpdateProductMutation } from "../../../GraphQL/Products/Mutations/UpdateProduct";
 import { useGetProductQuery } from "../../../GraphQL/Products/Queries/Products";
 import { usePaginatedPurchaseItemsByProductQuery } from "../../../GraphQL/PurchaseItem/Queries/PaginatedPurchaseItemsByProduct";
 import { useCreateSaleItemMutation } from "../../../GraphQL/SaleItem/Mutations/CreateSaleItem";
-import { usePaginatedSaleItemsByProductQuery } from "../../../GraphQL/SaleItem/Queries/PaginatedSaleItemsByProduct";
-import { usePaginatedStockMovementsByProductQuery } from "../../../GraphQL/StockMovement/Queries/PaginatedStockMovementsByProduct";
+import { usePaginatedSaleItemsByProductQuery, GET_PAGINATED_SALE_ITEMS_BY_PRODUCT } from "../../../GraphQL/SaleItem/Queries/PaginatedSaleItemsByProduct";
+import { usePaginatedStockMovementsByProductQuery, GET_PAGINATED_STOCK_MOVEMENTS_BY_PRODUCT } from "../../../GraphQL/StockMovement/Queries/PaginatedStockMovementsByProduct";
 import ContentSpinner from "../../../components/Spinners/ContentSpinner";
 import PaginationControls from "../../../components/pagination/PaginationControls";
 import usePagination from "../../../components/pagination/usePagination";
@@ -42,7 +42,9 @@ const ProductDetails = () => {
     data: productData,
     loading: productLoading,
     error: productError,
+    refetch: refetchProduct,
   } = useGetProductQuery(parseInt(id));
+  
 
 
   const navigate = useNavigate();
@@ -54,10 +56,12 @@ const ProductDetails = () => {
   // Load summary data for main product summary display
   const {
     data: mainSalesData,
+    refetch: refetchMainSales,
   } = usePaginatedSaleItemsByProductQuery(product?.id, 1, 50);
 
   const {
     data: mainPurchasesData,
+    refetch: refetchMainPurchases,
   } = usePaginatedPurchaseItemsByProductQuery(product?.id, 1, 50);
 
   // Extract data for main summary
@@ -92,17 +96,6 @@ const ProductDetails = () => {
     return Math.round(totalSold / diffMonths);
   };
 
-  const totalSaleValue = mainSales.reduce((total, sale) => {
-    const saleTotal = sale.sale?.total_amount || (sale.quantity * sale.price);
-    return total + (saleTotal || 0);
-  }, 0);
-  
-  const totalPurchaseValue = mainPurchases.reduce((total, purchase) => {
-    const purchaseTotal = purchase.purchase?.total_amount || (purchase.quantity * purchase.price);
-    return total + (purchaseTotal || 0);
-  }, 0);
-  
-  const profitValue = totalSaleValue - totalPurchaseValue;
 
   // Edit Product Modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -133,6 +126,10 @@ const ProductDetails = () => {
 
   // Sale Modal state
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false);
+  
+  // Refs for tab components to directly call their refetch functions
+  const salesTabRef = useRef(null);
+  const stockHistoryTabRef = useRef(null);
 
   // Categories and mutations
   const [loadCategories, { data: categoriesData, loading: loadingCategories }] =
@@ -146,29 +143,77 @@ const ProductDetails = () => {
 
   useEffect(() => {
     if (productData?.productById) {
+      const productInfo = productData.productById;
+      
       setProduct({
-        id: productData.productById.id,
-        name: productData.productById.name,
-        description: productData.productById.description,
-        image: productData.productById.image,
-        price: productData.productById.price,
-        stock: productData.productById.stock,
-        category: productData.productById.category.name,
-        createdAt: productData.productById.created_at,
-        updatedAt: productData.productById.updated_at,
-        // take 4 first letters of the category and join them with dashes
+        id: productInfo.id,
+        name: productInfo.name,
+        description: productInfo.description,
+        image: productInfo.image,
+        price: productInfo.price,
+        stock: productInfo.stock,
+        category: productInfo.category.name,
+        createdAt: productInfo.created_at,
+        updatedAt: productInfo.updated_at,
+        // Initialize analytics (will be calculated dynamically)
+        totalSalesCount: 0,
+        totalPurchasesCount: 0,
+        totalSalesValue: 0,
+        totalPurchaseValue: 0,
+        profitValue: 0,
+        profitPercentage: 0,
+        salesVelocity: 0,
+        salesHighlight: 'Loading analytics...',
+        // Generate SKU
         sku:
-          productData.productById.category.name
+          productInfo.category.name
             .split(" ")
             .map((word) => word.substring(0, 4).toUpperCase())
             .join("") +
           "-" +
-          (productData.productById.id < 10
-            ? "00" + productData.productById.id
-            : productData.productById.id),
+          (productInfo.id < 10
+            ? "00" + productInfo.id
+            : productInfo.id),
       });
     }
   }, [productData, id]);
+
+  // Calculate and update analytics dynamically when sales/purchases data changes
+  useEffect(() => {
+    if (product && mainSales && mainPurchases) {
+      // Calculate analytics from frontend data
+      const totalSaleValue = mainSales.reduce((total, sale) => {
+        const saleTotal = sale.sale?.total_amount || (sale.quantity * sale.price);
+        return total + (saleTotal || 0);
+      }, 0);
+      
+      const totalPurchaseValue = mainPurchases.reduce((total, purchase) => {
+        const purchaseTotal = purchase.purchase?.total_amount || (purchase.quantity * purchase.price);
+        return total + (purchaseTotal || 0);
+      }, 0);
+      
+      const profitValue = totalSaleValue - totalPurchaseValue;
+      const profitPercentage = totalSaleValue > 0 ? ((profitValue / totalSaleValue) * 100) : 0;
+      
+      // Calculate sales velocity
+      const salesVelocity = getSalesVelocity();
+      
+      // Update product state with calculated analytics using setter pattern
+      setProduct(prevProduct => ({
+        ...prevProduct,
+        totalSalesCount: mainSales.length,
+        totalPurchasesCount: mainPurchases.length,
+        totalSalesValue: totalSaleValue,
+        totalPurchaseValue: totalPurchaseValue,
+        profitValue: profitValue,
+        profitPercentage: profitPercentage,
+        salesVelocity: salesVelocity,
+        salesHighlight: salesVelocity > 0 
+          ? `Sales velocity: ${salesVelocity} units/month` 
+          : 'No significant sales activity'
+      }));
+    }
+  }, [product?.id, mainSales, mainPurchases]);
 
   // Load categories data
   useEffect(() => {
@@ -379,6 +424,65 @@ const ProductDetails = () => {
     });
   };
 
+  const handleQuickSaleCreated = async (newSaleItem) => {
+    try {
+      // Update local product stock optimistically using setter pattern
+      if (product && quickSaleData.quantity) {
+        const newStock = Math.max(0, product.stock - parseInt(quickSaleData.quantity));
+        setProduct(prev => ({
+          ...prev,
+          stock: newStock
+        }));
+        
+        // Force immediate refetch of ALL GraphQL queries
+        console.log('🔄 Forcing immediate refetch of all product-related queries...');
+        await Promise.all([
+          refetchProduct(), // Update product stock and basic info  
+          refetchMainSales(), // Update main sales data for analytics
+          refetchMainPurchases() // Update main purchases data for analytics
+        ]);
+      }
+      
+      // Dispatch events to refresh tabs with immediate and delayed strategies
+      const eventDetail = { productId: product.id, newSaleItem, timestamp: Date.now() };
+      
+      // Immediate events
+      window.dispatchEvent(new CustomEvent('salesDataUpdated', { detail: eventDetail }));
+      window.dispatchEvent(new CustomEvent('stockHistoryUpdated', { detail: eventDetail }));
+      window.dispatchEvent(new CustomEvent('productDataUpdated', { detail: eventDetail }));
+      
+      // Additional delayed refetch to account for backend cache clearing
+      setTimeout(async () => {
+        console.log('🔄 Delayed refetch after backend processing...');
+        try {
+          // Force refetch again after backend has processed
+          await Promise.all([
+            refetchProduct(),
+            refetchMainSales(),
+            refetchMainPurchases()
+          ]);
+          
+          // Dispatch delayed events
+          window.dispatchEvent(new CustomEvent('salesDataUpdated', { 
+            detail: { ...eventDetail, delayed: true, timestamp: Date.now() } 
+          }));
+          window.dispatchEvent(new CustomEvent('stockHistoryUpdated', { 
+            detail: { ...eventDetail, delayed: true, timestamp: Date.now() } 
+          }));
+          
+          console.log('✅ All data refreshed successfully');
+        } catch (error) {
+          console.error('❌ Delayed refetch failed:', error);
+        }
+      }, 2000); // Increased delay to 2 seconds for backend cache clearing
+      
+      toast.success('Sale created successfully! 🎉');
+    } catch (error) {
+      console.error('Error updating data after sale creation:', error);
+      toast.error('Sale created but data refresh failed');
+    }
+  };
+
   // Purchase Modal Functions
   const openPurchaseModal = () => {
     setIsPurchaseModalOpen(true);
@@ -440,9 +544,9 @@ const ProductDetails = () => {
     // Use actual calculated values from main summary (same as overview tab)
     const actualTotalSold = mainSales.reduce((total, sale) => total + (sale.quantity || 0), 0);
     const actualTotalPurchased = mainPurchases.reduce((total, purchase) => total + (purchase.quantity || 0), 0);
-    const actualTotalSaleValue = totalSaleValue;
-    const actualTotalPurchaseValue = totalPurchaseValue;
-    const actualProfitValue = profitValue;
+    const actualTotalSaleValue = product?.totalSalesValue || 0;
+    const actualTotalPurchaseValue = product?.totalPurchaseValue || 0;
+    const actualProfitValue = product?.profitValue || 0;
     const actualProfitPercentage = actualTotalSaleValue > 0 ? (actualProfitValue / actualTotalSaleValue) * 100 : 0;
     const actualSalesVelocity = getSalesVelocity();
 
@@ -1087,7 +1191,7 @@ const ProductDetails = () => {
                         <div>
                           <p className="text-sm font-medium text-gray-600">Total Revenue</p>
                           <p className="text-2xl font-bold text-gray-800">
-                            {formatCurrency(totalSaleValue)}
+                            {formatCurrency(product?.totalSalesValue || 0)}
                           </p>
                         </div>
                       </div>
@@ -1104,9 +1208,9 @@ const ProductDetails = () => {
                         <div>
                           <p className="text-sm font-medium text-gray-600">Net Profit</p>
                           <p className={`text-2xl font-bold ${
-                            profitValue >= 0 ? 'text-green-600' : 'text-red-600'
+                            (product?.profitValue || 0) >= 0 ? 'text-green-600' : 'text-red-600'
                           }`}>
-                            {formatCurrency(profitValue)}
+                            {formatCurrency(product?.profitValue || 0)}
                           </p>
                         </div>
                       </div>
@@ -1266,6 +1370,7 @@ const ProductDetails = () => {
               setQuickSaleData={setQuickSaleData}
               closeModal={closeQuickSaleModal}
               formatCurrency={formatCurrency}
+              onSaleCreated={handleQuickSaleCreated}
             />
           )}
         </AnimatePresence>
@@ -1827,6 +1932,48 @@ const SalesTab = ({ productId, formatCurrency, formatDate, onNewSale }) => {
     error: salesError,
     refetch,
   } = usePaginatedSaleItemsByProductQuery(productId, currentPage, perPage);
+  
+  // Listen for sales data updates
+  useEffect(() => {
+    console.log('📟 SalesTab: Setting up event listener for productId:', productId);
+    
+    const handleSalesUpdate = (event) => {
+      console.log('🔔 SalesTab: Received salesDataUpdated event:', event.detail);
+      const { productId: eventProductId, newSaleItem, timestamp } = event.detail;
+      
+      if (eventProductId === productId) {
+        console.log('✅ SalesTab: Event matches current product, refetching...', { 
+          eventProductId, 
+          currentProductId: productId,
+          newSaleItem,
+          timestamp 
+        });
+        
+        refetch()
+          .then((result) => {
+            console.log('✅ SalesTab: Refetch successful', { 
+              dataLength: result?.data?.paginatedSaleItemsByProduct?.data?.length,
+              timestamp: Date.now()
+            });
+          })
+          .catch((error) => {
+            console.error('❌ SalesTab: Refetch failed', error);
+          });
+      } else {
+        console.log('⚠️ SalesTab: Event productId mismatch', { 
+          eventProductId, 
+          currentProductId: productId 
+        });
+      }
+    };
+    
+    window.addEventListener('salesDataUpdated', handleSalesUpdate);
+    
+    return () => {
+      console.log('🧮 SalesTab: Cleaning up event listener for productId:', productId);
+      window.removeEventListener('salesDataUpdated', handleSalesUpdate);
+    };
+  }, [productId, refetch]);
 
   const sales = salesData?.paginatedSaleItemsByProduct?.data || [];
   const meta = salesData?.paginatedSaleItemsByProduct?.meta;
@@ -2006,6 +2153,47 @@ const StockHistoryTab = ({ productId, formatDate }) => {
     error: stockMovementsError,
     refetch,
   } = usePaginatedStockMovementsByProductQuery(productId, currentPage, perPage);
+  
+  // Listen for stock history updates
+  useEffect(() => {
+    console.log('📈 StockHistoryTab: Setting up event listener for productId:', productId);
+    
+    const handleStockHistoryUpdate = (event) => {
+      console.log('🔔 StockHistoryTab: Received stockHistoryUpdated event:', event.detail);
+      const { productId: eventProductId, timestamp } = event.detail;
+      
+      if (eventProductId === productId) {
+        console.log('✅ StockHistoryTab: Event matches current product, refetching...', { 
+          eventProductId, 
+          currentProductId: productId,
+          timestamp 
+        });
+        
+        refetch()
+          .then((result) => {
+            console.log('✅ StockHistoryTab: Refetch successful', { 
+              dataLength: result?.data?.paginatedStockMovementsByProduct?.data?.length,
+              timestamp: Date.now()
+            });
+          })
+          .catch((error) => {
+            console.error('❌ StockHistoryTab: Refetch failed', error);
+          });
+      } else {
+        console.log('⚠️ StockHistoryTab: Event productId mismatch', { 
+          eventProductId, 
+          currentProductId: productId 
+        });
+      }
+    };
+    
+    window.addEventListener('stockHistoryUpdated', handleStockHistoryUpdate);
+    
+    return () => {
+      console.log('🧮 StockHistoryTab: Cleaning up event listener for productId:', productId);
+      window.removeEventListener('stockHistoryUpdated', handleStockHistoryUpdate);
+    };
+  }, [productId, refetch]);
 
   const stockHistory = stockMovementsData?.paginatedStockMovementsByProduct?.data || [];
   const meta = stockMovementsData?.paginatedStockMovementsByProduct?.meta;
@@ -2208,6 +2396,7 @@ const QuickSaleModal = ({
   closeModal,
   formatCurrency,
   editingSale = null,
+  onSaleCreated,
 }) => {
   const toast = useToast();
   const [errors, setErrors] = useState({});
@@ -2245,12 +2434,12 @@ const QuickSaleModal = ({
       newErrors.price = "Price must be greater than 0";
     }
 
-    if (quickSaleData.tax < 0) {
-      newErrors.tax = "Tax cannot be negative";
+    if (quickSaleData.tax < 0 || quickSaleData.tax > 100) {
+      newErrors.tax = "Tax must be between 0 and 100 percent";
     }
 
-    if (quickSaleData.discount < 0) {
-      newErrors.discount = "Discount cannot be negative";
+    if (quickSaleData.discount < 0 || quickSaleData.discount > 100) {
+      newErrors.discount = "Discount must be between 0 and 100 percent";
     }
 
     setErrors(newErrors);
@@ -2270,10 +2459,16 @@ const QuickSaleModal = ({
       } else {
         // Create new sale
 
-        // Calculate absolute tax and discount amounts from percentages
-        const subtotal = parseFloat(quickSaleData.price) * parseInt(quickSaleData.quantity);
-        const taxAmount = subtotal * (parseFloat(quickSaleData.tax || 0) / 100);
-        const discountAmount = subtotal * (parseFloat(quickSaleData.discount || 0) / 100);
+        // Tax and discount are now stored as percentages in the database
+        // Send the percentage values directly to the backend
+        console.log('🛒 Creating sale with data:', {
+          product_id: product.id,
+          quantity: parseInt(quickSaleData.quantity),
+          price: parseFloat(quickSaleData.price),
+          tax: parseFloat(quickSaleData.tax || 0),
+          discount: parseFloat(quickSaleData.discount || 0),
+          customer_name: quickSaleData.customer_name,
+        });
         
         const result = await createSaleItem({
           variables: {
@@ -2281,51 +2476,31 @@ const QuickSaleModal = ({
               product_id: product.id,
               quantity: parseInt(quickSaleData.quantity),
               price: parseFloat(quickSaleData.price),
-              tax: taxAmount, // Send absolute tax amount, not percentage
-              discount: discountAmount, // Send absolute discount amount, not percentage
+              tax: parseFloat(quickSaleData.tax || 0), // Send percentage value (0-100)
+              discount: parseFloat(quickSaleData.discount || 0), // Send percentage value (0-100)
               customer_name: quickSaleData.customer_name,
             },
           },
         });
+        
+        console.log('✅ Sale creation result:', {
+          success: !!result?.data?.createSaleByProduct,
+          saleItem: result?.data?.createSaleByProduct,
+          errors: result?.errors
+        });
 
-        /*    id: item.id,
-        customer_name: item.sale.customer_name,
-        user: {
-          id: item.sale.user.id,
-          name: item.sale.user.name,
-          email: item.sale.user.email,
-          role: item.sale.user.role,
-        },
-        quantity: item.quantity,
-        price: item.price,
-        total_amount: item.price * item.quantity,
-        tax: item.sale.tax,
-        discount: item.sale.discount,
-        sale_date: item.sale.sale_date,
-        createdAt: item.created_at, */
-
-        setSales((prev) => [
-          ...prev,
-          {
-            id: result.data.createSaleByProduct.id,
-            customer_name: result.data.createSaleByProduct.sale.customer_name,
-            user: {
-              id: result.data.createSaleByProduct.sale.user.id,
-              name: result.data.createSaleByProduct.sale.user.name,
-              email: result.data.createSaleByProduct.sale.user.email,
-              role: result.data.createSaleByProduct.sale.user.role,
-            },
-            quantity: result.data.createSaleByProduct.quantity,
-            price: result.data.createSaleByProduct.price,
-            total_amount:
-              result.data.createSaleByProduct.price *
-              result.data.createSaleByProduct.quantity,
-            tax: result.data.createSaleByProduct.sale.tax,
-            discount: result.data.createSaleByProduct.sale.discount,
-            sale_date: result.data.createSaleByProduct.sale.sale_date,
-            createdAt: result.data.createSaleByProduct.created_at,
-          },
-        ]);
+        // Get the created sale item from the result
+        const createdSaleItem = result?.data?.createSaleByProduct;
+        
+        if (!createdSaleItem) {
+          console.error('❌ No sale item returned from mutation:', result);
+          throw new Error('Failed to create sale item - no data returned');
+        }
+        
+        // Trigger refetch of sales data and update product stock
+        if (onSaleCreated) {
+          onSaleCreated(createdSaleItem);
+        }
       }
       toast.success("Sale created successfully!");
       closeModal();
@@ -2474,6 +2649,7 @@ const QuickSaleModal = ({
                   onChange={handleInputChange}
                   step="0.01"
                   min="0"
+                  max="100"
                   className={`px-4 py-3 w-full rounded-xl border focus:ring-2 focus:outline-none ${
                     errors.tax
                       ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
@@ -2497,6 +2673,7 @@ const QuickSaleModal = ({
                   onChange={handleInputChange}
                   step="0.01"
                   min="0"
+                  max="100"
                   className={`px-4 py-3 w-full rounded-xl border focus:ring-2 focus:outline-none ${
                     errors.discount
                       ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"

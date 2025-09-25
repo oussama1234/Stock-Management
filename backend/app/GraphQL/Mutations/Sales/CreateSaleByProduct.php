@@ -59,14 +59,34 @@ class CreateSaleByProduct extends Mutation
         $price = $saleItemValues['price'];
         // Create a new sale
         $sale = new Sale();
-            $sale->user_id = Auth::id(); // Default to user ID 1 if not authenticateds
+            $sale->user_id = Auth::id();
 
+            // Tax and discount are now stored as percentages (0-100)
+            // Input can be either percentage or absolute amount - we'll determine based on context
+            $subtotal = (float) $price * (int) $quantity;
+            
             if(isset($saleItemValues['tax'])) {
-                $sale->tax = $saleItemValues['tax'];
+                $taxValue = (float) $saleItemValues['tax'];
+                // If tax seems to be an absolute amount (greater than subtotal/10), convert to percentage
+                if ($taxValue > 100 || ($taxValue > ($subtotal * 0.1) && $subtotal > 0)) {
+                    // Convert absolute amount to percentage
+                    $sale->tax = $subtotal > 0 ? min(100, ($taxValue / $subtotal) * 100) : 0;
+                } else {
+                    // Already a percentage
+                    $sale->tax = min(100, max(0, $taxValue));
+                }
             }
 
             if(isset($saleItemValues['discount'])) {
-                $sale->discount = $saleItemValues['discount'];
+                $discountValue = (float) $saleItemValues['discount'];
+                // If discount seems to be an absolute amount, convert to percentage
+                if ($discountValue > 100 || ($discountValue > ($subtotal * 0.1) && $subtotal > 0)) {
+                    // Convert absolute amount to percentage
+                    $sale->discount = $subtotal > 0 ? min(100, ($discountValue / $subtotal) * 100) : 0;
+                } else {
+                    // Already a percentage
+                    $sale->discount = min(100, max(0, $discountValue));
+                }
             }
 
             if(isset($saleItemValues['sale_date'])) {
@@ -81,9 +101,11 @@ class CreateSaleByProduct extends Mutation
             $lineTotal = (float) $price * (int) $quantity;
             $total += $lineTotal;
 
-            // Apply tax and discount to total_amount if needed
-            $totalWithTax = $total + $sale->tax - $sale->discount;
-            $sale->total_amount = max(0, $totalWithTax);
+            // Calculate tax and discount amounts from percentages
+            $taxAmount = ($sale->tax / 100) * $total;
+            $discountAmount = ($sale->discount / 100) * $total;
+            $totalWithTaxDiscount = $total + $taxAmount - $discountAmount;
+            $sale->total_amount = max(0, $totalWithTaxDiscount);
             $sale->save(); 
 
 
@@ -93,13 +115,16 @@ class CreateSaleByProduct extends Mutation
         if ($product->stock < $quantity) {
             throw new \Exception('Not enough stock');
         }
-        // Create the sale item
-        $saleItem = new \App\Models\SaleItem();
-        $saleItem->sale_id = $sale->id;
-        $saleItem->product_id = $product->id;
-        $saleItem->quantity = $quantity;
-        $saleItem->price = $price;
-        $saleItem->save();
+        // Create the sale item (this will trigger the SaleItemObserver::created event)
+        $saleItem = \App\Models\SaleItem::create([
+            'sale_id' => $sale->id,
+            'product_id' => $product->id,
+            'quantity' => $quantity,
+            'price' => $price,
+        ]);
+        
+        // Load relationships for the observer
+        $saleItem->load(['sale.user', 'product']);
         // invalidate cache
         CacheHelper::bump('Sale');
         CacheHelper::bump('Product');

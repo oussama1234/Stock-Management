@@ -3,6 +3,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getUserPreferences, updateUserPreferences } from '../api/Preferences';
+import { useAuth } from './AuthContext';
 
 const PreferencesContext = createContext();
 
@@ -107,6 +108,7 @@ const defaultPreferences = {
 };
 
 export const PreferencesProvider = ({ children }) => {
+  const { user } = useAuth();
   const [preferences, setPreferences] = useState(defaultPreferences);
   const [loading, setLoading] = useState(true);
   const [currentTheme, setCurrentTheme] = useState(themeColors.blue);
@@ -140,10 +142,15 @@ export const PreferencesProvider = ({ children }) => {
 
   // Load preferences from backend
   const loadPreferences = async () => {
+    if (!user) {
+      // User not authenticated, use defaults and localStorage
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
       const response = await getUserPreferences();
-      console.log('Loaded preferences:', response);
       
       if (response.preferences) {
         const userPrefs = { ...defaultPreferences, ...response.preferences };
@@ -156,8 +163,7 @@ export const PreferencesProvider = ({ children }) => {
         updateTheme(userPrefs.theme_color);
       }
     } catch (error) {
-      console.error('Failed to load preferences:', error);
-      // Apply defaults if loading fails
+      // If loading fails, fall back to localStorage and defaults
       applyDarkMode(defaultPreferences.dark_mode);
       updateTheme(defaultPreferences.theme_color);
     } finally {
@@ -184,11 +190,9 @@ export const PreferencesProvider = ({ children }) => {
       
       // Save to backend
       const response = await updateUserPreferences(updatedPrefs);
-      console.log('Saved preferences:', response);
       
       return { success: true, preferences: updatedPrefs };
     } catch (error) {
-      console.error('Failed to save preferences:', error);
       // Revert local state if save fails
       setPreferences(preferences);
       return { success: false, error: error.message };
@@ -208,7 +212,6 @@ export const PreferencesProvider = ({ children }) => {
       const response = await updateUserPreferences({ ...preferences, dark_mode: newDarkMode });
       return { success: true, preferences: { ...preferences, dark_mode: newDarkMode } };
     } catch (error) {
-      console.error('Failed to save dark mode preference:', error);
       // Keep the UI change even if backend save fails
       return { success: true, preferences: { ...preferences, dark_mode: newDarkMode }, warning: 'UI updated but failed to save to server' };
     }
@@ -219,10 +222,10 @@ export const PreferencesProvider = ({ children }) => {
     return await savePreferences({ theme_color: colorName });
   };
 
-  // Initialize preferences on mount
+  // Initialize preferences when user changes
   useEffect(() => {
     loadPreferences();
-  }, []);
+  }, [user]);
 
   // Also check localStorage on initial load for instant theme application
   useEffect(() => {

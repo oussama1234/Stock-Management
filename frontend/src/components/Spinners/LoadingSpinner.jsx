@@ -321,7 +321,7 @@ const LoadingSpinner = ({
               transition={{ duration: 0.5 }}
               className="text-center mb-6"
             >
-              <motion.p 
+              <motion.div 
                 className="text-xl font-semibold text-white mb-2 flex items-center justify-center gap-2"
                 animate={{ scale: [1, 1.02, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
@@ -333,7 +333,7 @@ const LoadingSpinner = ({
                   <ArrowRight className="h-5 w-5 text-blue-300" />
                 </motion.div>
                 {showSteps ? loadingText : message}
-              </motion.p>
+              </motion.div>
             </motion.div>
           </AnimatePresence>
 

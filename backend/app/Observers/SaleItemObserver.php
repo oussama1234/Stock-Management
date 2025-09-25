@@ -5,7 +5,10 @@ namespace App\Observers;
 use App\Models\Product;
 use App\Models\SaleItem;
 use App\Models\StockMovement;
+use App\Jobs\CheckLowStockJob;
+use App\Jobs\CreateSaleNotificationJob;
 use App\Support\CacheHelper;
+use Illuminate\Support\Facades\Log;
 
 /**
  * SaleItemObserver
@@ -43,9 +46,33 @@ class SaleItemObserver
             'movement_date' => now(),
         ]);
 
+        // Load sale with relationships for notification
+        $sale = $item->sale()->with(['items.product', 'user'])->first();
+        if ($sale) {
+            // Dispatch sale notification job (only once per sale)
+            CreateSaleNotificationJob::dispatch($sale);
+            Log::info('Sale notification dispatched', [
+                'sale_id' => $sale->id,
+                'sale_item_id' => $item->id
+            ]);
+        }
+        
+        // Dispatch low stock check if product stock is low
+        if ($new <= ($product->low_stock_threshold ?? 10)) {
+            CheckLowStockJob::dispatch()->delay(now()->addMinutes(1));
+            Log::info('Low stock detected, dispatching check job', [
+                'product_id' => $product->id,
+                'product_name' => $product->name,
+                'current_stock' => $new,
+                'threshold' => $product->low_stock_threshold ?? 10
+            ]);
+        }
+        
         CacheHelper::bump('products');
         CacheHelper::bump('stock_movements');
         CacheHelper::bump('dashboard_metrics');
+        CacheHelper::bump('sales');
+        CacheHelper::bump('notifications');
     }
 
     /**
@@ -81,6 +108,7 @@ class SaleItemObserver
         CacheHelper::bump('products');
         CacheHelper::bump('stock_movements');
         CacheHelper::bump('dashboard_metrics');
+        CacheHelper::bump('notifications');
     }
 
     /**
@@ -110,5 +138,6 @@ class SaleItemObserver
         CacheHelper::bump('products');
         CacheHelper::bump('stock_movements');
         CacheHelper::bump('dashboard_metrics');
+        CacheHelper::bump('notifications');
     }
 }

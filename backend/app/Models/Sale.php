@@ -22,6 +22,16 @@ class Sale extends Model
         'customer_name',
     ];
 
+    /**
+     * The attributes that should be cast to native types.
+     */
+    protected $casts = [
+        'sale_date' => 'datetime',
+        'total_amount' => 'decimal:2',
+        'tax' => 'decimal:2',
+        'discount' => 'decimal:2',
+    ];
+
     // relationship with users
     public function user()
     {

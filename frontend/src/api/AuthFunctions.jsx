@@ -32,10 +32,19 @@ export const logout = async () => {
 
 export const GetUser = async () => {
   try {
+    console.log('🌐 API: Getting CSRF token for user fetch...');
     await getCsrfToken(); // Ensure CSRF token is set before fetching user
+    console.log('🌐 API: Fetching user from /user endpoint...');
     const response = await AxiosClient.get("/user");
+    console.log('🌐 API: User response received', { status: response.status, userData: !!response.data });
     return response.data;
   } catch (error) {
+    console.error('🌐 API: Error in GetUser', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      message: error.response?.data?.message,
+      url: error.config?.url
+    });
     throw error;
   }
 };
@@ -78,11 +87,6 @@ export const PostUpdateProfile = async (userData, file) => {
       formdata.append("profileImage", file);
     }
     
-    // Debug log the form data
-    console.log('Profile update form data:');
-    for (let [key, value] of formdata.entries()) {
-      console.log(`${key}:`, value);
-    }
 
     const response = await AxiosClient.post("/profile/update", formdata, {
       headers: {
