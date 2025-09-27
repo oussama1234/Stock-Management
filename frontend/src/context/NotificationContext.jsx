@@ -64,10 +64,6 @@ export const NotificationProvider = ({ children }) => {
     // Force to 10 for now to test pagination
     const perPage = 10;
     
-    console.log('🔔 NotificationContext: Using FORCED perPage', { 
-      perPage,
-      preferences: preferences?.preferences || preferences
-    });
     return perPage;
   }, [preferences]);
 
@@ -90,15 +86,12 @@ export const NotificationProvider = ({ children }) => {
    */
   const fetchUnreadCount = useCallback(async () => {
     try {
-      console.log('🔔 NotificationContext: fetchUnreadCount called');
       const result = await getUnreadCount();
-      console.log('🔔 NotificationContext: unread count result', result);
       if (result.success) {
         setUnreadCount(result.count);
       }
     } catch (err) {
       // Silently fail for unread count to avoid disrupting UX
-      console.warn('Failed to fetch unread count:', err);
     }
   }, []);
 
@@ -108,12 +101,10 @@ export const NotificationProvider = ({ children }) => {
   const fetchNotifications = useCallback(async (page = 1, append = false) => {
     try {
       const currentPerPage = getPerPage();
-      console.log('🔔 NotificationContext: fetchNotifications called', { page, currentPerPage, append, isAuthenticated, user: !!user });
       setLoading(true);
       setError(null);
 
       const result = await getNotifications({ page, per_page: currentPerPage });
-      console.log('🔔 NotificationContext: API result', result);
       
       if (result.success) {
         // Add formatted timeAgo to each notification
@@ -133,23 +124,11 @@ export const NotificationProvider = ({ children }) => {
         setCurrentPage(result.meta.current_page);
         setTotalPages(result.meta.last_page);
         setTotal(result.meta.total);
-        
-        console.log('🔔 NotificationContext: Updated pagination state', {
-          currentPage: result.meta.current_page,
-          totalPages: result.meta.last_page,
-          total: result.meta.total,
-          perPage: result.meta.per_page,
-          hasMore: result.meta.current_page < result.meta.last_page,
-          rawMeta: result.meta,
-          notificationsReceived: result.data.length,
-          fullApiResponse: result
-        });
       } else {
         setError(result.message);
       }
     } catch (err) {
       setError('Failed to fetch notifications');
-      console.error('Error fetching notifications:', err);
     } finally {
       setLoading(false);
     }
@@ -170,7 +149,6 @@ export const NotificationProvider = ({ children }) => {
         setLowStockNotifications(notificationsWithTimeAgo);
       }
     } catch (err) {
-      console.warn('Failed to fetch low stock notifications:', err);
     }
   }, [formatTimeAgo]);
 
@@ -206,7 +184,6 @@ export const NotificationProvider = ({ children }) => {
       
       return result;
     } catch (err) {
-      console.error('Error marking notification as read:', err);
       return { success: false, message: 'Failed to mark notification as read' };
     }
   }, []);
@@ -242,7 +219,6 @@ export const NotificationProvider = ({ children }) => {
       
       return result;
     } catch (err) {
-      console.error('Error marking all notifications as read:', err);
       return { success: false, message: 'Failed to mark all notifications as read' };
     }
   }, []);
@@ -285,7 +261,6 @@ export const NotificationProvider = ({ children }) => {
       
       return result;
     } catch (err) {
-      console.error('Error deleting notification:', err);
       return { success: false, message: 'Failed to delete notification' };
     }
   }, [notifications, currentPage]);
@@ -296,7 +271,6 @@ export const NotificationProvider = ({ children }) => {
   const refreshNotifications = useCallback(async () => {
     try {
       const currentPerPage = getPerPage();
-      console.log('🔔 NotificationContext: refreshNotifications called');
       setLoading(true);
       setError(null);
       setCurrentPage(1); // Reset to first page
@@ -337,7 +311,6 @@ export const NotificationProvider = ({ children }) => {
             setLowStockNotifications(lowStockWithTimeAgo);
           }
         }).catch(err => {
-          console.warn('Failed to refresh low stock notifications:', err);
         });
       } else {
         setError(regularResult.message);
@@ -346,7 +319,6 @@ export const NotificationProvider = ({ children }) => {
       setLastRefresh(Date.now());
     } catch (err) {
       setError('Failed to refresh notifications');
-      console.error('Error refreshing notifications:', err);
     } finally {
       setLoading(false);
     }
@@ -360,12 +332,6 @@ export const NotificationProvider = ({ children }) => {
       try {
         const nextPage = currentPage + 1;
         const currentPerPage = getPerPage();
-        console.log('🔔 NotificationContext: loadMoreNotifications called', { 
-          nextPage, 
-          currentPage, 
-          totalPages, 
-          currentPerPage 
-        });
         setLoading(true);
 
         // Fetch next page of notifications
@@ -381,27 +347,12 @@ export const NotificationProvider = ({ children }) => {
           setNotifications(notificationsWithTimeAgo);
           setCurrentPage(regularResult.meta.current_page);
           setTotalPages(regularResult.meta.last_page);
-          
-          console.log('🔔 NotificationContext: loaded next page notifications', {
-            newNotifications: notificationsWithTimeAgo.length,
-            currentPage: regularResult.meta.current_page,
-            totalPages: regularResult.meta.last_page
-          });
         } else {
-          console.error('Failed to load more notifications:', regularResult.message);
         }
       } catch (err) {
-        console.error('Error loading more notifications:', err);
       } finally {
         setLoading(false);
       }
-    } else {
-      console.log('🔔 NotificationContext: loadMore skipped', {
-        currentPage,
-        totalPages,
-        hasMore: currentPage < totalPages,
-        loading
-      });
     }
   }, [currentPage, totalPages, loading, notifications.length, getPerPage, formatTimeAgo]);
 
@@ -418,12 +369,6 @@ export const NotificationProvider = ({ children }) => {
       try {
         const previousPage = currentPage - 1;
         const currentPerPage = getPerPage();
-        console.log('🔔 NotificationContext: goToPreviousPage called', { 
-          previousPage, 
-          currentPage, 
-          totalPages, 
-          currentPerPage 
-        });
         setLoading(true);
 
         // Fetch previous page of notifications
@@ -439,17 +384,9 @@ export const NotificationProvider = ({ children }) => {
           setNotifications(notificationsWithTimeAgo);
           setCurrentPage(regularResult.meta.current_page);
           setTotalPages(regularResult.meta.last_page);
-          
-          console.log('🔔 NotificationContext: loaded previous page notifications', {
-            newNotifications: notificationsWithTimeAgo.length,
-            currentPage: regularResult.meta.current_page,
-            totalPages: regularResult.meta.last_page
-          });
         } else {
-          console.error('Failed to load previous notifications:', regularResult.message);
         }
       } catch (err) {
-        console.error('Error loading previous notifications:', err);
       } finally {
         setLoading(false);
       }
@@ -461,12 +398,6 @@ export const NotificationProvider = ({ children }) => {
     if (page >= 1 && page <= totalPages && page !== currentPage && !loading) {
       try {
         const currentPerPage = getPerPage();
-        console.log('🔔 NotificationContext: goToPage called', { 
-          page, 
-          currentPage, 
-          totalPages, 
-          currentPerPage 
-        });
         setLoading(true);
 
         // Fetch specific page of notifications
@@ -482,17 +413,9 @@ export const NotificationProvider = ({ children }) => {
           setNotifications(notificationsWithTimeAgo);
           setCurrentPage(regularResult.meta.current_page);
           setTotalPages(regularResult.meta.last_page);
-          
-          console.log('🔔 NotificationContext: loaded page notifications', {
-            newNotifications: notificationsWithTimeAgo.length,
-            currentPage: regularResult.meta.current_page,
-            totalPages: regularResult.meta.last_page
-          });
         } else {
-          console.error('Failed to load page notifications:', regularResult.message);
         }
       } catch (err) {
-        console.error('Error loading page notifications:', err);
       } finally {
         setLoading(false);
       }
@@ -501,29 +424,19 @@ export const NotificationProvider = ({ children }) => {
 
   // Initial data fetch - only when user is authenticated
   useEffect(() => {
-    console.log('🔔 NotificationContext: Auth state changed', { isAuthenticated, user: !!user });
     
     const fetchInitialData = async () => {
       try {
         const currentPerPage = getPerPage();
-        console.log('🔔 NotificationContext: fetchInitialData called', { currentPerPage });
         setLoading(true);
         setError(null);
 
         // Fetch ONLY regular notifications for the first page and unread count
-        console.log('🔔 NotificationContext: Fetching initial data with perPage:', currentPerPage);
         
         const [regularResult, unreadResult] = await Promise.all([
           getNotifications({ page: 1, per_page: currentPerPage }),
           getUnreadCount()
         ]);
-        
-        console.log('🔔 NotificationContext: Initial API results', { 
-          regularResult, 
-          unreadResult,
-          notificationsCount: regularResult.success ? regularResult.data.length : 0,
-          paginationMeta: regularResult.success ? regularResult.meta : null
-        });
         
         if (regularResult.success) {
           // Format regular notifications only
@@ -555,24 +468,20 @@ export const NotificationProvider = ({ children }) => {
               setLowStockNotifications(lowStockWithTimeAgo);
             }
           }).catch(err => {
-            console.warn('Failed to load low stock notifications:', err);
           });
         } else {
           setError(regularResult.message);
         }
       } catch (err) {
         setError('Failed to fetch notifications');
-        console.error('Error fetching initial notifications:', err);
       } finally {
         setLoading(false);
       }
     };
     
     if (isAuthenticated && user) {
-      console.log('🔔 NotificationContext: User authenticated, fetching initial notifications');
       fetchInitialData();
     } else {
-      console.log('🔔 NotificationContext: User not authenticated, resetting state');
       // Reset state when user logs out
       setNotifications([]);
       setUnreadCount(0);

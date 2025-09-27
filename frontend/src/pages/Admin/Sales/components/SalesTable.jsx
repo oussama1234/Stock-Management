@@ -144,7 +144,7 @@ export default function SalesTable({
       <table className="w-full">
         <thead>
           <tr className="border-b border-gray-200/60 dark:border-gray-600/60">
-            <SortableHeader column="sale_date" icon={Calendar}>
+            <SortableHeader column="updated_at" icon={Calendar}>
               Date
             </SortableHeader>
             <th className="px-6 py-4 text-left">
@@ -187,14 +187,28 @@ export default function SalesTable({
               >
                 <td className="px-6 py-4">
                   <div className="flex items-center">
-                    <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-2 rounded-lg mr-3">
-                      <Calendar className="h-4 w-4 text-purple-600" />
+                    <div className={`bg-gradient-to-r p-2 rounded-lg mr-3 ${
+                      new Date(sale.updated_at) > new Date(sale.created_at)
+                        ? 'from-amber-100 to-orange-100'
+                        : 'from-green-100 to-emerald-100'
+                    }`}>
+                      <Calendar className={`h-4 w-4 ${
+                        new Date(sale.updated_at) > new Date(sale.created_at)
+                          ? 'text-amber-600'
+                          : 'text-green-600'
+                      }`} />
                     </div>
                     <div>
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {formatDate(sale.sale_date)}
+                        {formatDate(
+                          new Date(sale.updated_at) > new Date(sale.created_at)
+                            ? sale.updated_at
+                            : sale.created_at
+                        )}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">#{sale.id}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(sale.updated_at) > new Date(sale.created_at) ? 'Updated' : 'Created'} • #{sale.id}
+                      </div>
                     </div>
                   </div>
                 </td>
@@ -320,11 +334,39 @@ export default function SalesTable({
                         className="bg-gradient-to-r from-purple-50/30 to-pink-50/30 dark:from-purple-900/10 dark:to-pink-900/10 border-t border-purple-100 dark:border-purple-800"
                       >
                         <div className="px-8 py-6">
-                          <div className="flex items-center mb-4">
-                            <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-2 rounded-lg mr-3">
-                              <Sparkles className="h-5 w-5 text-purple-600" />
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center">
+                              <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-2 rounded-lg mr-3">
+                                <Sparkles className="h-5 w-5 text-purple-600" />
+                              </div>
+                              <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Sale Details</h4>
                             </div>
-                            <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Sale Line Items</h4>
+                            
+                            {/* Sale-level Tax and Discount Summary */}
+                            <div className="flex items-center space-x-6 bg-gradient-to-r from-gray-50 to-purple-50 px-4 py-2 rounded-xl border border-purple-100">
+                              {(sale.tax > 0 || sale.discount > 0) && (
+                                <>
+                                  {sale.tax > 0 && (
+                                    <div className="flex items-center space-x-1">
+                                      <div className="bg-emerald-100 p-1 rounded">
+                                        <DollarSign className="h-3 w-3 text-emerald-600" />
+                                      </div>
+                                      <span className="text-xs font-medium text-emerald-700">Tax: {sale.tax}%</span>
+                                    </div>
+                                  )}
+                                  {sale.discount > 0 && (
+                                    <div className="flex items-center space-x-1">
+                                      <div className="bg-rose-100 p-1 rounded">
+                                        <DollarSign className="h-3 w-3 text-rose-600" />
+                                      </div>
+                                      <span className="text-xs font-medium text-rose-700">Discount: {sale.discount}%</span>
+                                    </div>
+                                  )}
+                                </>
+                              ) || (
+                                <span className="text-xs text-gray-500">No tax or discount applied</span>
+                              )}
+                            </div>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {sale.items?.map((item, itemIndex) => (
@@ -371,15 +413,56 @@ export default function SalesTable({
                                     <span className="font-semibold text-gray-800 dark:text-gray-200">{formatCurrency(item.price)}</span>
                                   </div>
                                   
-                                  <div className="pt-2 mt-2 border-t border-purple-100 flex items-center justify-between">
-                                    <span className="text-gray-700 dark:text-gray-300 font-medium flex items-center">
-                                      <Star className="h-3 w-3 mr-1 text-purple-500" />
-                                      Total
-                                    </span>
-                                    <span className="text-lg font-bold text-purple-600">
-                                      {formatCurrency(item.price * item.quantity)}
-                                    </span>
-                                  </div>
+                                  {/* Show tax and discount breakdown for this item */}
+                                  {(() => {
+                                    const itemSubtotal = item.price * item.quantity;
+                                    const itemTax = (sale.tax / 100) * itemSubtotal;
+                                    const itemDiscount = (sale.discount / 100) * itemSubtotal;
+                                    const itemTotal = itemSubtotal + itemTax - itemDiscount;
+                                    
+                                    return (
+                                      <>
+                                        {(sale.tax > 0 || sale.discount > 0) && (
+                                          <div className="space-y-1 text-xs">
+                                            <div className="flex items-center justify-between text-gray-600">
+                                              <span>Item Subtotal:</span>
+                                              <span>{formatCurrency(itemSubtotal)}</span>
+                                            </div>
+                                            
+                                            {sale.tax > 0 && (
+                                              <div className="flex items-center justify-between text-emerald-600">
+                                                <span className="flex items-center">
+                                                  <DollarSign className="h-2 w-2 mr-1" />
+                                                  Tax ({sale.tax}%):
+                                                </span>
+                                                <span>+{formatCurrency(itemTax)}</span>
+                                              </div>
+                                            )}
+                                            
+                                            {sale.discount > 0 && (
+                                              <div className="flex items-center justify-between text-rose-600">
+                                                <span className="flex items-center">
+                                                  <DollarSign className="h-2 w-2 mr-1" />
+                                                  Discount ({sale.discount}%):
+                                                </span>
+                                                <span>-{formatCurrency(itemDiscount)}</span>
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+                                        
+                                        <div className="pt-2 mt-2 border-t border-purple-100 flex items-center justify-between">
+                                          <span className="text-gray-700 dark:text-gray-300 font-medium flex items-center">
+                                            <Star className="h-3 w-3 mr-1 text-purple-500" />
+                                            {(sale.tax > 0 || sale.discount > 0) ? 'Final Total' : 'Total'}
+                                          </span>
+                                          <span className="text-lg font-bold text-purple-600">
+                                            {formatCurrency((sale.tax > 0 || sale.discount > 0) ? itemTotal : itemSubtotal)}
+                                          </span>
+                                        </div>
+                                      </>
+                                    );
+                                  })()}
                                 </div>
                               </motion.div>
                             ))}

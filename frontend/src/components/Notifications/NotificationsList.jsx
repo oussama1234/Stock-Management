@@ -12,7 +12,6 @@ const LoadMoreSection = memo(({ notificationContext }) => {
   const hasPrevious = currentPage > 1;
   const isLoadingMore = loading;
 
-  console.log('🔎 LoadMoreSection:', { currentPage, totalPages, hasMore, total, notificationsLength: notifications.length });
 
   return (
     <div className="p-6 border-t border-gray-100/50 dark:border-gray-700/50 text-center">
@@ -38,7 +37,6 @@ const LoadMoreSection = memo(({ notificationContext }) => {
               whileHover={{ scale: 1.05, x: -2 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => {
-                console.log('🔎 First page clicked!');
                 goToPage(1);
               }}
               disabled={isLoadingMore}
@@ -54,7 +52,6 @@ const LoadMoreSection = memo(({ notificationContext }) => {
               whileHover={{ scale: 1.05, x: -2 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => {
-                console.log('🔎 Previous page clicked!');
                 goToPreviousPage();
               }}
               disabled={isLoadingMore}
@@ -71,7 +68,6 @@ const LoadMoreSection = memo(({ notificationContext }) => {
               whileHover={{ scale: 1.05, x: 2 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => {
-                console.log('🔎 Next page clicked!');
                 loadMoreNotifications();
               }}
               disabled={isLoadingMore}
@@ -97,7 +93,6 @@ const LoadMoreSection = memo(({ notificationContext }) => {
               whileHover={{ scale: 1.05, x: 2 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => {
-                console.log('🔎 Last page clicked!');
                 goToPage(totalPages);
               }}
               disabled={isLoadingMore}

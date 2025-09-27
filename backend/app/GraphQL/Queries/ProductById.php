@@ -51,7 +51,7 @@ class ProductById extends Query
             'select' => $select,
             'with' => array_keys($with),
         ]);
-        $ttl = CacheHelper::ttlSeconds('GRAPHQL_PRODUCT_BY_ID_TTL', 120);
+        $ttl = CacheHelper::ttlSeconds('GRAPHQL_PRODUCT_BY_ID_TTL', 10); // Reduced from 120 to 10 seconds for real-time updates
 
         return Cache::remember($cacheKey, now()->addSeconds($ttl), function () use ($with, $select, $id) {
             return Product::with($with)->select($select)->find($id);

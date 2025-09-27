@@ -11,7 +11,6 @@ const SaleNotificationDebug = () => {
     const handleSalesUpdate = (event) => {
       const { productId, newSaleItem } = event.detail;
       
-      console.log('🔍 Sale created - checking for notifications:', {
         productId,
         saleItem: newSaleItem,
         currentUnreadCount: unreadCount,

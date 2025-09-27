@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     curl \
+    netcat-traditional \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
 # Install Composer

@@ -79,6 +79,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/purchases/analytics/purchasing-team', [\App\Http\Controllers\PurchasesAnalyticsController::class, 'purchasingTeam']);
     Route::get('/purchases/analytics/cost-analysis', [\App\Http\Controllers\PurchasesAnalyticsController::class, 'costAnalysis']);
 
+    // Stock validation endpoints
+    Route::prefix('stock-validation')->group(function () {
+        Route::post('/validate-product', [\App\Http\Controllers\StockValidationController::class, 'validateProductStock']);
+        Route::post('/validate-multiple', [\App\Http\Controllers\StockValidationController::class, 'validateMultipleProductsStock']);
+        Route::post('/stock-levels', [\App\Http\Controllers\StockValidationController::class, 'getStockLevels']);
+        Route::get('/product/{productId}/stock-info', [\App\Http\Controllers\StockValidationController::class, 'getProductStockInfo']);
+    });
+
     // Notification endpoints - Clean and organized routes
     Route::prefix('notifications')->group(function () {
         // Main notification CRUD operations

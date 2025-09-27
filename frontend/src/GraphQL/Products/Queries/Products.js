@@ -55,8 +55,8 @@ export const PRODUCT_ANALYTICS_QUERY = gql`
 export const useGetProductQuery = (id) =>
   useQuery(PRODUCT_QUERY, {
     variables: { id },
-    fetchPolicy: "cache-first",
-    nextFetchPolicy: "cache-and-network",
+    fetchPolicy: "cache-and-network", // Keep cache for product data as it changes less frequently
+    nextFetchPolicy: "network-only", // But ensure subsequent fetches get fresh data for analytics consistency
     errorPolicy: "all",
     notifyOnNetworkStatusChange: true,
   });
@@ -64,7 +64,7 @@ export const useGetProductQuery = (id) =>
 export const useGetProductWithAnalyticsQuery = (id) =>
   useQuery(PRODUCT_ANALYTICS_QUERY, {
     variables: { id },
-    fetchPolicy: "cache-first",
+    fetchPolicy: "cache-and-network",
     nextFetchPolicy: "cache-and-network",
     errorPolicy: "all",
     notifyOnNetworkStatusChange: true,

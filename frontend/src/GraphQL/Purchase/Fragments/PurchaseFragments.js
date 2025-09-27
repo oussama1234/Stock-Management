@@ -8,6 +8,8 @@ export const PURCHASE_FRAGMENT = gql`
     id
     total_amount
     purchase_date
+    tax
+    discount
     created_at
     updated_at
     user {

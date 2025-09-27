@@ -42,7 +42,6 @@ const itemVariants = {
 };
 
 export default function PurchasesMinimal() {
-  console.log("🎯 PurchasesMinimal component rendering");
   
   // Local UI state
   const toast = useToast();
@@ -66,13 +65,6 @@ export default function PurchasesMinimal() {
 
   // Data fetching with caching (TTL 30s) and server pagination
   const { data: purchases, meta, loading, error, refetch } = usePurchasesData(apiParams);
-  
-  console.log("🔍 PurchasesMinimal data:", { 
-    purchasesCount: purchases?.length, 
-    loading, 
-    error,
-    meta: meta ? { current_page: meta.current_page, total: meta.total } : null
-  });
 
   // Loading & error states
   if (loading) {
@@ -92,14 +84,6 @@ export default function PurchasesMinimal() {
       </div>
     );
   }
-
-  console.log("📝 PurchasesMinimal about to render main content:", {
-    hasData: !!purchases,
-    dataLength: purchases?.length,
-    hasMeta: !!meta,
-    loading,
-    error
-  });
 
   return (
     <motion.div 
@@ -181,10 +165,6 @@ export default function PurchasesMinimal() {
             <p className="text-blue-700 text-sm">Testing: PurchasesFilters component</p>
           </div>
           <PurchasesFilters
-            onSearch={(v) => console.log('Search:', v)}
-            onNewPurchase={() => console.log('New Purchase')}
-            onFiltersChange={(f) => console.log('Filters:', f)}
-            onExport={() => console.log('Export')}
             isExporting={false}
           />
         </motion.div>
@@ -200,11 +180,8 @@ export default function PurchasesMinimal() {
             <div className="p-6">
               <PurchasesTable
                 rows={purchases}
-                onEdit={(p) => console.log('Edit:', p)}
-                onDelete={(p) => console.log('Delete:', p)}
                 formatCurrency={(n) => `$${Number(n || 0).toFixed(2)}`}
                 formatDate={(iso) => new Date(iso).toLocaleDateString()}
-                onSort={(col, order) => console.log('Sort:', col, order)}
                 sortBy="purchase_date"
                 sortOrder="desc"
               />

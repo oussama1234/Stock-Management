@@ -118,7 +118,6 @@ const MyProfile = () => {
   const savePreferences = async () => {
     try {
       setSavingPreferences(true);
-      console.log('Saving preferences:', localPreferences);
       
       const result = await saveUserPreferences(localPreferences);
       
@@ -134,7 +133,6 @@ const MyProfile = () => {
         throw new Error(result.error || 'Failed to save preferences');
       }
     } catch (error) {
-      console.error('Failed to save preferences:', error);
       setErrors({ preferences: error.message || 'Failed to save preferences' });
     } finally {
       setSavingPreferences(false);
@@ -186,7 +184,6 @@ const MyProfile = () => {
     e.preventDefault();
 
     if (validateForm()) {
-      console.log("Submitting profile data:", userData);
       const result = await updateProfile(userData, file);
       
       if (result.success) {
@@ -217,7 +214,6 @@ const MyProfile = () => {
     if (validateForm()) {
       try {
         setUpdatingSecurity(true);
-        console.log("Updating security settings:", userData);
         const result = await updateProfile(userData, null);
         
         if (result.success) {

@@ -63,6 +63,50 @@ services:
     networks:
       - app-network
 
+  # Laravel Queue Worker (Auto-Restart)
+  laravel_queue:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: laravel_queue
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./backend:/var/www/html
+      - ./backend/vendor:/var/www/html/vendor
+      - ./backend/storage:/var/www/html/storage
+    command: >
+      sh -c '
+        echo "🔄 Waiting for MySQL..."
+        while ! nc -z mysql_db 3306; do sleep 2; done
+        echo "✅ MySQL is ready! Starting queue workers..."
+        
+        echo "🚀 Starting notification queue worker..."
+        php artisan queue:work database --queue=notifications --timeout=60 --sleep=3 --tries=3 --max-jobs=1000 --verbose &
+        
+        echo "🚀 Starting default queue worker..."
+        php artisan queue:work database --queue=default --timeout=60 --sleep=3 --tries=3 --max-jobs=1000 --verbose &
+        
+        echo "✅ Both queue workers started successfully!"
+        echo "📊 Queue workers will automatically restart every 1000 jobs or 1 hour"
+        
+        # Keep the container alive
+        wait
+      '
+    depends_on:
+      - mysql_db
+      - laravel_app
+    networks:
+      - app-network
+    environment:
+      - CONTAINER_ROLE=queue
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'queue:work' > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
   # React Frontend
   react_app:
     image: node:20-alpine

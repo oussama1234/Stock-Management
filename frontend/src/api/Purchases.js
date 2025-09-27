@@ -34,8 +34,6 @@ export const getPurchases = async (params = {}, options = {}) => {
   if (params.supplierId) cleanParams.supplier_id = params.supplierId;
   if (params.userId) cleanParams.user_id = params.userId;
   
-  console.log('getPurchases params:', params); // Debug log
-  console.log('getPurchases cleanParams:', cleanParams); // Debug log
   
   const res = await AxiosClient.get("/purchases", { 
     params: cleanParams,
@@ -101,7 +99,6 @@ export const exportPurchases = async (params = {}) => {
   if (params.dateFrom && params.dateFrom.trim()) cleanParams.date_from = params.dateFrom;
   if (params.dateTo && params.dateTo.trim()) cleanParams.date_to = params.dateTo;
   
-  console.log('exportPurchases params:', cleanParams); // Debug log
   
   const res = await AxiosClient.get("/purchases/export", {
     params: cleanParams,
@@ -156,15 +153,11 @@ export const getSuppliers = async (params = {}) => {
   if (params.search && params.search.trim()) cleanParams.search = params.search.trim();
   if (params.per_page) cleanParams.per_page = params.per_page;
   
-  console.log('📞 Calling suppliers API with params:', cleanParams);
-  console.log('🍪 Current cookies:', document.cookie);
   
   try {
     const res = await AxiosClient.get("/suppliers", { params: cleanParams });
-    console.log('✅ Suppliers API success:', res.data);
     return res.data;
   } catch (error) {
-    console.error('❌ Suppliers API failed:', error);
     throw error;
   }
 };

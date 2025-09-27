@@ -92,13 +92,6 @@ export default function Purchases() {
     refetch,
   } = usePurchasesData(apiParams);
 
-  console.log("🔍 Original Purchases data:", {
-    purchasesCount: purchases?.length,
-    loading,
-    error,
-    meta: meta ? { current_page: meta.current_page, total: meta.total } : null,
-  });
-
   // Derived, stable utilities
   const pageList = useMemo(
     () => generatePages(meta?.last_page || 1),
@@ -333,14 +326,6 @@ export default function Purchases() {
     );
   }
 
-  console.log("📝 About to render main content:", {
-    hasData: !!purchases,
-    dataLength: purchases?.length,
-    hasMeta: !!meta,
-    loading,
-    error,
-  });
-
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8">
       {/* Header with beautiful gradient */}
@@ -439,6 +424,7 @@ export default function Purchases() {
           onClose={closeModal}
           onSubmit={handleCreateOrUpdate}
           initial={editing}
+          hideDate={!editing}
         />
       )}
     </div>

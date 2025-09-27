@@ -112,7 +112,6 @@ const UsersPageNew = () => {
         toast.error(response.message || "Failed to load users");
       }
     } catch (error) {
-      console.error("Failed to fetch users:", error);
       toast.error("Failed to load users");
     } finally {
       setLoading(false);
@@ -231,9 +230,7 @@ const UsersPageNew = () => {
       }
       
       // Debug log the form data
-      console.log('Form data being sent:');
       for (let [key, value] of formDataToSend.entries()) {
-        console.log(`${key}:`, value);
       }
 
       let response;
@@ -263,7 +260,6 @@ const UsersPageNew = () => {
   // Open modal for add/edit
   const openModal = (user = null) => {
     if (user) {
-      console.log('Opening edit modal with user data:', user);
       setEditingUser(user);
       setFormData({
         name: user.name || "",
@@ -342,7 +338,6 @@ const UsersPageNew = () => {
         }
       }
     } catch (error) {
-      console.error("Error deleting user:", error);
       toast.error("Failed to delete user");
     }
   };

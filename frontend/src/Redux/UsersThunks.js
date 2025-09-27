@@ -7,7 +7,6 @@ export const fetchUsers = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await AxiosClient.get("/users");
-      console.log("response called:", response);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -34,7 +33,6 @@ export const addUser = createAsyncThunk(
           Accept: "application/json",
         },
       });
-      console.log("Adding user response called:", response);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -49,7 +47,6 @@ export const deleteUser = createAsyncThunk(
   async (user, { rejectWithValue }) => {
     try {
       const response = await AxiosClient.delete(`/users/${user.id}`);
-      console.log("Deleting user response called:", response);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -81,7 +78,6 @@ export const updateUser = createAsyncThunk(
           },
         }
       );
-      console.log("Updating user response called:", response);
 
       return response.data;
     } catch (error) {

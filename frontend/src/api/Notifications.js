@@ -42,9 +42,7 @@ export const getNotifications = async (params = {}) => {
  */
 export const getUnreadCount = async () => {
   try {
-    console.log('🌐 API: Getting unread count');
     const response = await AxiosClient.get('/notifications/unread-count');
-    console.log('🌐 API: Unread count response', response);
     
     return {
       success: true,

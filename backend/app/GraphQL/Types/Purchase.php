@@ -31,6 +31,14 @@ class Purchase extends GraphQLType
             'total_amount' => [
                 'type' => Type::float(),
             ],
+            'tax' => [
+                'type' => Type::float(),
+                'description' => 'Tax percentage (0-100)',
+            ],
+            'discount' => [
+                'type' => Type::float(),
+                'description' => 'Discount percentage (0-100)',
+            ],
             'purchase_date' => [
                 'type' => Type::string(),
             ],

@@ -52,7 +52,6 @@ const itemVariants = {
 };
 
 export default function PurchasesDebug() {
-  console.log("🎯 PurchasesDebug component rendering");
 
   // Local UI state
   const [search, setSearch] = useState("");
@@ -83,13 +82,6 @@ export default function PurchasesDebug() {
       currency: "USD" 
     }).format(Number(n || 0)), []
   );
-
-  console.log("🔍 PurchasesDebug data:", { 
-    purchasesCount: purchases?.length, 
-    loading, 
-    error,
-    step
-  });
 
   if (loading) {
     return (
@@ -292,10 +284,6 @@ export default function PurchasesDebug() {
             <h3 className="font-semibold text-blue-800 mb-2">Testing PurchasesFilters Component</h3>
           </div>
           <PurchasesFilters
-            onSearch={(v) => console.log('Search:', v)}
-            onNewPurchase={() => console.log('New Purchase clicked')}
-            onFiltersChange={(f) => console.log('Filters:', f)}
-            onExport={() => console.log('Export clicked')}
             isExporting={false}
           />
         </motion.div>
@@ -311,11 +299,8 @@ export default function PurchasesDebug() {
             <div className="p-6">
               <PurchasesTable
                 rows={purchases}
-                onEdit={(p) => console.log('Edit:', p)}
-                onDelete={(p) => console.log('Delete:', p)}
                 formatCurrency={formatCurrency}
                 formatDate={(iso) => new Date(iso).toLocaleDateString()}
-                onSort={(col, order) => console.log('Sort:', col, order)}
                 sortBy="purchase_date"
                 sortOrder="desc"
               />

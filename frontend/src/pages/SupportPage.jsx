@@ -172,7 +172,6 @@ const SupportPage = () => {
   const handleContactSubmit = (e) => {
     e.preventDefault();
     // Handle contact form submission
-    console.log('Contact form submitted:', contactForm);
     // Reset form or show success message
   };
 

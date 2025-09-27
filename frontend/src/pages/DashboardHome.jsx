@@ -70,9 +70,7 @@ export default function DashboardHome() {
       try {
         const alerts = await getLowStockAlerts({ days: 7, threshold: 10 });
         setLowStockAlerts(alerts || []);
-        console.log('🚨 7-day stock alerts loaded:', alerts?.length || 0);
       } catch (error) {
-        console.error('Failed to load 7-day stock alerts:', error);
         setLowStockAlerts([]);
       } finally {
         setLoadingLowStock(false);

@@ -94,7 +94,6 @@ const Products = () => {
   // Sample initial data
   useEffect(() => {
     if (productsData?.products?.data) {
-      console.log("productsData:", productsData);
       setProducts(
         productsData?.products.data.map((product) => ({
           ...product,
@@ -125,7 +124,6 @@ const Products = () => {
   // loading Lazy data categories from GraphQL API
   useEffect(() => {
     if (categoriesData?.categories) {
-      console.log("categories:", categoriesData);
       setCategories(categoriesData.categories);
     }
   }, [categoriesData?.categories]);
@@ -271,7 +269,6 @@ const Products = () => {
 
           toast.success("Product updated successfully!");
         } catch (error) {
-          console.error("Error updating product:", error);
           toast.error(
             error?.errors?.[0]?.extensions?.validation?.[
               "product.image"
@@ -300,7 +297,6 @@ const Products = () => {
           // refetchProducts(); is slower than setProducts state update
           toast.success("Product created successfully!");
         } catch (error) {
-          console.error("Error creating product:", error);
           toast.error(
             error?.errors?.[0]?.extensions?.validation?.[
               "product.image"
@@ -382,7 +378,6 @@ const Products = () => {
         const { data } = await deleteProductMutation({
           variables: { id: productId },
         });
-        console.log("response called: ", data);
         if (data.deleteProduct?.success) {
           setProducts(products.filter((product) => product.id !== productId));
           setFilteredProducts(
@@ -1044,8 +1039,8 @@ export const ProductModal = ({
                     onChange={handleInputChange}
                     className={`pl-10 pr-4 py-3 w-full rounded-xl border focus:ring-2 focus:outline-none transition-all duration-300 ${
                       errors.name
-                        ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
-                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-500 focus:ring-opacity-20"
+                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 focus:ring-opacity-20"
                     }`}
                     placeholder="Enter product name"
                   />
@@ -1069,15 +1064,15 @@ export const ProductModal = ({
                   disabled={loadingCategories} // disable while loadings
                   className={`pl-10 pr-4 py-3 w-full rounded-xl border focus:ring-2 focus:outline-none transition-all duration-300 ${
                     errors.category
-                      ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
-                      : "border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                      ? "border-red-300 focus:border-red-500 focus:ring-red-500 focus:ring-opacity-20"
+                      : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 focus:ring-opacity-20"
                   }`}
                 >
                   {loadingCategories ? (
                     <option>Loading categories...</option>
                   ) : (
                     <>
-                      <option>Select a category</option>
+                      <option value="">Select a category</option>
                       {categories?.map((category) => (
                         <option key={category.id} value={category.id}>
                           {category.name}
@@ -1117,8 +1112,8 @@ export const ProductModal = ({
                     min="0"
                     className={`pl-10 pr-4 py-3 w-full rounded-xl border focus:ring-2 focus:outline-none transition-all duration-300 ${
                       errors.price
-                        ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
-                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-500 focus:ring-opacity-20"
+                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 focus:ring-opacity-20"
                     }`}
                     placeholder="0.00"
                   />
@@ -1143,8 +1138,8 @@ export const ProductModal = ({
                     min="0"
                     className={`pl-10 pr-4 py-3 w-full rounded-xl border focus:ring-2 focus:outline-none transition-all duration-300 ${
                       errors.stock
-                        ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
-                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-500 focus:ring-opacity-20"
+                        : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 focus:ring-opacity-20"
                     }`}
                     placeholder="0"
                   />
@@ -1166,10 +1161,10 @@ export const ProductModal = ({
                 value={formData.description}
                 onChange={handleInputChange}
                 rows="3"
-                className={`px-4 py-3 w-full rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all duration-300 ${
+                className={`px-4 py-3 w-full rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 focus:outline-none transition-all duration-300 ${
                   errors.description
-                    ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
-                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-500/20"
+                    ? "border-red-300 focus:border-red-500 focus:ring-red-500 focus:ring-opacity-20"
+                    : "border-gray-300 focus:border-blue-500 focus:ring-blue-500 focus:ring-opacity-20"
                 }`}
                 placeholder="Enter product description..."
               />
@@ -1218,7 +1213,7 @@ export const ProductModal = ({
 };
 
 // Product Detail Modal Component
-const ProductDetailModal = ({ product, closeModal }) => {
+export const ProductDetailModal = ({ product, closeModal }) => {
   const stockStatus = getStockStatus(product.stock);
 
   return (

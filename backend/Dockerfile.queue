@@ -1,0 +1,55 @@
+FROM php:8.2-fpm
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Install system dependencies including supervisor
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    zip \
+    unzip \
+    git \
+    curl \
+    netcat-traditional \
+    supervisor \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Create necessary directories
+RUN mkdir -p /var/log/supervisor \
+    && mkdir -p /var/run \
+    && mkdir -p storage/framework/{sessions,views,cache} \
+    && mkdir -p storage/logs \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html/storage
+
+# Copy supervisor configuration
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Create entrypoint script
+RUN echo '#!/bin/bash' > /usr/local/bin/docker-entrypoint.sh \
+    && echo 'set -e' >> /usr/local/bin/docker-entrypoint.sh \
+    && echo '' >> /usr/local/bin/docker-entrypoint.sh \
+    && echo '# Wait for MySQL' >> /usr/local/bin/docker-entrypoint.sh \
+    && echo 'echo "Waiting for MySQL to be ready..."' >> /usr/local/bin/docker-entrypoint.sh \
+    && echo 'while ! nc -z mysql_db 3306; do' >> /usr/local/bin/docker-entrypoint.sh \
+    && echo '    echo "MySQL not ready, waiting..."' >> /usr/local/bin/docker-entrypoint.sh \
+    && echo '    sleep 2' >> /usr/local/bin/docker-entrypoint.sh \
+    && echo 'done' >> /usr/local/bin/docker-entrypoint.sh \
+    && echo 'echo "MySQL is ready!"' >> /usr/local/bin/docker-entrypoint.sh \
+    && echo '' >> /usr/local/bin/docker-entrypoint.sh \
+    && echo '# Start supervisor' >> /usr/local/bin/docker-entrypoint.sh \
+    && echo 'echo "Starting supervisor..."' >> /usr/local/bin/docker-entrypoint.sh \
+    && echo 'exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf' >> /usr/local/bin/docker-entrypoint.sh \
+    && chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Expose supervisor web interface port (optional)
+EXPOSE 9001
+
+# Use the entrypoint script
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

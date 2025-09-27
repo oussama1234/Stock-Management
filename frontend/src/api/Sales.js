@@ -34,8 +34,6 @@ export const getSales = async (params = {}, options = {}) => {
   if (params.customerId) cleanParams.customer_id = params.customerId;
   if (params.userId) cleanParams.user_id = params.userId;
   
-  console.log('getSales params:', params); // Debug log
-  console.log('getSales cleanParams:', cleanParams); // Debug log
   
   const res = await AxiosClient.get("/sales", { 
     params: cleanParams,
@@ -58,7 +56,17 @@ export const getSaleById = async (id) => {
  * @param {{ customer_name?: string, tax?: number, discount?: number, sale_date?: string, items: Array<{product_id:number, quantity:number, price:number}> }} payload
  */
 export const createSale = async (payload) => {
-  const res = await AxiosClient.post("/sales", payload);
+  
+  const res = await AxiosClient.post("/sales", payload, {
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'x-no-cache': 'true',
+      'x-cache-bust': Date.now().toString()
+    }
+  });
+  
   return res.data;
 };
 

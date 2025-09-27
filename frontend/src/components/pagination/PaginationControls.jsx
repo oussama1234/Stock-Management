@@ -91,20 +91,34 @@ export default function PaginationControls({
 
         {/* Page Numbers */}
         <div className="flex items-center gap-1">
-          {pages.map((page) => (
-            <motion.button
-              key={page}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => onPageChange(page)}
-              className={`w-8 h-8 rounded-lg text-sm font-medium transition-all duration-300 ${
-                currentPage === page ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-              }`}
-              aria-current={currentPage === page ? "page" : undefined}
-            >
-              {page}
-            </motion.button>
-          ))}
+          {pages.map((page, idx) => {
+            const isEllipsis = typeof page !== 'number' || Number.isNaN(page);
+            if (isEllipsis) {
+              return (
+                <span
+                  key={`ellipsis-${idx}`}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium text-gray-400 bg-gray-50 cursor-default select-none"
+                  aria-hidden="true"
+                >
+                  ...
+                </span>
+              );
+            }
+            return (
+              <motion.button
+                key={`page-${page}`}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => onPageChange(page)}
+                className={`w-8 h-8 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  currentPage === page ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                }`}
+                aria-current={currentPage === page ? "page" : undefined}
+              >
+                {page}
+              </motion.button>
+            );
+          })}
         </div>
 
         {/* Next Page Button */}

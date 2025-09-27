@@ -80,11 +80,6 @@ export default function PurchasesFilters({
   const [loadingSuppliers, setLoadingSuppliers] = useState(false);
   
   // Debug: Log state changes
-  console.log('📊 PurchasesFilters state:', {
-    suppliersCount: suppliers.length,
-    loadingSuppliers,
-    showAdvanced
-  });
   
   // Advanced filter state
   const [filters, setFilters] = useState({
@@ -103,9 +98,7 @@ export default function PurchasesFilters({
       try {
         const result = await getSuppliers({ per_page: 100 });
         setSuppliers(result.data || result || []);
-        console.log('✅ Suppliers loaded:', result.data?.length || 0);
       } catch (error) {
-        console.error("Failed to load suppliers:", error);
         // Set empty array so the UI doesn't stay loading forever
         setSuppliers([]);
         // Add a timeout to prevent infinite loading
@@ -117,7 +110,6 @@ export default function PurchasesFilters({
     
     // Add timeout as fallback in case the request hangs
     const timeoutId = setTimeout(() => {
-      console.warn('⚠️ Suppliers loading timeout, setting empty array');
       setSuppliers([]);
       setLoadingSuppliers(false);
     }, 5000); // 5 second timeout

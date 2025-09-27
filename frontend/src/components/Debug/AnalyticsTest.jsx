@@ -11,7 +11,6 @@ const AnalyticsTest = ({ productId }) => {
 
   useEffect(() => {
     if (analyticsData) {
-      console.log('🎯 Raw Analytics Query Response:', {
         data: analyticsData,
         productById: analyticsData.productById,
         analytics: {
@@ -27,7 +26,6 @@ const AnalyticsTest = ({ productId }) => {
     }
     
     if (analyticsError) {
-      console.error('❌ Analytics Query Error:', analyticsError);
     }
   }, [analyticsData, analyticsError]);
 

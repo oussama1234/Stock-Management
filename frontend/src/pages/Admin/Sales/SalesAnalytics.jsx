@@ -62,7 +62,6 @@ export default function SalesAnalytics() {
       });
     } catch (err) {
       setError(err.message || "Failed to load analytics");
-      console.error("Analytics error:", err);
     } finally {
       setLoading(false);
     }

@@ -17,6 +17,8 @@ class Purchase extends Model
         'user_id',
         'supplier_id',
         'total_amount',
+        'tax',
+        'discount',
         'purchase_date',
     ];
 
@@ -28,6 +30,8 @@ class Purchase extends Model
     protected $casts = [
         'purchase_date' => 'datetime',
         'total_amount' => 'decimal:2',
+        'tax' => 'decimal:2',
+        'discount' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

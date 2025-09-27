@@ -60,7 +60,6 @@ const itemVariants = {
 };
 
 export default function PurchasesTestHooks() {
-  console.log("🎯 PurchasesTestHooks component rendering");
 
   // Local UI state
   const toast = useToast();
@@ -121,15 +120,6 @@ export default function PurchasesTestHooks() {
     setModalOpen(false);
     setEditing(null);
   }, []);
-
-  console.log("🔍 PurchasesTestHooks state:", { 
-    purchasesCount: purchases?.length, 
-    loading, 
-    error,
-    modalOpen,
-    editing: editing?.id,
-    isExporting
-  });
 
   /**
    * Handle create or update purchase with dynamic state updates

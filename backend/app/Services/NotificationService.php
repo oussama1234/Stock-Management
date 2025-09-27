@@ -85,6 +85,18 @@ class NotificationService
      */
     public function createLowStockAlert(Product $product, ?int $userId = null): Notification
     {
+        // If a notification for this user and product already exists, return it (idempotent per user)
+        if ($userId !== null) {
+            $existing = Notification::where('type', Notification::TYPE_LOW_STOCK)
+                ->where('user_id', $userId)
+                ->where('notifiable_type', Product::class)
+                ->where('notifiable_id', $product->id)
+                ->first();
+            if ($existing) {
+                return $existing;
+            }
+        }
+
         // Get threshold for this product (default: 10)
         $threshold = $product->low_stock_threshold ?? 10;
         
@@ -118,18 +130,34 @@ class NotificationService
      */
     public function createSaleNotification(Sale $sale, ?int $userId = null): Notification
     {
+        // Ensure relations are present
+        $sale->loadMissing(['items.product', 'user']);
+
         $totalAmount = $sale->items->sum(fn($item) => $item->quantity * $item->price);
+        
+        // Get first product if available for message and navigation
+        $firstItem = $sale->items->first();
+        $firstProduct = $firstItem?->product;
+        $productId = $firstProduct?->id;
+        $productName = $firstProduct?->name;
+
+        $baseMessage = "Sale order #{$sale->id} has been created successfully.";
+        $message = ($productId && $productName)
+            ? "Sale order #{$sale->id} of {$productName} (#{$productId}) has been created successfully."
+            : $baseMessage;
         
         $data = [
             'type' => Notification::TYPE_SALE_CREATED,
             'title' => 'Sale Created',
-            'message' => "Sale order #{$sale->id} has been created successfully.",
+            'message' => $message,
             'data' => [
                 'sale_id' => $sale->id,
                 'customer_name' => $sale->customer_name,
                 'total_amount' => $totalAmount,
                 'items_count' => $sale->items->count(),
                 'sale_date' => $sale->sale_date->toISOString(),
+                'product_id' => $productId,
+                'product_name' => $productName,
             ],
             'user_id' => $userId ?? $sale->user_id,
             'priority' => Notification::PRIORITY_MEDIUM,
@@ -150,18 +178,34 @@ class NotificationService
      */
     public function createPurchaseNotification(Purchase $purchase, ?int $userId = null): Notification
     {
+        // Ensure relations are present
+        $purchase->loadMissing(['items.product', 'supplier', 'user']);
+
         $totalAmount = $purchase->items->sum(fn($item) => $item->quantity * $item->price);
+        
+        // Get first product if available for message and navigation
+        $firstItem = $purchase->items->first();
+        $firstProduct = $firstItem?->product;
+        $productId = $firstProduct?->id;
+        $productName = $firstProduct?->name;
+
+        $baseMessage = "Purchase order #{$purchase->id} has been created successfully.";
+        $message = ($productId && $productName)
+            ? "Purchase order #{$purchase->id} of {$productName} (#{$productId}) has been created successfully."
+            : $baseMessage;
         
         $data = [
             'type' => Notification::TYPE_PURCHASE_CREATED,
             'title' => 'Purchase Created',
-            'message' => "Purchase order #{$purchase->id} has been created successfully.",
+            'message' => $message,
             'data' => [
                 'purchase_id' => $purchase->id,
                 'supplier_name' => $purchase->supplier?->name ?? 'Unknown Supplier',
                 'total_amount' => $totalAmount,
                 'items_count' => $purchase->items->count(),
                 'purchase_date' => $purchase->purchase_date->toISOString(),
+                'product_id' => $productId,
+                'product_name' => $productName,
             ],
             'user_id' => $userId ?? $purchase->user_id,
             'priority' => Notification::PRIORITY_MEDIUM,
@@ -414,21 +458,31 @@ class NotificationService
             $createdCount = 0;
             
             // Get products with low stock (avoiding N+1 queries)
+            // Only create alerts for products that do NOT already have a low_stock notification
             $lowStockProducts = Product::with(['category'])
                 ->whereRaw('stock <= COALESCE(low_stock_threshold, 10)')
-                ->whereDoesntHave('notifications', function ($query) {
-                    $query->where('type', Notification::TYPE_LOW_STOCK)
-                        ->where('created_at', '>=', Carbon::now()->subHours(24)); // Don't spam daily
+                ->whereDoesntHave('systemNotifications', function ($query) {
+                    $query->where('type', Notification::TYPE_LOW_STOCK);
                 })
                 ->get();
 
-            // Get all admin users to notify
+            // Get all admin users to notify (global)
             $adminUsers = User::whereIn('role', ['admin', 'super_admin'])->get();
 
             foreach ($lowStockProducts as $product) {
-                foreach ($adminUsers as $user) {
-                    $this->createLowStockAlert($product, $user->id);
-                    $createdCount++;
+                $lockKey = 'low_stock_lock:' . $product->id;
+                // simple cache lock to avoid concurrent duplicates (10s TTL)
+                if (!Cache::add($lockKey, 1, 10)) {
+                    continue;
+                }
+
+                try {
+                    foreach ($adminUsers as $user) {
+                        $this->createLowStockAlert($product, $user->id);
+                        $createdCount++;
+                    }
+                } finally {
+                    Cache::forget($lockKey);
                 }
             }
 
@@ -508,6 +562,36 @@ class NotificationService
         
         // Use CacheHelper to bump notifications namespace as well
         CacheHelper::bump('notifications');
+    }
+
+    /**
+     * Clear all low stock notifications for a product (used on restock crossing)
+     */
+    public function clearLowStockAlertsForProduct(int $productId): int
+    {
+        try {
+            $deleted = Notification::where('type', Notification::TYPE_LOW_STOCK)
+                ->where('notifiable_type', Product::class)
+                ->where('notifiable_id', $productId)
+                ->delete();
+
+            // Invalidate caches broadly since we cannot target per-user caches reliably without tags
+            Cache::flush();
+            CacheHelper::bump('notifications');
+
+            Log::info('Cleared low stock notifications for product', [
+                'product_id' => $productId,
+                'deleted' => $deleted,
+            ]);
+
+            return $deleted;
+        } catch (\Exception $e) {
+            Log::error('Failed to clear low stock notifications for product', [
+                'product_id' => $productId,
+                'error' => $e->getMessage(),
+            ]);
+            return 0;
+        }
     }
 
     /**

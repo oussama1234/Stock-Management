@@ -53,7 +53,7 @@ const StatCard = ({ title, value, subtitle, icon: Icon, color, delay = 0 }) => (
   </motion.div>
 );
 
-export default function SalesStats({ sales = [], meta = {} }) {
+export default function SalesStats({ sales, meta }) {
   // Calculate statistics from the sales data
   const stats = useMemo(() => {
     if (!sales || sales.length === 0) {

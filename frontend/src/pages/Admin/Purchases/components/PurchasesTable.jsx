@@ -22,7 +22,8 @@ import {
   DollarSign,
   ShoppingCart,
   Sparkles,
-  Box
+  Box,
+  Star
 } from "lucide-react";
 import { useState } from "react";
 
@@ -276,13 +277,38 @@ export default function PurchasesTable({
                     <div className="bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-700 overflow-hidden">
                       <div className={`transition-all duration-300 ${expanded[purchase.id] ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}`}>
                         <div className="px-8 py-6">
-                          <div className="flex items-center mb-4">
-                            <Sparkles className="h-5 w-5 text-emerald-500 mr-2" />
-                            <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                              Purchase Items
-                            </h4>
-                            <div className="ml-auto text-sm text-gray-500 dark:text-gray-400">
-                              {(purchase.purchaseItems || purchase.purchase_items || []).length} items
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center">
+                              <div className="bg-gradient-to-r from-emerald-100 to-teal-100 p-2 rounded-lg mr-3">
+                                <Sparkles className="h-5 w-5 text-emerald-600" />
+                              </div>
+                              <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Purchase Details</h4>
+                            </div>
+                            
+                            {/* Purchase-level Tax and Discount Summary */}
+                            <div className="flex items-center space-x-6 bg-gradient-to-r from-gray-50 to-emerald-50 px-4 py-2 rounded-xl border border-emerald-100">
+                              {(purchase.tax > 0 || purchase.discount > 0) && (
+                                <>
+                                  {purchase.tax > 0 && (
+                                    <div className="flex items-center space-x-1">
+                                      <div className="bg-emerald-100 p-1 rounded">
+                                        <DollarSign className="h-3 w-3 text-emerald-600" />
+                                      </div>
+                                      <span className="text-xs font-medium text-emerald-700">Tax: {purchase.tax}%</span>
+                                    </div>
+                                  )}
+                                  {purchase.discount > 0 && (
+                                    <div className="flex items-center space-x-1">
+                                      <div className="bg-rose-100 p-1 rounded">
+                                        <DollarSign className="h-3 w-3 text-rose-600" />
+                                      </div>
+                                      <span className="text-xs font-medium text-rose-700">Discount: {purchase.discount}%</span>
+                                    </div>
+                                  )}
+                                </>
+                              ) || (
+                                <span className="text-xs text-gray-500">No tax or discount applied</span>
+                              )}
                             </div>
                           </div>
                           
@@ -327,14 +353,56 @@ export default function PurchasesTable({
                                     </span>
                                   </div>
                                   
-                                  <div className="flex justify-between items-center pt-2 border-t border-emerald-200">
-                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                      Line Total
-                                    </span>
-                                    <span className="font-bold text-emerald-600 text-lg">
-                                      {formatCurrency(item.price * item.quantity)}
-                                    </span>
-                                  </div>
+                                  {/* Show tax and discount breakdown for this item */}
+                                  {(() => {
+                                    const itemSubtotal = item.price * item.quantity;
+                                    const itemTax = (purchase.tax / 100) * itemSubtotal;
+                                    const itemDiscount = (purchase.discount / 100) * itemSubtotal;
+                                    const itemTotal = itemSubtotal + itemTax - itemDiscount;
+                                    
+                                    return (
+                                      <>
+                                        {(purchase.tax > 0 || purchase.discount > 0) && (
+                                          <div className="space-y-1 text-xs">
+                                            <div className="flex items-center justify-between text-gray-600">
+                                              <span>Item Subtotal:</span>
+                                              <span>{formatCurrency(itemSubtotal)}</span>
+                                            </div>
+                                            
+                                            {purchase.tax > 0 && (
+                                              <div className="flex items-center justify-between text-emerald-600">
+                                                <span className="flex items-center">
+                                                  <DollarSign className="h-2 w-2 mr-1" />
+                                                  Tax ({purchase.tax}%):
+                                                </span>
+                                                <span>+{formatCurrency(itemTax)}</span>
+                                              </div>
+                                            )}
+                                            
+                                            {purchase.discount > 0 && (
+                                              <div className="flex items-center justify-between text-rose-600">
+                                                <span className="flex items-center">
+                                                  <DollarSign className="h-2 w-2 mr-1" />
+                                                  Discount ({purchase.discount}%):
+                                                </span>
+                                                <span>-{formatCurrency(itemDiscount)}</span>
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+                                        
+                                        <div className="pt-2 mt-2 border-t border-emerald-100 flex items-center justify-between">
+                                          <span className="text-gray-700 dark:text-gray-300 font-medium flex items-center">
+                                            <Star className="h-3 w-3 mr-1 text-emerald-500" />
+                                            {(purchase.tax > 0 || purchase.discount > 0) ? 'Final Total' : 'Line Total'}
+                                          </span>
+                                          <span className="text-lg font-bold text-emerald-600">
+                                            {formatCurrency((purchase.tax > 0 || purchase.discount > 0) ? itemTotal : itemSubtotal)}
+                                          </span>
+                                        </div>
+                                      </>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                             ))}

@@ -7,6 +7,7 @@ namespace App\GraphQL\Mutations\Sales;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Support\CacheHelper;
+use App\Services\StockValidationService;
 use Closure;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
@@ -55,8 +56,22 @@ class CreateSaleByProduct extends Mutation
         if (!$product) {
             throw new \Exception('Product not found');
         }
-           $quantity = $saleItemValues['quantity'];
+        
+        $quantity = $saleItemValues['quantity'];
         $price = $saleItemValues['price'];
+        
+        // Enhanced stock validation using service - check before creating sale
+        $stockValidationService = new StockValidationService();
+        $stockValidation = $stockValidationService->checkProductStock($product->id, $quantity);
+        
+        if (!$stockValidation['valid']) {
+            throw new \Exception($stockValidation['error']);
+        }
+        
+        // Additional validation for quantity
+        if ($quantity <= 0) {
+            throw new \Exception('Quantity must be greater than 0');
+        }
         // Create a new sale
         $sale = new Sale();
             $sale->user_id = Auth::id();
@@ -110,11 +125,6 @@ class CreateSaleByProduct extends Mutation
 
 
 
-        
-        // Check if there is enough stock
-        if ($product->stock < $quantity) {
-            throw new \Exception('Not enough stock');
-        }
         // Create the sale item (this will trigger the SaleItemObserver::created event)
         $saleItem = \App\Models\SaleItem::create([
             'sale_id' => $sale->id,

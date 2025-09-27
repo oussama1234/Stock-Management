@@ -1,6 +1,5 @@
 // defining the mutation to create a sale item by product
-import { gql } from "@apollo/client";
-import { useMutation } from "@apollo/client/react";
+import { gql, useMutation } from "@apollo/client";
 import { SALE_ITEM_FRAGMENT } from "../Fragments/SaleItemFragments";
 
 export const CREATE_SALE_ITEM_MUTATION = gql`
@@ -28,54 +27,66 @@ export const useCreateSaleItemMutation = () => {
   const [createSaleItem, { data, loading, error, client }] = useMutation(
     CREATE_SALE_ITEM_MUTATION,
     {
-      // Use update function to manually clear cache
-      update: (cache, { data }) => {
-        if (data?.createSaleByProduct) {
-          console.log('🗑️ Clearing Apollo cache after sale creation...');
-          
-          // Clear all cached queries related to this product
-          const productId = data.createSaleByProduct.product_id;
-          
-          // Evict all product-related cache entries
-          cache.evict({ 
-            id: `Product:${productId}` 
-          });
-          
-          // Evict paginated queries for this product
-          cache.evict({ 
-            fieldName: 'paginatedSaleItemsByProduct',
-            args: { productId }
-          });
-          
-          cache.evict({ 
-            fieldName: 'paginatedStockMovementsByProduct', 
-            args: { productId }
-          });
-          
-          cache.evict({ 
-            fieldName: 'paginatedPurchaseItemsByProduct',
-            args: { productId }
-          });
-          
-          cache.evict({ 
-            fieldName: 'productById',
-            args: { id: productId }
-          });
-          
-          // Garbage collect evicted entries
-          cache.gc();
-          
-          // As a last resort, clear the entire store to force fresh data
-          setTimeout(() => {
-            cache.reset();
-            console.log('🗑️ Complete Apollo cache reset performed');
-          }, 100);
-          
-          console.log('✅ Apollo cache cleared successfully');
+      // DISABLE ALL CACHING for mutation
+      fetchPolicy: 'no-cache',
+      
+      // Add cache-busting context
+      context: {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'x-no-cache': 'true'
         }
       },
-      // Force network-only fetch policy for next queries
-      fetchPolicy: 'network-only'
+      
+      // NUCLEAR cache clearing after mutation
+      update: (cache, { data }) => {
+        if (data?.createSaleByProduct) {
+          const productId = data.createSaleByProduct.product_id;
+          
+          try {
+            // STEP 1: Evict specific fields with args
+            cache.evict({ 
+              fieldName: 'productById',
+              args: { id: productId }
+            });
+            cache.evict({ 
+              fieldName: 'paginatedSaleItemsByProduct',
+              args: { product_id: productId }
+            });
+            cache.evict({ 
+              fieldName: 'paginatedStockMovementsByProduct',
+              args: { product_id: productId }
+            });
+            cache.evict({ 
+              fieldName: 'paginatedPurchaseItemsByProduct',
+              args: { product_id: productId }
+            });
+            
+            // STEP 2: Evict entire field types (nuclear option)
+            cache.evict({ fieldName: 'productById' });
+            cache.evict({ fieldName: 'paginatedSaleItemsByProduct' });
+            cache.evict({ fieldName: 'paginatedStockMovementsByProduct' });
+            cache.evict({ fieldName: 'paginatedPurchaseItemsByProduct' });
+            
+            // STEP 3: Clear entire cache if needed (ultimate nuclear option)
+            // Enable this for testing - full cache reset
+            cache.reset();
+            
+            // Force garbage collection
+            cache.gc();
+            
+          } catch (evictError) {
+            // Last resort: clear everything
+            try {
+              cache.reset();
+            } catch (resetError) {
+              // Silent fallback
+            }
+          }
+        }
+      }
     }
   );
   return { createSaleItem, data, loading, error, client };

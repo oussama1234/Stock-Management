@@ -1,6 +1,10 @@
 // NotificationItem.jsx - Individual notification item component
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { ProductDetailsRoute } from '@/router/Index';
+import { getSaleById } from '@/api/Sales';
+import { getPurchaseById } from '@/api/Purchases';
 import { 
   Package, 
   ShoppingCart, 
@@ -22,6 +26,42 @@ const NotificationItem = memo(({
 }) => {
   const priorityInfo = getPriorityDisplayInfo(notification.priority);
   const loadingState = notificationActions.getNotificationLoadingState(notification.id);
+  const navigate = useNavigate();
+
+  // Resolve product meta for sale/purchase if not provided by backend (fallback)
+  const initialProductId = notification?.data?.product_id || null;
+  const initialProductName = notification?.data?.product_name || '';
+  const [productMeta, setProductMeta] = useState({ id: initialProductId, name: initialProductName });
+
+  useEffect(() => {
+    let cancelled = false;
+    async function resolveProduct() {
+      if (productMeta.id) return; // Already have it (from backend)
+      if (notification.type === NotificationTypes.SALE_CREATED && notification?.data?.sale_id) {
+        try {
+          const res = await getSaleById(notification.data.sale_id);
+          const sale = res?.data || res; // support either {data: {...}} or {...}
+          const firstItem = sale?.items?.[0];
+          const prod = firstItem?.product;
+          if (!cancelled && prod?.id) {
+            setProductMeta({ id: prod.id, name: prod.name || 'Product' });
+          }
+        } catch (_) {}
+      } else if (notification.type === NotificationTypes.PURCHASE_CREATED && notification?.data?.purchase_id) {
+        try {
+          const res = await getPurchaseById(notification.data.purchase_id);
+          const purchase = res?.data || res;
+          const firstItem = purchase?.purchaseItems?.[0] || purchase?.items?.[0];
+          const prod = firstItem?.product;
+          if (!cancelled && prod?.id) {
+            setProductMeta({ id: prod.id, name: prod.name || 'Product' });
+          }
+        } catch (_) {}
+      }
+    }
+    resolveProduct();
+    return () => { cancelled = true; };
+  }, [notification?.data?.sale_id, notification?.data?.purchase_id, notification.type]);
 
   // Get icon for notification type
   const getIcon = useCallback(() => {
@@ -53,12 +93,37 @@ const NotificationItem = memo(({
     onSelectionChange(e.target.checked);
   }, [onSelectionChange]);
 
+  // Row click should no longer auto mark as read; keep as no-op to preserve hover/tap effects
   const handleClick = useCallback(() => {
-    // Mark as read when clicked if unread
-    if (!notification.is_read) {
-      notificationActions.handleMarkAsRead(notification.id);
+    return;
+  }, []);
+
+  const handleGoToProduct = useCallback(async (e) => {
+    e.stopPropagation();
+    const productId = productMeta?.id || notification?.data?.product_id;
+    if (productId) {
+      navigate(`${ProductDetailsRoute}/${productId}`);
+    } else {
+      // Last resort: try resolving then navigate
+      if (notification.type === NotificationTypes.SALE_CREATED && notification?.data?.sale_id) {
+        try {
+          const res = await getSaleById(notification.data.sale_id);
+          const sale = res?.data || res;
+          const firstItem = sale?.items?.[0];
+          const prodId = firstItem?.product?.id;
+          if (prodId) navigate(`${ProductDetailsRoute}/${prodId}`);
+        } catch (_) {}
+      } else if (notification.type === NotificationTypes.PURCHASE_CREATED && notification?.data?.purchase_id) {
+        try {
+          const res = await getPurchaseById(notification.data.purchase_id);
+          const purchase = res?.data || res;
+          const firstItem = purchase?.purchaseItems?.[0] || purchase?.items?.[0];
+          const prodId = firstItem?.product?.id;
+          if (prodId) navigate(`${ProductDetailsRoute}/${prodId}`);
+        } catch (_) {}
+      }
     }
-  }, [notification.id, notification.is_read, notificationActions]);
+  }, [productMeta?.id, notification?.data?.product_id, notification?.data?.sale_id, notification?.data?.purchase_id, notification.type, navigate]);
 
   // Get notification type styling
   const getTypeStyle = () => {
@@ -175,6 +240,15 @@ const NotificationItem = memo(({
                   : 'text-gray-800 dark:text-gray-200'
               }`}>
                 {notification.message}
+                {(productMeta?.id && (productMeta?.name || notification?.data?.product_name)) && (
+                  <button
+                    onClick={handleGoToProduct}
+                    className="ml-2 text-indigo-600 dark:text-indigo-400 hover:underline"
+                    title={`View ${productMeta?.name || notification?.data?.product_name}`}
+                  >
+                    {(productMeta?.name || notification?.data?.product_name)} (#{productMeta?.id || notification?.data?.product_id})
+                  </button>
+                )}
               </p>
 
               {/* Footer with time and priority */}

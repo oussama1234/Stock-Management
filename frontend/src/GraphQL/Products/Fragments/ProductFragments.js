@@ -9,6 +9,7 @@ export const PRODUCT_FRAGMENT = gql`
     image
     price
     stock
+    days_in_stock
     category {
       ...CategoryFragment
     }
@@ -26,6 +27,7 @@ export const PRODUCT_ANALYTICS_FRAGMENT = gql`
     image
     price
     stock
+    days_in_stock
     category {
       ...CategoryFragment
     }

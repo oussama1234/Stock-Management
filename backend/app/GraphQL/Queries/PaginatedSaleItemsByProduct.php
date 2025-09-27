@@ -67,7 +67,7 @@ class PaginatedSaleItemsByProduct extends Query
             'select' => $select,
             'with' => array_keys($with),
         ]);
-        $ttl = CacheHelper::ttlSeconds('GRAPHQL_SALE_ITEMS_TTL', 120);
+        $ttl = CacheHelper::ttlSeconds('GRAPHQL_SALE_ITEMS_TTL', 10); // Reduced from 120 to 10 seconds for real-time updates
 
         return Cache::remember($key, now()->addSeconds($ttl), function () use ($productId, $page, $perPage, $with) {
             // Get total count first

@@ -42,8 +42,8 @@ export const GET_PAGINATED_PURCHASE_ITEMS_BY_PRODUCT = gql`
 export const usePaginatedPurchaseItemsByProductQuery = (productId, page = 1, perPage = 10) =>
   useQuery(GET_PAGINATED_PURCHASE_ITEMS_BY_PRODUCT, {
     variables: { product_id: productId, page, perPage },
-    fetchPolicy: "cache-first",
-    nextFetchPolicy: "cache-and-network",
+    fetchPolicy: "network-only", // Always fetch fresh data for accurate analytics
+    nextFetchPolicy: "network-only", // Ensure subsequent fetches are also fresh
     errorPolicy: "all",
     notifyOnNetworkStatusChange: true,
     skip: !productId,

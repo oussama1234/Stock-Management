@@ -280,7 +280,10 @@ export default function Sales() {
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Sales Records</h3>
             </div>
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              {meta?.total || 0} total sales
+              <span className="font-semibold text-purple-600">{meta?.total || 0}</span> total sales
+              {meta && (
+                <span className="ml-2">• Showing {meta.from}-{meta.to}</span>
+              )}
             </div>
           </div>
         </div>
@@ -292,7 +295,7 @@ export default function Sales() {
             formatCurrency={formatCurrency} 
             formatDate={formatDate}
             onSort={handleSort}
-            sortBy={filters.sortBy || 'sale_date'}
+            sortBy={filters.sortBy || 'created_at'}
             sortOrder={filters.sortOrder || 'desc'}
             deletingId={deletingId}
           />

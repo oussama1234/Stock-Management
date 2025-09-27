@@ -16,7 +16,6 @@ export const getPurchasesOverview = async (params = {}, options = {}) => {
   
   if (params.range_days) cleanParams.range_days = params.range_days;
   
-  console.log('getPurchasesOverview params:', cleanParams);
   
   const res = await AxiosClient.get("/purchases/analytics/overview", { 
     params: cleanParams,
@@ -38,7 +37,6 @@ export const getPurchasesTrends = async (params = {}, options = {}) => {
   if (params.range_days) cleanParams.range_days = params.range_days;
   if (params.group_by) cleanParams.group_by = params.group_by;
   
-  console.log('getPurchasesTrends params:', cleanParams);
   
   const res = await AxiosClient.get("/purchases/analytics/trends", { 
     params: cleanParams,
@@ -60,7 +58,6 @@ export const getPurchasesTopProducts = async (params = {}, options = {}) => {
   if (params.range_days) cleanParams.range_days = params.range_days;
   if (params.limit) cleanParams.limit = params.limit;
   
-  console.log('getPurchasesTopProducts params:', cleanParams);
   
   const res = await AxiosClient.get("/purchases/analytics/top-products", { 
     params: cleanParams,
@@ -82,7 +79,6 @@ export const getPurchasesSuppliers = async (params = {}, options = {}) => {
   if (params.range_days) cleanParams.range_days = params.range_days;
   if (params.limit) cleanParams.limit = params.limit;
   
-  console.log('getPurchasesSuppliers params:', cleanParams);
   
   const res = await AxiosClient.get("/purchases/analytics/suppliers", { 
     params: cleanParams,
@@ -103,7 +99,6 @@ export const getPurchasesCategories = async (params = {}, options = {}) => {
   
   if (params.range_days) cleanParams.range_days = params.range_days;
   
-  console.log('getPurchasesCategories params:', cleanParams);
   
   const res = await AxiosClient.get("/purchases/analytics/categories", { 
     params: cleanParams,
@@ -124,7 +119,6 @@ export const getPurchasingTeam = async (params = {}, options = {}) => {
   
   if (params.range_days) cleanParams.range_days = params.range_days;
   
-  console.log('getPurchasingTeam params:', cleanParams);
   
   const res = await AxiosClient.get("/purchases/analytics/purchasing-team", { 
     params: cleanParams,
@@ -145,7 +139,6 @@ export const getCostAnalysis = async (params = {}, options = {}) => {
   
   if (params.range_days) cleanParams.range_days = params.range_days;
   
-  console.log('getCostAnalysis params:', cleanParams);
   
   const res = await AxiosClient.get("/purchases/analytics/cost-analysis", { 
     params: cleanParams,
@@ -163,7 +156,6 @@ export const getCostAnalysis = async (params = {}, options = {}) => {
  */
 export const getAllPurchasesAnalytics = async (params = {}, options = {}) => {
   try {
-    console.log('Fetching all purchases analytics data...');
     
     const [
       overview,
@@ -194,7 +186,6 @@ export const getAllPurchasesAnalytics = async (params = {}, options = {}) => {
       _fetchedAt: new Date().toISOString()
     };
   } catch (error) {
-    console.error('Error fetching purchases analytics:', error);
     throw error;
   }
 };

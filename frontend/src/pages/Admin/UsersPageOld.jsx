@@ -64,7 +64,6 @@ const UsersPage = () => {
     if (selectedUsers.length === 0) {
       const fetchData = async () => {
         const result = await dispatch(fetchUsers());
-        console.log("result:", result);
       };
       fetchData();
     }
@@ -179,7 +178,6 @@ const UsersPage = () => {
           updateUser({ userData: formData, file: file })
         );
         if (updateUser.fulfilled.match(result)) {
-          console.log("result updated:", result);
           const updatedUser = {
             ...formData,
             id: result.payload.id,
@@ -189,7 +187,6 @@ const UsersPage = () => {
           );
           setUsers(updatedUsers);
           setUser(updatedUser);
-          console.log("users:", users);
           if (result.payload.message) {
             toast.error(result.payload.message);
           }
@@ -202,13 +199,11 @@ const UsersPage = () => {
           addUser({ userdata: formData, file: file })
         );
         if (addUser.fulfilled.match(result)) {
-          console.log("result added:", result);
           const newUser = {
             ...formData,
             id: result.payload.id,
           };
           setUsers([...users, newUser]);
-          console.log("users:", users);
           toast.success("User Created successfully!");
         } else {
           toast.error(result.payload);
@@ -216,7 +211,6 @@ const UsersPage = () => {
             ...prev,
             email: result.payload || "Error creating user",
           }));
-          console.log("error:", selectedError);
         }
       }
 
@@ -276,8 +270,6 @@ const UsersPage = () => {
         // simulate deleting user from api response
         const result = await dispatch(deleteUser(userObj));
         if (deleteUser.fulfilled.match(result)) {
-          console.log("result deleted:", result);
-          console.log("selectedUsers:", selectedUsers);
 
           toast.success("User deleted successfully!");
         } else if (deleteUser.rejected.match(result)) {
@@ -285,7 +277,6 @@ const UsersPage = () => {
         }
       }
     } catch (error) {
-      console.log("Error deleting user:", error);
     }
   };
 

@@ -35,7 +35,6 @@ export default function usePurchasesData(params = {}) {
    * Refetch data by incrementing trigger
    */
   const refetch = useCallback(() => {
-    console.log('🔄 Refetch triggered manually');
     setRefetchTrigger(prev => prev + 1);
   }, []);
 
@@ -50,7 +49,6 @@ export default function usePurchasesData(params = {}) {
         setLoading(true);
         setError(null);
 
-        console.log('🔄 Fetching purchases data:', params);
         
         // Fetch from API without AbortController for now
         const result = await getPurchases(params);
@@ -58,13 +56,9 @@ export default function usePurchasesData(params = {}) {
         // Don't update if component unmounted
         if (!isMounted) return;
         
-        console.log('✅ Received purchases data:', result);
         
         // Debug: Log actual data structure
-        console.log('🔍 First purchase data structure:', result.data?.[0]);
         if (result.data?.[0]) {
-          console.log('🔍 Purchase items keys:', Object.keys(result.data[0]));
-          console.log('🔍 Purchase items data:', result.data[0].purchaseItems || result.data[0].purchase_items);
         }
         
         // Transform data to ensure consistent property names
@@ -86,7 +80,6 @@ export default function usePurchasesData(params = {}) {
         });
 
       } catch (err) {
-        console.error('❌ Error fetching purchases:', err);
         
         if (!isMounted) return;
         
@@ -112,12 +105,7 @@ export default function usePurchasesData(params = {}) {
   // Debug logging in development
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 Purchases data updated:', {
-        dataCount: data.length,
-        meta,
-        loading,
-        error: error ? '❌' : '✅'
-      });
+      // Debug logging removed for production
     }
   }, [data.length, meta, loading, error]);
 
@@ -157,7 +145,6 @@ export function usePurchaseById(id) {
         return;
       }
       
-      console.error('❌ Error fetching purchase:', err);
       const errorMessage = err?.response?.data?.message || err.message || 'Failed to load purchase';
       setError(errorMessage);
       setPurchase(null);

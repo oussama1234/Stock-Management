@@ -77,7 +77,6 @@ const usersSlice = createSlice({
         state.error = null;
         const user = action.payload;
         state.users = state.users.filter((u) => u.id !== user.id);
-        console.log("users from payload filtered:", state.users);
       })
       .addCase(updateUser.pending, (state) => {
         state.loading = true;
@@ -92,7 +91,6 @@ const usersSlice = createSlice({
         state.error = null;
         const user = action.payload;
         state.users = state.users.map((u) => (u.id === user.id ? user : u));
-        console.log("users from payload filtered:", state.users);
       });
   },
 });

@@ -2,43 +2,32 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
-use App\Models\Product;
+use App\Services\AnalyticsService;
 use App\Support\CacheHelper;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class SalesAnalyticsController extends Controller
 {
+    protected AnalyticsService $analyticsService;
+
+    public function __construct(AnalyticsService $analyticsService)
+    {
+        $this->analyticsService = $analyticsService;
+    }
+
     /**
      * Get sales overview statistics
      */
     public function overview(Request $request)
     {
-        $period = $request->input('period', '30'); // days
-        $startDate = Carbon::now()->subDays((int) $period)->startOfDay();
-
-        $key = CacheHelper::key('sales', 'overview', ['period' => $period]);
-        $ttl = CacheHelper::ttlSeconds('API_SALES_ANALYTICS_TTL', 300); // 5 minutes
-
-        $data = Cache::remember($key, now()->addSeconds($ttl), function () use ($startDate) {
-            return [
-                'total_sales' => Sale::where('sale_date', '>=', $startDate)->sum('total_amount'),
-                'total_orders' => Sale::where('sale_date', '>=', $startDate)->count(),
-                'average_order_value' => Sale::where('sale_date', '>=', $startDate)->avg('total_amount'),
-                'total_items_sold' => SaleItem::whereHas('sale', function ($q) use ($startDate) {
-                    $q->where('sale_date', '>=', $startDate);
-                })->sum('quantity'),
-                'unique_customers' => Sale::where('sale_date', '>=', $startDate)
-                    ->whereNotNull('customer_name')
-                    ->distinct('customer_name')
-                    ->count(),
-            ];
-        });
-
+        $period = (int) $request->input('period', 30);
+        $data = $this->analyticsService->getSalesOverview($period);
         return response()->json($data);
     }
 
@@ -47,75 +36,20 @@ class SalesAnalyticsController extends Controller
      */
     public function trends(Request $request)
     {
-        $period = $request->input('period', '30'); // days
-        $interval = $request->input('interval', 'day'); // day, week, month
-        $startDate = Carbon::now()->subDays((int) $period)->startOfDay();
-
-        $key = CacheHelper::key('sales', 'trends', [
-            'period' => $period,
-            'interval' => $interval,
-        ]);
-        $ttl = CacheHelper::ttlSeconds('API_SALES_ANALYTICS_TTL', 300);
-
-        $data = Cache::remember($key, now()->addSeconds($ttl), function () use ($startDate, $interval) {
-            $dateFormat = match ($interval) {
-                'week' => '%Y-%u',
-                'month' => '%Y-%m',
-                default => '%Y-%m-%d',
-            };
-
-            return Sale::where('sale_date', '>=', $startDate)
-                ->select([
-                    DB::raw("DATE_FORMAT(sale_date, '$dateFormat') as period"),
-                    DB::raw('COUNT(*) as orders'),
-                    DB::raw('SUM(total_amount) as revenue'),
-                    DB::raw('AVG(total_amount) as avg_order_value'),
-                ])
-                ->groupBy('period')
-                ->orderBy('period')
-                ->get();
-        });
-
+        $period = (int) $request->input('period', 30);
+        $interval = $request->input('interval', 'day');
+        $data = $this->analyticsService->getSalesTrends($period, $interval);
         return response()->json($data);
     }
 
     /**
-     * Get top selling products
+     * Get top selling products with CORRECTED revenue calculation
      */
     public function topProducts(Request $request)
     {
-        $period = $request->input('period', '30');
+        $period = (int) $request->input('period', 30);
         $limit = min(50, max(5, (int) $request->input('limit', 10)));
-        $startDate = Carbon::now()->subDays((int) $period)->startOfDay();
-
-        $key = CacheHelper::key('sales', 'top_products', [
-            'period' => $period,
-            'limit' => $limit,
-        ]);
-        $ttl = CacheHelper::ttlSeconds('API_SALES_ANALYTICS_TTL', 300);
-
-        $data = Cache::remember($key, now()->addSeconds($ttl), function () use ($startDate, $limit) {
-            return SaleItem::query()
-                ->select([
-                    'product_id',
-                    DB::raw('SUM(quantity) as total_quantity'),
-                    DB::raw('SUM(quantity * price) as total_revenue'),
-                    DB::raw('COUNT(DISTINCT sale_id) as times_sold'),
-                    DB::raw('AVG(price) as avg_price'),
-                ])
-                ->whereHas('sale', function ($q) use ($startDate) {
-                    $q->where('sale_date', '>=', $startDate);
-                })
-                ->with([
-                    'product:id,name,category_id,image,stock',
-                    'product.category:id,name'
-                ])
-                ->groupBy('product_id')
-                ->orderByDesc('total_quantity')
-                ->limit($limit)
-                ->get();
-        });
-
+        $data = $this->analyticsService->getSalesTopProducts($period, $limit);
         return response()->json($data);
     }
 

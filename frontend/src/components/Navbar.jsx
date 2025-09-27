@@ -91,7 +91,6 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
     e.preventDefault();
     if (searchTerm.trim()) {
       // Implement global search functionality here
-      console.log('Searching for:', searchTerm);
       Toast.success(`Searching for "${searchTerm}"`);
     }
   };

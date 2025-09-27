@@ -69,13 +69,15 @@ const itemVariants = {
   }
 };
 
-export default function PurchaseModal({ open, onClose, onSubmit, initial = null }) {
+export default function PurchaseModal({ open, onClose, onSubmit, initial = null, hideDate = false }) {
   const toast = useToast();
   
   // Form state
   const [formData, setFormData] = useState({
     supplier_id: "",
     purchase_date: new Date().toISOString().split('T')[0],
+    tax: 0,
+    discount: 0,
     items: []
   });
   
@@ -102,6 +104,8 @@ export default function PurchaseModal({ open, onClose, onSubmit, initial = null 
       setFormData({
         supplier_id: initial.supplier?.id || "",
         purchase_date: initial.purchase_date ? initial.purchase_date.split('T')[0] : new Date().toISOString().split('T')[0],
+        tax: initial.tax || 0,
+        discount: initial.discount || 0,
         items: initial.purchaseItems?.map(item => ({
           product_id: item.product_id,
           product_name: item.product?.name || "",
@@ -113,6 +117,8 @@ export default function PurchaseModal({ open, onClose, onSubmit, initial = null 
       setFormData({
         supplier_id: "",
         purchase_date: new Date().toISOString().split('T')[0],
+        tax: 0,
+        discount: 0,
         items: []
       });
     }
@@ -129,22 +135,37 @@ export default function PurchaseModal({ open, onClose, onSubmit, initial = null 
 
   // Filter products based on search
   useEffect(() => {
-    if (productSearch.trim()) {
+    const q = productSearch.trim().toLowerCase();
+    if (q) {
       const filtered = products.filter(product =>
-        product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-        product.category?.name.toLowerCase().includes(productSearch.toLowerCase())
+        (product.name || '').toLowerCase().includes(q) ||
+        ((product.category?.name || '').toLowerCase().includes(q))
       );
       setFilteredProducts(filtered);
     } else {
-      setFilteredProducts(products.slice(0, 50)); // Limit to first 50 for performance
+      // Show all products without artificial cap
+      setFilteredProducts(products);
     }
   }, [productSearch, products]);
 
   const loadProducts = async () => {
     setLoadingProducts(true);
     try {
-      const result = await getProducts({ per_page: 1000 });
-      setProducts(result.data || []);
+      let page = 1;
+      let lastPage = 1;
+      const all = [];
+      do {
+        const res = await getProducts({ per_page: 200, page });
+        const items = res?.data || [];
+        all.push(...items);
+        lastPage = res?.meta?.last_page || 1;
+        page++;
+      } while (page <= lastPage);
+
+      // Deduplicate by product id
+      const deduped = Array.from(new Map(all.map(p => [p.id, p])).values());
+
+      setProducts(deduped);
     } catch (error) {
       toast.error("Failed to load products");
     } finally {
@@ -241,7 +262,7 @@ export default function PurchaseModal({ open, onClose, onSubmit, initial = null 
       newErrors.supplier_id = "Supplier is required";
     }
 
-    if (!formData.purchase_date) {
+    if (!hideDate && !formData.purchase_date) {
       newErrors.purchase_date = "Purchase date is required";
     }
 
@@ -279,6 +300,8 @@ export default function PurchaseModal({ open, onClose, onSubmit, initial = null 
       const payload = {
         supplier_id: parseInt(formData.supplier_id),
         purchase_date: formData.purchase_date,
+        tax: parseFloat(formData.tax) || 0,
+        discount: parseFloat(formData.discount) || 0,
         items: formData.items.map(item => ({
           product_id: parseInt(item.product_id),
           quantity: parseInt(item.quantity),
@@ -286,20 +309,33 @@ export default function PurchaseModal({ open, onClose, onSubmit, initial = null 
         }))
       };
 
+      if (hideDate) {
+        delete payload.purchase_date;
+      }
+
       await onSubmit(payload);
       // Don't auto-close - let parent handle success and closing
     } catch (error) {
       // Error handling is done in parent component
-      console.error('Modal submission error:', error);
     } finally {
       setSaving(false);
     }
   };
 
   const calculateTotal = () => {
-    return formData.items.reduce((total, item) => {
+    const subtotal = formData.items.reduce((total, item) => {
       return total + (parseFloat(item.price || 0) * parseInt(item.quantity || 0));
     }, 0);
+    
+    const taxAmount = (parseFloat(formData.tax || 0) / 100) * subtotal;
+    const discountAmount = (parseFloat(formData.discount || 0) / 100) * subtotal;
+    
+    return {
+      subtotal,
+      taxAmount,
+      discountAmount,
+      total: Math.max(0, subtotal + taxAmount - discountAmount)
+    };
   };
 
   if (!open) return null;
@@ -400,27 +436,65 @@ export default function PurchaseModal({ open, onClose, onSubmit, initial = null 
                 </motion.div>
 
                 {/* Purchase Date */}
+                {!hideDate && (
+                  <motion.div variants={itemVariants} className="space-y-2">
+                    <label className="flex items-center text-sm font-medium text-gray-700">
+                      <Calendar className="h-4 w-4 text-emerald-500 mr-2" />
+                      Purchase Date *
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.purchase_date}
+                      onChange={(e) => handleInputChange("purchase_date", e.target.value)}
+                      className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-0 transition-all duration-300 ${
+                        errors.purchase_date 
+                          ? 'border-red-300 focus:border-red-500' 
+                          : 'border-gray-200 focus:border-emerald-500'
+                      }`}
+                    />
+                    {errors.purchase_date && (
+                      <p className="text-red-500 text-sm flex items-center">
+                        <AlertTriangle className="h-3 w-3 mr-1" />
+                        {errors.purchase_date}
+                      </p>
+                    )}
+                  </motion.div>
+                )}
+                
+                {/* Tax */}
                 <motion.div variants={itemVariants} className="space-y-2">
                   <label className="flex items-center text-sm font-medium text-gray-700">
-                    <Calendar className="h-4 w-4 text-emerald-500 mr-2" />
-                    Purchase Date *
+                    <DollarSign className="h-4 w-4 text-emerald-500 mr-2" />
+                    Tax (%)
                   </label>
                   <input
-                    type="date"
-                    value={formData.purchase_date}
-                    onChange={(e) => handleInputChange("purchase_date", e.target.value)}
-                    className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-0 transition-all duration-300 ${
-                      errors.purchase_date 
-                        ? 'border-red-300 focus:border-red-500' 
-                        : 'border-gray-200 focus:border-emerald-500'
-                    }`}
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    value={formData.tax}
+                    onChange={(e) => handleInputChange("tax", e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-200 focus:border-emerald-500 rounded-xl focus:ring-0 transition-all duration-300 bg-gradient-to-r from-white to-emerald-50/30 placeholder-gray-400"
+                    placeholder="0.00"
                   />
-                  {errors.purchase_date && (
-                    <p className="text-red-500 text-sm flex items-center">
-                      <AlertTriangle className="h-3 w-3 mr-1" />
-                      {errors.purchase_date}
-                    </p>
-                  )}
+                </motion.div>
+                
+                {/* Discount */}
+                <motion.div variants={itemVariants} className="space-y-2">
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <DollarSign className="h-4 w-4 text-red-500 mr-2" />
+                    Discount (%)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    value={formData.discount}
+                    onChange={(e) => handleInputChange("discount", e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-200 focus:border-red-400 rounded-xl focus:ring-0 transition-all duration-300 bg-gradient-to-r from-white to-red-50/30 placeholder-gray-400"
+                    placeholder="0.00"
+                  />
                 </motion.div>
               </div>
 
@@ -549,21 +623,61 @@ export default function PurchaseModal({ open, onClose, onSubmit, initial = null 
                           )}
                         </div>
                       </div>
+
+                      {/* Show subtotal for this item (mirrors Sales design) */}
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Item Subtotal:</span>
+                          <span className="text-lg font-bold text-gray-800">
+                            ${((parseInt(item.quantity || 0) * parseFloat(item.price || 0)) || 0).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
                     </motion.div>
                   ))}
                 </div>
 
                 {/* Total */}
-                {formData.items.length > 0 && (
-                  <div className="flex justify-end p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl">
-                    <div className="text-right">
-                      <div className="text-sm text-gray-600">Total Amount</div>
-                      <div className="text-2xl font-bold text-emerald-600">
-                        ${calculateTotal().toFixed(2)}
+                {formData.items.length > 0 && (() => {
+                  const totals = calculateTotal();
+                  return (
+                    <div className="p-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl">
+                      <h3 className="text-lg font-semibold text-emerald-800 mb-4 flex items-center">
+                        <DollarSign className="h-5 w-5 mr-2" />
+                        Purchase Summary
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center text-gray-700">
+                          <span className="font-medium">Items Subtotal:</span>
+                          <span className="font-semibold">${totals.subtotal.toFixed(2)}</span>
+                        </div>
+                        
+                        {formData.tax > 0 && (
+                          <div className="flex justify-between items-center text-emerald-600">
+                            <span className="font-medium">Tax ({formData.tax}%):</span>
+                            <span className="font-semibold">+${totals.taxAmount.toFixed(2)}</span>
+                          </div>
+                        )}
+                        
+                        {formData.discount > 0 && (
+                          <div className="flex justify-between items-center text-red-600">
+                            <span className="font-medium">Discount ({formData.discount}%):</span>
+                            <span className="font-semibold">-${totals.discountAmount.toFixed(2)}</span>
+                          </div>
+                        )}
+                        
+                        <div className="pt-3 border-t border-emerald-200">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xl font-bold text-emerald-800">Final Total:</span>
+                            <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                              ${totals.total.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </motion.div>
             </div>
 
@@ -578,15 +692,25 @@ export default function PurchaseModal({ open, onClose, onSubmit, initial = null 
               >
                 Cancel
               </motion.button>
-              <LoadingButton
+              <motion.button
                 type="submit"
-                loading={saving}
-                loadingMessage="Saving..."
-                className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                disabled={saving}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 flex items-center justify-center"
               >
-                <Save className="h-4 w-4 mr-2" />
-                {initial ? "Update Purchase" : "Create Purchase"}
-              </LoadingButton>
+                {saving ? (
+                  <div className="flex items-center">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Saving...
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <Save className="h-5 w-5 mr-2" />
+                    {initial ? "Update Purchase" : "Create Purchase"}
+                  </div>
+                )}
+              </motion.button>
             </div>
           </form>
         </motion.div>

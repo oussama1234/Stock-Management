@@ -22,7 +22,7 @@ export default function useSalesData(params) {
     page: 1,
     per_page: 20,
     search: '',
-    sortBy: 'sale_date',
+    sortBy: 'updated_at',
     sortOrder: 'desc',
     ...params
   };

@@ -68,11 +68,18 @@ class SaleItemObserver
             ]);
         }
         
+        // Bump all relevant cache namespaces for real-time updates
         CacheHelper::bump('products');
         CacheHelper::bump('stock_movements');
         CacheHelper::bump('dashboard_metrics');
         CacheHelper::bump('sales');
         CacheHelper::bump('notifications');
+        
+        // Bump GraphQL query cache namespaces for immediate data refresh
+        CacheHelper::bump('paginated_sale_items');
+        CacheHelper::bump('paginated_purchase_items');
+        CacheHelper::bump('paginated_stock_movements');
+        CacheHelper::bump('analytics_service');
     }
 
     /**
@@ -109,6 +116,10 @@ class SaleItemObserver
         CacheHelper::bump('stock_movements');
         CacheHelper::bump('dashboard_metrics');
         CacheHelper::bump('notifications');
+        CacheHelper::bump('paginated_sale_items');
+        CacheHelper::bump('paginated_purchase_items');
+        CacheHelper::bump('paginated_stock_movements');
+        CacheHelper::bump('analytics_service');
     }
 
     /**
@@ -139,5 +150,9 @@ class SaleItemObserver
         CacheHelper::bump('stock_movements');
         CacheHelper::bump('dashboard_metrics');
         CacheHelper::bump('notifications');
+        CacheHelper::bump('paginated_sale_items');
+        CacheHelper::bump('paginated_purchase_items');
+        CacheHelper::bump('paginated_stock_movements');
+        CacheHelper::bump('analytics_service');
     }
 }

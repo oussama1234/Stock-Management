@@ -92,7 +92,6 @@ const Login = () => {
         setisLoading(false);
       }
     } catch (error) {
-      console.log("Login failed:", error.message);
       // Stop loading on error
       setisLoading(false);
     }

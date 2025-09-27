@@ -1,33 +1,22 @@
 // src/pages/Admin/Sales/components/SaleModal.jsx
 // Modal for creating or editing a sale.
-// - Captures customer name, sale_date, tax, discount
+// - Captures customer name, tax, discount (sale dates are handled automatically by backend)
 // - Lets user add multiple items (product_id, quantity, price)
 // - Emits onSubmit(payload) for parent to call create/update API
 // NOTE: For brevity, product selector is a simple numeric input; you can replace
 // it with a searchable dropdown (using your categories/products queries) later.
 
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Plus, Trash2, AlertTriangle, ShoppingCart, Sparkles, Calendar, Users, DollarSign, Package } from "lucide-react";
+import { X, Plus, Trash2, AlertTriangle, ShoppingCart, Sparkles, Calendar, Users, DollarSign, Package, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
 import ProductSelector from "./ProductSelector";
 import SalesLoadingButton from "./SalesLoadingButton";
+import useStockValidation from "@/hooks/useStockValidation";
 
-// Helper function to format datetime for datetime-local input
-const formatDateTimeLocal = (dateString) => {
-  if (!dateString) return "";
-  try {
-    const date = new Date(dateString);
-    // Format as YYYY-MM-DDTHH:mm (required by datetime-local input)
-    return date.toISOString().slice(0, 16);
-  } catch {
-    return "";
-  }
-};
 
 export default function SaleModal({ open, onClose, onSubmit, initial }) {
   const [form, setForm] = useState(() => ({
     customer_name: initial?.customer_name || "",
-    sale_date: formatDateTimeLocal(initial?.sale_date) || "",
     tax: initial?.tax || 0,
     discount: initial?.discount || 0,
     items: initial?.items?.length ? initial.items.map(item => ({
@@ -39,12 +28,12 @@ export default function SaleModal({ open, onClose, onSubmit, initial }) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [modalKey, setModalKey] = useState(Date.now()); // Force component refresh
+  const { validateProductStock, getValidationState, clearValidationState } = useStockValidation();
 
   // Reset form when initial changes (switching between create/edit or different sales)
   useEffect(() => {
     setForm({
       customer_name: initial?.customer_name || "",
-      sale_date: formatDateTimeLocal(initial?.sale_date) || "",
       tax: initial?.tax || 0,
       discount: initial?.discount || 0,
       items: initial?.items?.length ? initial.items.map(item => ({
@@ -55,13 +44,26 @@ export default function SaleModal({ open, onClose, onSubmit, initial }) {
     });
     setErrors({});
     setModalKey(Date.now()); // Force ProductSelector refresh
-  }, [initial, open]);
+    clearValidationState(); // Clear stock validation state
+  }, [initial, open, clearValidationState]);
 
   const update = (patch) => setForm((f) => ({ ...f, ...patch }));
-  const updateItem = (idx, patch) => setForm((f) => ({
-    ...f,
-    items: f.items.map((it, i) => i === idx ? { ...it, ...patch } : it),
-  }));
+  const updateItem = (idx, patch) => {
+    setForm((f) => {
+      const newItems = f.items.map((it, i) => i === idx ? { ...it, ...patch } : it);
+      
+      // If quantity or product_id changed, validate stock
+      if ((patch.quantity !== undefined || patch.product_id !== undefined)) {
+        const item = newItems[idx];
+        if (item.product_id && item.quantity > 0) {
+          const validationKey = `item_${idx}`;
+          validateProductStock(item.product_id, item.quantity, { key: validationKey });
+        }
+      }
+      
+      return { ...f, items: newItems };
+    });
+  };
   const addItem = () => setForm((f) => ({ ...f, items: [...f.items, { product_id: "", quantity: 1, price: 0 }] }));
   const removeItem = (idx) => setForm((f) => ({ ...f, items: f.items.filter((_, i) => i !== idx) }));
 
@@ -81,6 +83,13 @@ export default function SaleModal({ open, onClose, onSubmit, initial }) {
         if (!item.price || item.price < 0) {
           newErrors[`item_${index}_price`] = 'Price must be 0 or greater';
         }
+        
+        // Check stock validation state
+        const validationKey = `item_${index}`;
+        const stockValidation = getValidationState(validationKey);
+        if (item.product_id && item.quantity > 0 && !stockValidation.valid && stockValidation.error) {
+          newErrors[`item_${index}_stock`] = stockValidation.error;
+        }
       });
     }
     
@@ -97,10 +106,9 @@ export default function SaleModal({ open, onClose, onSubmit, initial }) {
     
     setLoading(true);
     try {
-      // Coerce numeric fields safely and format date properly
+      // Coerce numeric fields safely - let backend handle timestamps automatically
       const payload = {
         customer_name: form.customer_name || undefined,
-        sale_date: form.sale_date ? form.sale_date : undefined, // Send as YYYY-MM-DDTHH:mm format
         tax: Number(form.tax) || 0,
         discount: Number(form.discount) || 0,
         items: form.items.map((it) => ({
@@ -110,7 +118,6 @@ export default function SaleModal({ open, onClose, onSubmit, initial }) {
         })).filter((it) => it.product_id && it.quantity > 0 && it.price >= 0),
       };
       
-      console.log('SaleModal payload:', payload); // Debug log
       await onSubmit?.(payload);
     } finally {
       setLoading(false);
@@ -201,24 +208,6 @@ export default function SaleModal({ open, onClose, onSubmit, initial }) {
                     </div>
                   </motion.div>
                   
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 }}
-                  >
-                    <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                      <Calendar className="h-4 w-4 text-pink-500 mr-2" />
-                      Sale Date
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="datetime-local"
-                        value={form.sale_date}
-                        onChange={(e) => update({ sale_date: e.target.value })}
-                        className="px-6 py-4 w-full rounded-2xl border-2 border-gray-200 focus:border-pink-400 focus:ring-4 focus:ring-pink-100 focus:outline-none transition-all duration-300 bg-gradient-to-r from-white to-pink-50/30"
-                      />
-                    </div>
-                  </motion.div>
                   
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -322,24 +311,68 @@ export default function SaleModal({ open, onClose, onSubmit, initial }) {
                           </div>
                           
                           <div className="col-span-6 md:col-span-2">
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Quantity</label>
-                            <input
-                              type="number"
-                              min="1"
-                              value={it.quantity}
-                              onChange={(e) => updateItem(idx, { quantity: e.target.value })}
-                              className={`px-4 py-3 w-full rounded-xl border-2 focus:ring-4 focus:outline-none transition-all duration-300 bg-white ${
-                                errors[`item_${idx}_quantity`] 
-                                  ? 'border-red-300 focus:border-red-400 focus:ring-red-100' 
-                                  : 'border-gray-200 focus:border-indigo-400 focus:ring-indigo-100'
-                              }`}
-                            />
+                            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                              Quantity
+                              {(() => {
+                                const validationKey = `item_${idx}`;
+                                const stockValidation = getValidationState(validationKey);
+                                if (it.product_id && it.quantity > 0) {
+                                  if (stockValidation.loading) {
+                                    return <Clock className="h-3 w-3 ml-1 text-blue-500 animate-spin" />;
+                                  } else if (stockValidation.valid) {
+                                    return <CheckCircle2 className="h-3 w-3 ml-1 text-green-500" />;
+                                  } else if (stockValidation.error) {
+                                    return <XCircle className="h-3 w-3 ml-1 text-red-500" />;
+                                  }
+                                }
+                                return null;
+                              })()} 
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                min="1"
+                                value={it.quantity}
+                                onChange={(e) => updateItem(idx, { quantity: e.target.value })}
+                                className={`px-4 py-3 w-full rounded-xl border-2 focus:ring-4 focus:outline-none transition-all duration-300 bg-white ${
+                                  errors[`item_${idx}_quantity`] || errors[`item_${idx}_stock`]
+                                    ? 'border-red-300 focus:border-red-400 focus:ring-red-100' 
+                                    : (() => {
+                                        const validationKey = `item_${idx}`;
+                                        const stockValidation = getValidationState(validationKey);
+                                        if (it.product_id && it.quantity > 0 && stockValidation.valid) {
+                                          return 'border-green-300 focus:border-green-400 focus:ring-green-100';
+                                        }
+                                        return 'border-gray-200 focus:border-indigo-400 focus:ring-indigo-100';
+                                      })()
+                                }`}
+                              />
+                            </div>
                             {errors[`item_${idx}_quantity`] && (
                               <div className="flex items-center mt-2 text-red-600 text-xs">
                                 <AlertTriangle className="h-3 w-3 mr-1" />
                                 {errors[`item_${idx}_quantity`]}
                               </div>
                             )}
+                            {errors[`item_${idx}_stock`] && (
+                              <div className="flex items-center mt-2 text-red-600 text-xs">
+                                <XCircle className="h-3 w-3 mr-1" />
+                                {errors[`item_${idx}_stock`]}
+                              </div>
+                            )}
+                            {(() => {
+                              const validationKey = `item_${idx}`;
+                              const stockValidation = getValidationState(validationKey);
+                              if (it.product_id && it.quantity > 0 && stockValidation.valid && stockValidation.warnings?.length > 0) {
+                                return (
+                                  <div className="flex items-center mt-2 text-amber-600 text-xs">
+                                    <AlertTriangle className="h-3 w-3 mr-1" />
+                                    {stockValidation.warnings[0]}
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })()} 
                           </div>
                           
                           <div className="col-span-6 md:col-span-3">
@@ -389,6 +422,71 @@ export default function SaleModal({ open, onClose, onSubmit, initial }) {
                       </motion.div>
                     ))}
                   </div>
+
+                  {/* Total Calculation Section */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                    className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100 shadow-sm"
+                  >
+                    <div className="flex items-center mb-4">
+                      <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-2 rounded-xl mr-3">
+                        <DollarSign className="h-5 w-5 text-white" />
+                      </div>
+                      <h3 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                        Sale Summary
+                      </h3>
+                    </div>
+                    
+                    {(() => {
+                      // Calculate totals using same logic as backend
+                      const itemsSubtotal = form.items.reduce((sum, item) => {
+                        const quantity = Number(item.quantity) || 0;
+                        const price = Number(item.price) || 0;
+                        return sum + (quantity * price);
+                      }, 0);
+                      
+                      const taxPercentage = Number(form.tax) || 0;
+                      const discountPercentage = Number(form.discount) || 0;
+                      
+                      const taxAmount = (taxPercentage / 100) * itemsSubtotal;
+                      const discountAmount = (discountPercentage / 100) * itemsSubtotal;
+                      const finalTotal = Math.max(0, itemsSubtotal + taxAmount - discountAmount);
+                      
+                      return (
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center text-gray-700">
+                            <span className="font-medium">Items Subtotal:</span>
+                            <span className="font-semibold">${itemsSubtotal.toFixed(2)}</span>
+                          </div>
+                          
+                          {taxPercentage > 0 && (
+                            <div className="flex justify-between items-center text-emerald-600">
+                              <span className="font-medium">Tax ({taxPercentage}%):</span>
+                              <span className="font-semibold">+${taxAmount.toFixed(2)}</span>
+                            </div>
+                          )}
+                          
+                          {discountPercentage > 0 && (
+                            <div className="flex justify-between items-center text-rose-600">
+                              <span className="font-medium">Discount ({discountPercentage}%):</span>
+                              <span className="font-semibold">-${discountAmount.toFixed(2)}</span>
+                            </div>
+                          )}
+                          
+                          <div className="pt-3 border-t border-purple-200">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xl font-bold text-gray-800">Final Total:</span>
+                              <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                ${finalTotal.toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </motion.div>
                 </motion.div>
 
                 {errors.items && (

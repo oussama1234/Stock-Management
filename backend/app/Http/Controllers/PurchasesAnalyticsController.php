@@ -4,110 +4,29 @@ namespace App\Http\Controllers;
 
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
-use App\Models\Product;
-use App\Models\Supplier;
+use App\Services\AnalyticsService;
 use App\Support\CacheHelper;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 
 class PurchasesAnalyticsController extends Controller
 {
+    protected AnalyticsService $analyticsService;
+
+    public function __construct(AnalyticsService $analyticsService)
+    {
+        $this->analyticsService = $analyticsService;
+    }
+
     /**
-     * Get purchases overview analytics with caching
-     * Returns total purchases, average order value, top suppliers, etc.
+     * Get purchases overview analytics using AnalyticsService
      */
     public function overview(Request $request)
     {
-        $dateRange = (int) $request->input('range_days', 30);
-        $dateFrom = now()->subDays($dateRange)->startOfDay();
-        $dateTo = now()->endOfDay();
-
-        // Create cache key
-        $key = CacheHelper::key('purchases_analytics', 'overview', [
-            'range_days' => $dateRange,
-            'date_from' => $dateFrom->format('Y-m-d'),
-            'date_to' => $dateTo->format('Y-m-d')
-        ]);
-        $ttl = CacheHelper::ttlSeconds('API_PURCHASES_ANALYTICS_TTL', 300); // 5 minutes
-
-        $data = Cache::remember($key, now()->addSeconds($ttl), function () use ($dateFrom, $dateTo, $dateRange) {
-            // Total purchases in period
-            $totalPurchases = Purchase::whereBetween('purchase_date', [$dateFrom, $dateTo])->count();
-            
-            // Total purchase amount in period
-            $totalAmount = Purchase::whereBetween('purchase_date', [$dateFrom, $dateTo])->sum('total_amount');
-            
-            // Average order value
-            $avgOrderValue = $totalPurchases > 0 ? $totalAmount / $totalPurchases : 0;
-            
-            // Previous period for comparison
-            $prevDateFrom = $dateFrom->copy()->subDays($dateRange);
-            $prevDateTo = $dateFrom->copy()->subDay();
-            
-            $prevTotalPurchases = Purchase::whereBetween('purchase_date', [$prevDateFrom, $prevDateTo])->count();
-            $prevTotalAmount = Purchase::whereBetween('purchase_date', [$prevDateFrom, $prevDateTo])->sum('total_amount');
-            
-            // Calculate growth percentages
-            $purchasesGrowth = $prevTotalPurchases > 0 ? (($totalPurchases - $prevTotalPurchases) / $prevTotalPurchases) * 100 : 0;
-            $amountGrowth = $prevTotalAmount > 0 ? (($totalAmount - $prevTotalAmount) / $prevTotalAmount) * 100 : 0;
-            
-            // Top suppliers by purchase amount
-            $topSuppliers = Purchase::select('suppliers.name', 'suppliers.id')
-                ->selectRaw('SUM(purchases.total_amount) as total_spent')
-                ->selectRaw('COUNT(purchases.id) as purchase_count')
-                ->join('suppliers', 'purchases.supplier_id', '=', 'suppliers.id')
-                ->whereBetween('purchase_date', [$dateFrom, $dateTo])
-                ->groupBy('suppliers.id', 'suppliers.name')
-                ->orderByDesc('total_spent')
-                ->limit(10)
-                ->get();
-
-            // Most purchased products
-            $topProducts = PurchaseItem::select('products.name', 'products.id')
-                ->selectRaw('SUM(purchase_items.quantity) as total_quantity')
-                ->selectRaw('SUM(purchase_items.quantity * purchase_items.price) as total_value')
-                ->selectRaw('COUNT(DISTINCT purchase_items.purchase_id) as purchase_count')
-                ->join('products', 'purchase_items.product_id', '=', 'products.id')
-                ->join('purchases', 'purchase_items.purchase_id', '=', 'purchases.id')
-                ->whereBetween('purchases.purchase_date', [$dateFrom, $dateTo])
-                ->groupBy('products.id', 'products.name')
-                ->orderByDesc('total_quantity')
-                ->limit(10)
-                ->get();
-
-            // Purchase frequency by day of week
-            $purchasesByDayOfWeek = Purchase::select(DB::raw('DAYOFWEEK(purchase_date) as day_of_week'))
-                ->selectRaw('COUNT(*) as purchase_count')
-                ->selectRaw('SUM(total_amount) as total_amount')
-                ->whereBetween('purchase_date', [$dateFrom, $dateTo])
-                ->groupBy('day_of_week')
-                ->orderBy('day_of_week')
-                ->get()
-                ->mapWithKeys(function ($item) {
-                    $days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                    return [$days[$item->day_of_week - 1] => [
-                        'count' => $item->purchase_count,
-                        'amount' => $item->total_amount
-                    ]];
-                });
-
-            return [
-                'summary' => [
-                    'total_purchases' => $totalPurchases,
-                    'total_amount' => (float) $totalAmount,
-                    'avg_order_value' => (float) $avgOrderValue,
-                    'purchases_growth' => (float) $purchasesGrowth,
-                    'amount_growth' => (float) $amountGrowth,
-                ],
-                'top_suppliers' => $topSuppliers,
-                'top_products' => $topProducts,
-                'purchases_by_day_of_week' => $purchasesByDayOfWeek,
-            ];
-        });
-
+        $rangeDays = (int) $request->input('range_days', 30);
+        $data = $this->analyticsService->getPurchasesOverview($rangeDays);
         return response()->json($data);
     }
 

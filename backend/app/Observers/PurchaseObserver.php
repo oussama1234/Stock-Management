@@ -33,6 +33,8 @@ class PurchaseObserver
             CacheHelper::bump('purchases');
             CacheHelper::bump('dashboard_metrics');
             CacheHelper::bump('notifications');
+            CacheHelper::bump('paginated_purchase_items');
+            CacheHelper::bump('analytics_service');
             
             Log::info('Purchase observer: created event handled', [
                 'purchase_id' => $purchase->id,
@@ -61,6 +63,8 @@ class PurchaseObserver
             CacheHelper::bump('purchases');
             CacheHelper::bump('dashboard_metrics');
             CacheHelper::bump('notifications');
+            CacheHelper::bump('paginated_purchase_items');
+            CacheHelper::bump('analytics_service');
             
             Log::info('Purchase observer: updated event handled', [
                 'purchase_id' => $purchase->id,
@@ -86,6 +90,8 @@ class PurchaseObserver
             CacheHelper::bump('purchases');
             CacheHelper::bump('dashboard_metrics');
             CacheHelper::bump('notifications');
+            CacheHelper::bump('paginated_purchase_items');
+            CacheHelper::bump('analytics_service');
             
             Log::info('Purchase observer: deleted event handled', [
                 'purchase_id' => $purchase->id

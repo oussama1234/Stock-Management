@@ -86,17 +86,9 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        console.log('🔐 AuthContext: Fetching user...');
         const userData = await GetUser();
-        console.log('🔐 AuthContext: User fetched successfully', { userData: !!userData, userName: userData?.name });
         setUser(userData);
       } catch (error) {
-        console.error('🔐 AuthContext: Error fetching user', error);
-        console.log('🔐 AuthContext: Error details', {
-          status: error.response?.status,
-          message: error.response?.data?.message,
-          url: error.config?.url
-        });
         setError(
           error.response?.data?.message || "Failed to Load initial data"
         );
@@ -112,13 +104,6 @@ export const AuthProvider = ({ children }) => {
   // Computed authentication state
   const isAuthenticated = user !== null && !loading;
   
-  // Debug logging
-  console.log('🔐 AuthContext: State', { 
-    user: !!user, 
-    loading, 
-    isAuthenticated,
-    userName: user?.name || 'Not set'
-  });
 
   return (
     <AuthContext.Provider

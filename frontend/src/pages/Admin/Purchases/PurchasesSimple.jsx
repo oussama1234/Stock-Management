@@ -5,18 +5,11 @@ import { useState, useEffect } from "react";
 import usePurchasesData from "./usePurchasesData";
 
 export default function PurchasesSimple() {
-  console.log("🎯 PurchasesSimple component rendering");
   
   const { data: purchases, loading, error } = usePurchasesData({
     page: 1,
     per_page: 20,
     search: ""
-  });
-
-  console.log("🔍 PurchasesSimple data:", { 
-    purchasesCount: purchases?.length, 
-    loading, 
-    error 
   });
 
   if (loading) {

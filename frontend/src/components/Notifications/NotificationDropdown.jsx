@@ -1,9 +1,10 @@
 // NotificationDropdown.jsx - Clean, performant notification component
 // Optimized for speed with memoization and efficient rendering
 
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { NotificationsRoute, ProductDetailsRoute } from '@/router/Index';
 import { 
   Bell, 
   Package, 
@@ -14,16 +15,18 @@ import {
   Info,
   X,
   ExternalLink,
-  Loader2
+  Loader2,
+  Check
 } from 'lucide-react';
 import { useNotificationContext } from '@/context/NotificationContext';
-import { NotificationsRoute } from '@/router/Index';
 import { 
   NotificationTypes, 
   NotificationPriorities, 
   getNotificationIcon, 
   getNotificationColor 
 } from '@/api/Notifications';
+import { getSaleById } from '@/api/Sales';
+import { getPurchaseById } from '@/api/Purchases';
 import { useToast } from '@/components/Toaster/ToastContext';
 
 /**
@@ -33,7 +36,7 @@ const NotificationItem = memo(({
   notification, 
   onMarkAsRead, 
   onDelete, 
-  onNavigateToLowStock,
+  onCloseDropdown,
   isDeleting = false,
   isMarkingAsRead = false
 }) => {
@@ -68,18 +71,51 @@ const NotificationItem = memo(({
     };
   }, [notification.priority]);
 
-  // Handle click actions
+  // Row click should not auto mark as read anymore
   const handleClick = useCallback(() => {
-    // Mark as read when clicked
-    if (!notification.is_read) {
-      onMarkAsRead(notification.id);
-    }
+    return;
+  }, []);
+  const navigate = useNavigate();
 
-    // Navigate to relevant section for low stock notifications
-    if (notification.type === NotificationTypes.LOW_STOCK) {
-      onNavigateToLowStock();
+  // Resolve product meta for sale/purchase if backend omitted it
+  const initialProductId = notification?.data?.product_id || null;
+  const initialProductName = notification?.data?.product_name || '';
+  const [productMeta, setProductMeta] = useState({ id: initialProductId, name: initialProductName });
+
+  useEffect(() => {
+    let cancelled = false;
+    async function resolveProduct() {
+      if (productMeta.id) return;
+      if (notification.type === NotificationTypes.SALE_CREATED && notification?.data?.sale_id) {
+        try {
+          const res = await getSaleById(notification.data.sale_id);
+          const sale = res?.data || res;
+          const firstItem = sale?.items?.[0];
+          const prod = firstItem?.product;
+          if (!cancelled && prod?.id) setProductMeta({ id: prod.id, name: prod.name || 'Product' });
+        } catch (_) {}
+      } else if (notification.type === NotificationTypes.PURCHASE_CREATED && notification?.data?.purchase_id) {
+        try {
+          const res = await getPurchaseById(notification.data.purchase_id);
+          const purchase = res?.data || res;
+          const firstItem = purchase?.purchaseItems?.[0] || purchase?.items?.[0];
+          const prod = firstItem?.product;
+          if (!cancelled && prod?.id) setProductMeta({ id: prod.id, name: prod.name || 'Product' });
+        } catch (_) {}
+      }
     }
-  }, [notification.id, notification.is_read, notification.type, onMarkAsRead, onNavigateToLowStock]);
+    resolveProduct();
+    return () => { cancelled = true; };
+  }, [notification?.data?.sale_id, notification?.data?.purchase_id, notification.type]);
+
+  const handleGoToProduct = useCallback((e) => {
+    e.stopPropagation();
+    const productId = productMeta?.id || notification?.data?.product_id;
+    if (productId) {
+      navigate(`${ProductDetailsRoute}/${productId}`);
+      onCloseDropdown?.();
+    }
+  }, [productMeta?.id, notification?.data?.product_id, navigate, onCloseDropdown]);
 
   const handleDelete = useCallback((e) => {
     e.stopPropagation();
@@ -112,6 +148,15 @@ const NotificationItem = memo(({
               </h4>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
                 {notification.message}
+                {(productMeta?.id && (productMeta?.name || notification?.data?.product_name)) && (
+                  <button
+                    onClick={(e) => handleGoToProduct(e)}
+                    className="ml-2 text-indigo-600 dark:text-indigo-400 hover:underline"
+                    title={`View ${productMeta?.name || notification?.data?.product_name}`}
+                  >
+                    {(productMeta?.name || notification?.data?.product_name)} (#{productMeta?.id || notification?.data?.product_id})
+                  </button>
+                )}
               </p>
               <div className="flex items-center justify-between mt-2">
                 <p className="text-xs text-gray-400 dark:text-gray-500">
@@ -134,6 +179,28 @@ const NotificationItem = memo(({
               {isMarkingAsRead && (
                 <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 animate-pulse" />
               )}
+
+              {/* Explicit mark-as-read button */}
+              {!notification.is_read && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onMarkAsRead(notification.id); }}
+                  disabled={isMarkingAsRead}
+                  className={`${
+                    isMarkingAsRead
+                      ? 'opacity-100'
+                      : 'opacity-0 group-hover:opacity-100'
+                  } p-1 rounded-md hover:bg-green-100 dark:hover:bg-green-900/30 text-gray-400 hover:text-green-600 transition-all duration-200 disabled:cursor-not-allowed`}
+                  title={isMarkingAsRead ? 'Marking...' : 'Mark as read'}
+                >
+                  {isMarkingAsRead ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Check className="h-3 w-3" />
+                  )}
+                </button>
+              )}
+
+              {/* Delete button */}
               <button
                 onClick={handleDelete}
                 disabled={isDeleting || isMarkingAsRead}
@@ -318,7 +385,7 @@ const NotificationDropdown = memo(({
               notification={notification}
               onMarkAsRead={handleMarkAsRead}
               onDelete={handleDelete}
-              onNavigateToLowStock={handleNavigateToLowStock}
+              onCloseDropdown={onClose}
               isDeleting={loadingStates.deleting.has(notification.id)}
               isMarkingAsRead={loadingStates.markingAsRead.has(notification.id)}
             />

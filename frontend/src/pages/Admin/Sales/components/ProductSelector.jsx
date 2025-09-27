@@ -35,12 +35,9 @@ export default function ProductSelector({ value, onChange, className = "" }) {
     const loadProducts = async () => {
       try {
         setLoading(true);
-        console.log('ProductSelector: Loading products...'); // Debug log
         const result = await getProducts({ per_page: 100 });
-        console.log('ProductSelector: Products loaded:', result); // Debug log
         setProducts(result.data || []);
       } catch (error) {
-        console.error("ProductSelector: Failed to load products:", error);
         setProducts([]);
       } finally {
         setLoading(false);

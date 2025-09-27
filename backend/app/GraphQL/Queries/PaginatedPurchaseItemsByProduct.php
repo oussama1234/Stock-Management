@@ -67,7 +67,7 @@ class PaginatedPurchaseItemsByProduct extends Query
             'select' => $select,
             'with' => array_keys($with),
         ]);
-        $ttl = CacheHelper::ttlSeconds('GRAPHQL_PURCHASE_ITEMS_TTL', 120);
+        $ttl = CacheHelper::ttlSeconds('GRAPHQL_PURCHASE_ITEMS_TTL', 120); // Back to original 120 seconds
 
         return Cache::remember($key, now()->addSeconds($ttl), function () use ($productId, $page, $perPage, $with) {
             // Get total count first

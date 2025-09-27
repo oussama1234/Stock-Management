@@ -37,8 +37,20 @@ class Product extends GraphQLType
             'price' => [
                 'type' => Type::float(),
             ],
-            'stock' => [
+'stock' => [
                 'type' => Type::int(),
+            ],
+'days_in_stock' => [
+                'type' => Type::int(),
+                'selectable' => false,
+                'resolve' => function ($product) {
+                    // Cache the computed value per product and change token (updated_at)
+                    $cacheKey = sprintf('product_days_in_stock:%s:%s', $product->id, optional($product->updated_at)->timestamp ?? '0');
+                    $ttlSeconds = (int) (env('DAYS_IN_STOCK_TTL', 300)); // default 5 minutes
+                    return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addSeconds($ttlSeconds), function () use ($product) {
+                        return $product->days_in_stock; // uses accessor on model
+                    });
+                },
             ],
            'created_at' => [
                 'type' => Type::string(),

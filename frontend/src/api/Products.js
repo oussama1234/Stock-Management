@@ -9,9 +9,9 @@ import { AxiosClient } from "./AxiosClient";
  * @returns {Promise<{ data: Array, meta: object }>} products with metadata
  */
 export const getProducts = async (params = {}) => {
-  const { search = "", per_page = 100 } = params;
+  const { search = "", per_page = 100, page = 1 } = params;
   const res = await AxiosClient.get("/products", { 
-    params: { search, per_page } 
+    params: { search, per_page, page } 
   });
   return res.data;
 };
