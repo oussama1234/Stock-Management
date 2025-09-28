@@ -15,7 +15,8 @@ import {
   Loader,
   RefreshCw
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { usePreferences } from "@/context/PreferencesContext";
 
 const ContentSpinner = ({
   size = "medium",
@@ -23,7 +24,7 @@ const ContentSpinner = ({
   fullWidth = false,
   theme = "default", // default, sales, inventory, analytics, users
   showProgress = false,
-  variant = "modern", // modern, minimal, classic, orbital
+  variant = "minimal", // minimal by default for performance; modern/orbital available explicitly
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -108,6 +109,14 @@ const ContentSpinner = ({
     text: textSize,
     padding
   } = sizeClasses[size];
+
+  // Theme-aware colors from preferences
+  const { currentTheme } = usePreferences();
+  const spinnerBorderTop = useMemo(() => {
+    const accent = currentTheme?.accent || 'bg-blue-500';
+    return accent.replace(/^bg-/, 'border-t-');
+  }, [currentTheme?.accent]);
+  const spinnerBorderBase = useMemo(() => currentTheme?.border || 'border-blue-200', [currentTheme?.border]);
 
   // Render different variants
   const renderModernSpinner = () => (
@@ -260,15 +269,7 @@ const ContentSpinner = ({
 
   const renderMinimalSpinner = () => (
     <div className="relative">
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{
-          duration: 1.5,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-        className={`${containerSize} rounded-full border-4 border-gray-200 border-t-blue-500`}
-      />
+<div className={`${containerSize} rounded-full border-4 ${spinnerBorderBase} ${currentTheme?.text || ''} animate-spin`} style={{ animationDuration: '1s', borderTopColor: 'currentColor' }} />
     </div>
   );
 
@@ -418,17 +419,14 @@ export const InlineSpinner = ({ size = "small", className = "" }) => {
     medium: "h-6 w-6",
     large: "h-8 w-8",
   };
-
+  const { currentTheme } = usePreferences();
+  const spinnerBorderTop = useMemo(() => {
+    const accent = currentTheme?.accent || 'bg-blue-500';
+    return accent.replace(/^bg-/, 'border-t-');
+  }, [currentTheme?.accent]);
+  const spinnerBorderBase = useMemo(() => currentTheme?.border || 'border-blue-200', [currentTheme?.border]);
   return (
-    <motion.div
-      animate={{ rotate: 360 }}
-      transition={{
-        duration: 1,
-        repeat: Infinity,
-        ease: "linear",
-      }}
-      className={`${sizeClasses[size]} ${className} rounded-full border-2 border-blue-200 border-t-blue-500`}
-    />
+<div className={`${sizeClasses[size]} ${className} rounded-full border-2 ${spinnerBorderBase} ${currentTheme?.text || ''} animate-spin`} style={{ animationDuration: '1s', borderTopColor: 'currentColor' }} />
   );
 };
 

@@ -122,4 +122,16 @@ class User extends Authenticatable
     }
 
     
+    /**
+     * Scope: text search by user fields
+     */
+    public function scopeSearch($query, string $term)
+    {
+        $t = '%' . str_replace('%', '\\%', $term) . '%';
+        return $query->where(function ($q) use ($t) {
+            $q->where('name', 'like', $t)
+              ->orWhere('email', 'like', $t)
+              ->orWhere('role', 'like', $t);
+        });
+    }
 }

@@ -6,6 +6,8 @@ namespace App\GraphQL\Mutations\Products;
 
 use App\Models\Product;
 use App\Support\CacheHelper; // Invalidate caches on writes
+use App\Services\InventoryService;
+use Illuminate\Support\Facades\Auth;
 use Closure;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
@@ -63,19 +65,30 @@ class UpdateProduct extends Mutation
         $id = $args['id'];
 
         $product = Product::find($id);
+        $previousStock = (int) $product->stock;
+
+        // Update non-stock fields first
         $product->name = $productValues['name'];
         $product->description = $productValues['description'];
         $product->price = $productValues['price'];
-        $product->stock = $productValues['stock'];
         $product->category_id = $productValues['category_id'];
 
-        if(isset($productValues['image'])) {
-        
+        if (isset($productValues['image'])) {
             $productFullImagePath = $product->uploadImage($productValues['image']);
             $product->image = $productFullImagePath;
         }
 
         $product->save();
+
+        // Adjust stock via InventoryService so a StockMovement is recorded
+        $newStock = (int) $productValues['stock'];
+        if ($newStock !== $previousStock) {
+            /** @var InventoryService $inventoryService */
+            $inventoryService = app(InventoryService::class);
+            $inventoryService->adjustInventory($product->id, $newStock, 'product_update', (int) Auth::id());
+            // Refresh product after stock adjustment
+            $product->refresh();
+        }
 
         // Invalidate related caches so reads see fresh data
         CacheHelper::bump('products');

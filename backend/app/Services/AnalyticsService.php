@@ -394,6 +394,8 @@ class AnalyticsService
                 'products.stock',
                 'products.price',
                 'products.image',
+                'products.low_stock_threshold',
+                'categories.id as category_id',
                 'categories.name as category_name',
                 DB::raw('COALESCE(SUM(sale_items.quantity), 0) as sold_quantity'),
                 DB::raw('COALESCE(SUM(sale_items.quantity), 0) / ' . $rangeDays . ' as daily_velocity'),
@@ -405,13 +407,15 @@ class AnalyticsService
                      ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
                      ->where('sales.sale_date', '>=', $from);
             })
-            ->where('products.stock', '<=', $threshold)
+            ->whereColumn('products.stock', '<=', 'products.low_stock_threshold')
             ->groupBy([
                 'products.id', 
                 'products.name', 
                 'products.stock', 
                 'products.price',
                 'products.image',
+                'products.low_stock_threshold',
+                'categories.id',
                 'categories.name'
             ])
             ->orderBy('products.stock')

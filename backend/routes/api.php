@@ -104,6 +104,28 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/', [\App\Http\Controllers\NotificationController::class, 'store']); // Create notification (admin)
         Route::delete('/{id}', [\App\Http\Controllers\NotificationController::class, 'destroy']); // Delete notification
     });
+
+    // Reports endpoints
+    Route::prefix('reports')->group(function () {
+        Route::get('/sales', [\App\Http\Controllers\ReportsController::class, 'sales']);
+        Route::get('/purchases', [\App\Http\Controllers\ReportsController::class, 'purchases']);
+        Route::get('/stock-movements', [\App\Http\Controllers\ReportsController::class, 'stockMovements']);
+        Route::get('/products-sold', [\App\Http\Controllers\ReportsController::class, 'productsSold']);
+        Route::get('/products-purchased', [\App\Http\Controllers\ReportsController::class, 'productsPurchased']);
+        Route::get('/low-stock', [\App\Http\Controllers\ReportsController::class, 'lowStock']);
+    });
+
+    // Inventory endpoints
+    Route::prefix('inventory')->group(function () {
+        Route::get('/', [\App\Http\Controllers\InventoryController::class, 'overview']);
+        Route::post('/adjustments', [\App\Http\Controllers\InventoryController::class, 'adjust']);
+        Route::get('/history', [\App\Http\Controllers\InventoryController::class, 'history']);
+        Route::get('/history/export', [\App\Http\Controllers\InventoryController::class, 'export']);
+        Route::get('/dashboard/kpis', [\App\Http\Controllers\InventoryController::class, 'kpis']);
+    });
+
+    // Universal Search endpoint
+    Route::get('/search', [\App\Http\Controllers\SearchController::class, 'searchAll']);
 });
 
     // Add your protected routes here

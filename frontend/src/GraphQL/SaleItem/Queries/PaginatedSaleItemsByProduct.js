@@ -4,8 +4,32 @@ import { useQuery } from "@apollo/client/react";
 import { SALE_ITEM_FRAGMENT } from "../Fragments/SaleItemFragments";
 
 export const GET_PAGINATED_SALE_ITEMS_BY_PRODUCT = gql`
-  query GetPaginatedSaleItemsByProduct($product_id: Int!, $page: Int, $perPage: Int) {
-    paginatedSaleItemsByProduct(product_id: $product_id, page: $page, perPage: $perPage) {
+  query GetPaginatedSaleItemsByProduct(
+    $product_id: Int!,
+    $page: Int,
+    $perPage: Int,
+    $search: String,
+    $dateFrom: String,
+    $dateTo: String,
+    $minAmount: Float,
+    $maxAmount: Float,
+    $userId: Int,
+    $sortBy: String,
+    $sortOrder: String
+  ) {
+    paginatedSaleItemsByProduct(
+      product_id: $product_id,
+      page: $page,
+      perPage: $perPage,
+      search: $search,
+      dateFrom: $dateFrom,
+      dateTo: $dateTo,
+      minAmount: $minAmount,
+      maxAmount: $maxAmount,
+      userId: $userId,
+      sortBy: $sortBy,
+      sortOrder: $sortOrder
+    ) {
       data {
         ...SaleItemFragment
       }

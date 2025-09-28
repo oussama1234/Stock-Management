@@ -46,6 +46,55 @@ class PaginatedPurchaseItemsByProduct extends Query
                 'description' => 'Number of items per page',
                 'defaultValue' => 10,
             ],
+            // Filtering
+            'search' => [
+                'name' => 'search',
+                'type' => Type::string(),
+                'description' => 'Search term applied to supplier name or product name',
+            ],
+            'dateFrom' => [
+                'name' => 'dateFrom',
+                'type' => Type::string(),
+                'description' => 'Start date (inclusive) for purchase_date',
+            ],
+            'dateTo' => [
+                'name' => 'dateTo',
+                'type' => Type::string(),
+                'description' => 'End date (inclusive) for purchase_date',
+            ],
+            'minAmount' => [
+                'name' => 'minAmount',
+                'type' => Type::float(),
+                'description' => 'Minimum purchase total_amount filter',
+            ],
+            'maxAmount' => [
+                'name' => 'maxAmount',
+                'type' => Type::float(),
+                'description' => 'Maximum purchase total_amount filter',
+            ],
+            'supplierId' => [
+                'name' => 'supplierId',
+                'type' => Type::int(),
+                'description' => 'Filter by supplier id',
+            ],
+            'userId' => [
+                'name' => 'userId',
+                'type' => Type::int(),
+                'description' => 'Filter by user who created the purchase',
+            ],
+            // Sorting
+            'sortBy' => [
+                'name' => 'sortBy',
+                'type' => Type::string(),
+                'description' => 'Column to sort by: created_at | purchase_date | quantity | price | total_amount',
+                'defaultValue' => 'created_at',
+            ],
+            'sortOrder' => [
+                'name' => 'sortOrder',
+                'type' => Type::string(),
+                'description' => 'Sort direction: asc | desc',
+                'defaultValue' => 'desc',
+            ],
         ];
     }
 
@@ -69,22 +118,77 @@ class PaginatedPurchaseItemsByProduct extends Query
         ]);
         $ttl = CacheHelper::ttlSeconds('GRAPHQL_PURCHASE_ITEMS_TTL', 120); // Back to original 120 seconds
 
-        return Cache::remember($key, now()->addSeconds($ttl), function () use ($productId, $page, $perPage, $with) {
-            // Get total count first
-            $totalQuery = PurchaseItem::where('product_id', $productId);
-            $total = $totalQuery->count();
-            
+        return Cache::remember($key, now()->addSeconds($ttl), function () use ($productId, $page, $perPage, $with, $args) {
+            $base = PurchaseItem::query()->where('product_id', $productId);
+
+            // Filters
+            if (!empty($args['search'])) {
+                $search = $args['search'];
+                $base->where(function ($q) use ($search) {
+                    $q->whereHas('purchase.supplier', function ($sq) use ($search) {
+                        $sq->where('name', 'like', "%{$search}%");
+                    })->orWhereHas('product', function ($pq) use ($search) {
+                        $pq->where('name', 'like', "%{$search}%");
+                    });
+                });
+            }
+            if (!empty($args['dateFrom']) || !empty($args['dateTo'])) {
+                $from = $args['dateFrom'] ?? null;
+                $to = $args['dateTo'] ?? null;
+                $base->whereHas('purchase', function ($pq) use ($from, $to) {
+                    if ($from) $pq->whereDate('purchase_date', '>=', $from);
+                    if ($to) $pq->whereDate('purchase_date', '<=', $to);
+                });
+            }
+            if (isset($args['minAmount'])) {
+                $min = (float) $args['minAmount'];
+                $base->whereHas('purchase', function ($pq) use ($min) { $pq->where('total_amount', '>=', $min); });
+            }
+            if (isset($args['maxAmount'])) {
+                $max = (float) $args['maxAmount'];
+                $base->whereHas('purchase', function ($pq) use ($max) { $pq->where('total_amount', '<=', $max); });
+            }
+            if (!empty($args['supplierId'])) {
+                $sid = (int) $args['supplierId'];
+                $base->whereHas('purchase', function ($pq) use ($sid) { $pq->where('supplier_id', $sid); });
+            }
+            if (!empty($args['userId'])) {
+                $uid = (int) $args['userId'];
+                $base->whereHas('purchase', function ($pq) use ($uid) { $pq->where('user_id', $uid); });
+            }
+
+            // Count after filters
+            $total = (clone $base)->count();
             $lastPage = max(1, (int) ceil($total / $perPage));
             $currentPage = min($page, $lastPage);
             $offset = ($currentPage - 1) * $perPage;
 
-            // Get the actual data
-            $items = PurchaseItem::where('product_id', $productId)
-                ->with($with)
-                ->skip($offset)
-                ->take($perPage)
-                ->orderBy('created_at', 'desc')
-                ->get();
+            // Sorting
+            $sortBy = $args['sortBy'] ?? 'created_at';
+            $sortOrder = strtolower($args['sortOrder'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
+            $table = $base->getModel()->getTable(); // purchase_items
+
+            $query = (clone $base)->with($with);
+            switch ($sortBy) {
+                case 'purchase_date':
+                    $query->leftJoin('purchases', 'purchases.id', '=', $table . '.purchase_id')
+                          ->select($table . '.*')
+                          ->orderBy('purchases.purchase_date', $sortOrder);
+                    break;
+                case 'total_amount':
+                    $query->leftJoin('purchases', 'purchases.id', '=', $table . '.purchase_id')
+                          ->select($table . '.*')
+                          ->orderBy('purchases.total_amount', $sortOrder);
+                    break;
+                case 'quantity':
+                case 'price':
+                case 'created_at':
+                default:
+                    $query->orderBy($table . '.' . ($sortBy === 'price' ? 'price' : ($sortBy === 'quantity' ? 'quantity' : 'created_at')), $sortOrder);
+                    break;
+            }
+
+            $items = $query->skip($offset)->take($perPage)->get();
 
             return [
                 'data' => $items,

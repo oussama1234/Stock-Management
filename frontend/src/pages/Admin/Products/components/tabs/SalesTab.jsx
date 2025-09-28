@@ -1,4 +1,4 @@
-import React, { memo, useState, useCallback } from 'react';
+import React, { memo, useState, useCallback, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Calendar,
@@ -14,6 +14,11 @@ import {
 import { useProductData } from '../../context/ProductDataContext';
 import { useFormatters } from '../../hooks/useFormatters';
 import { useStockValidation } from '../../hooks/useStockValidation';
+import useTabPagination from '../../hooks/useTabPagination';
+import useProductSalesTabData from '../../hooks/useProductSalesTabData';
+import FilterBar from '@/components/filters/FilterBar';
+import Pagination from '@/components/Pagination/Pagination';
+import ContentSpinner from '@/components/Spinners/ContentSpinner';
 
 const SaleRow = memo(({ 
   sale, 
@@ -120,28 +125,62 @@ const SaleRow = memo(({
   );
 });
 
-const SalesTab = memo(({ productId, showFilters, onEditSale, onDeleteSale }) => {
-  const [sortField, setSortField] = useState('sale_date');
-  const [sortDirection, setSortDirection] = useState('desc');
+const SalesTab = memo(({ productId, showFilters, onEditSale, onDeleteSale, onAddNewSale }) => {
   const [selectedSale, setSelectedSale] = useState(null);
-  
-  const { 
-    product,
-    sales,
-    isLoading,
-    error
-  } = useProductData();
+
+  const { product } = useProductData();
+  const { page, perPage, setPage, setPerPage, params } = useTabPagination({ page: 1, perPage: 10 });
+  const { items, meta, loading, error, filters, setFilter, networkStatus } = useProductSalesTabData(productId, params, { sortBy: 'sale_date', sortOrder: 'desc' });
+
+  const sortField = filters.sortBy;
+  const sortDirection = filters.sortOrder;
 
   const { formatCurrency, formatNumber } = useFormatters();
-  
+
+  // Draft filters for Apply behavior
+  const [draft, setDraft] = useState({
+    search: filters.search || '',
+    dateFrom: filters.dateFrom || '',
+    dateTo: filters.dateTo || '',
+    sortBy: filters.sortBy || 'sale_date',
+    sortOrder: filters.sortOrder || 'desc',
+  });
+
+  // Keep draft in sync when external filters change (e.g., after Clear)
+  useEffect(() => {
+    setDraft({
+      search: filters.search || '',
+      dateFrom: filters.dateFrom || '',
+      dateTo: filters.dateTo || '',
+      sortBy: filters.sortBy || 'sale_date',
+      sortOrder: filters.sortOrder || 'desc',
+    });
+  }, [filters.search, filters.dateFrom, filters.dateTo, filters.sortBy, filters.sortOrder]);
+
+  const applyFilters = useCallback(() => {
+    setFilter('search', draft.search || '');
+    setFilter('dateFrom', draft.dateFrom || '');
+    setFilter('dateTo', draft.dateTo || '');
+    setFilter('sortBy', draft.sortBy || 'sale_date');
+    setFilter('sortOrder', draft.sortOrder || 'desc');
+    setPage(1);
+  }, [draft, setFilter, setPage]);
+
   const handleSort = useCallback((field) => {
-    if (sortField === field) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  }, [sortField]);
+    setFilter('sortBy', field);
+    setFilter('sortOrder', filters.sortBy === field && filters.sortOrder === 'asc' ? 'desc' : 'asc');
+  }, [filters.sortBy, filters.sortOrder, setFilter]);
+
+  const clearFilters = useCallback(() => {
+    const defaults = { search: '', dateFrom: '', dateTo: '', sortBy: 'sale_date', sortOrder: 'desc' };
+    setDraft(defaults);
+    setFilter('search', '');
+    setFilter('dateFrom', '');
+    setFilter('dateTo', '');
+    setFilter('sortBy', 'sale_date');
+    setFilter('sortOrder', 'desc');
+    setPage(1);
+  }, [setFilter, setPage]);
 
   const handleEditSale = useCallback((sale) => {
     if (onEditSale) {
@@ -161,16 +200,27 @@ const SalesTab = memo(({ productId, showFilters, onEditSale, onDeleteSale }) => 
   }, [onDeleteSale]);
 
   const handleAddSale = useCallback(() => {
-    // This would open the add sale modal with stock validation
+    if (onAddNewSale) {
+      onAddNewSale();
+      return;
+    }
     console.log('Adding new sale for product:', productId);
-  }, [productId]);
+  }, [productId, onAddNewSale]);
 
-  if (isLoading) {
+  // Precompute summary stats regardless of render path to keep hooks order stable
+  const totalSales = useMemo(() => (items ?? []).reduce((sum, saleItem) => {
+    if (saleItem.sale?.total_amount) {
+      return sum + parseFloat(saleItem.sale.total_amount);
+    }
+    return sum + ((saleItem.unit_price || saleItem.price) * saleItem.quantity);
+  }, 0), [items]);
+  const totalUnits = useMemo(() => (items ?? []).reduce((sum, sale) => sum + sale.quantity, 0), [items]);
+  const averageSalePrice = totalUnits > 0 ? totalSales / totalUnits : 0;
+
+  if (loading) {
     return (
-      <div className="space-y-4">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="animate-pulse h-16 bg-gray-200 rounded-xl"></div>
-        ))}
+      <div className="py-12">
+        <ContentSpinner theme="sales" size="medium" variant="minimal" fullWidth={true} message="Loading sales..." />
       </div>
     );
   }
@@ -185,7 +235,7 @@ const SalesTab = memo(({ productId, showFilters, onEditSale, onDeleteSale }) => 
     );
   }
 
-  if (!sales || sales.length === 0) {
+  if (!items || items.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 inline-block">
@@ -196,7 +246,7 @@ const SalesTab = memo(({ productId, showFilters, onEditSale, onDeleteSale }) => 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleAddSale}
-            className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl shadow-lg transition-all duration-200 mx-auto"
+            className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from.green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl shadow-lg transition-all duration-200 mx-auto"
           >
             <Plus className="h-5 w-5" />
             <span>Add First Sale</span>
@@ -206,36 +256,18 @@ const SalesTab = memo(({ productId, showFilters, onEditSale, onDeleteSale }) => 
     );
   }
 
-  // Calculate summary stats - use total_amount from backend which includes tax/discount
-  const totalSales = sales.reduce((sum, saleItem) => {
-    // Access nested sale object for total_amount (includes tax/discount)
-    if (saleItem.sale?.total_amount) {
-      return sum + parseFloat(saleItem.sale.total_amount);
-    }
-    // Fallback to line calculation for backward compatibility
-    return sum + ((saleItem.unit_price || saleItem.price) * saleItem.quantity);
-  }, 0);
-  const totalUnits = sales.reduce((sum, sale) => sum + sale.quantity, 0);
-  const averageSalePrice = totalUnits > 0 ? totalSales / totalUnits : 0;
+  // Calculate summary stats on current page dataset
+  const sortedSales = items; // server-side sorting
 
-  // Sort sales
-  const sortedSales = [...sales].sort((a, b) => {
-    let aValue = a[sortField];
-    let bValue = b[sortField];
-    
-    if (sortField === 'sale_date' || sortField === 'created_at') {
-      aValue = new Date(aValue);
-      bValue = new Date(bValue);
-    }
-    
-    if (sortDirection === 'asc') {
-      return aValue > bValue ? 1 : -1;
-    }
-    return aValue < bValue ? 1 : -1;
-  });
+  const isRefetching = !loading && [2,3,4,6].includes(networkStatus ?? 0);
 
   return (
-    <div className="space-y-6">
+    <div className="relative space-y-6">
+      {isRefetching && (
+        <div className="absolute inset-0 rounded-2xl bg-white/70 backdrop-blur-sm flex items-center justify-center z-10">
+          <ContentSpinner theme="sales" size="small" variant="minimal" />
+        </div>
+      )}
       {/* Sales Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl border border-green-200">
@@ -274,6 +306,70 @@ const SalesTab = memo(({ productId, showFilters, onEditSale, onDeleteSale }) => 
           </div>
         </div>
       </div>
+
+      {/* Filters */}
+      {showFilters && (
+        <FilterBar>
+          <input
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm"
+            placeholder="Search by customer/product..."
+            value={draft.search}
+            onChange={(e) => setDraft(prev => ({ ...prev, search: e.target.value }))}
+          />
+          <input
+            type="date"
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm"
+            value={draft.dateFrom}
+            onChange={(e) => setDraft(prev => ({ ...prev, dateFrom: e.target.value }))}
+          />
+          <input
+            type="date"
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm"
+            value={draft.dateTo}
+            onChange={(e) => setDraft(prev => ({ ...prev, dateTo: e.target.value }))}
+          />
+          <select
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm"
+            value={draft.sortBy}
+            onChange={(e) => setDraft(prev => ({ ...prev, sortBy: e.target.value }))}
+          >
+            <option value="sale_date">Date</option>
+            <option value="created_at">Created</option>
+            <option value="quantity">Quantity</option>
+            <option value="unit_price">Unit Price</option>
+            <option value="total_amount">Total Amount</option>
+          </select>
+          <select
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm"
+            value={draft.sortOrder}
+            onChange={(e) => setDraft(prev => ({ ...prev, sortOrder: e.target.value }))}
+          >
+            <option value="desc">Desc</option>
+            <option value="asc">Asc</option>
+          </select>
+          <select
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm"
+            value={perPage}
+            onChange={(e) => setPerPage(Number(e.target.value))}
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+          </select>
+          <button
+            onClick={applyFilters}
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100"
+          >
+            Apply Filters
+          </button>
+          <button
+            onClick={clearFilters}
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm bg-red-50 text-red-600 hover:bg-red-100"
+          >
+            Clear Filters
+          </button>
+        </FilterBar>
+      )}
 
       {/* Sales Table */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -370,6 +466,9 @@ const SalesTab = memo(({ productId, showFilters, onEditSale, onDeleteSale }) => 
           </table>
         </div>
       </div>
+
+      {/* Pagination */}
+      <Pagination meta={meta} onPageChange={setPage} />
     </div>
   );
 });

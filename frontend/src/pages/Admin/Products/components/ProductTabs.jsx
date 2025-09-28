@@ -63,15 +63,12 @@ const TabButton = memo(({
   );
 });
 
-const ProductTabs = memo(({ onAddNewSale, onAddNewPurchase, onEditSale, onDeleteSale, onEditPurchase, onDeletePurchase }) => {
+const ProductTabs = memo(({ onAddNewSale, onAddNewPurchase, onAddNewMovement, onEditSale, onDeleteSale, onEditPurchase, onDeletePurchase }) => {
   const [activeTab, setActiveTab] = useState('sales');
   const [showFilters, setShowFilters] = useState(false);
   
   const { 
     product,
-    sales,
-    purchases,
-    stockMovements,
     isLoading,
     refreshData
   } = useProductData();
@@ -98,10 +95,12 @@ const ProductTabs = memo(({ onAddNewSale, onAddNewPurchase, onEditSale, onDelete
       onAddNewSale?.();
     } else if (activeTab === 'purchases') {
       onAddNewPurchase?.();
+    } else if (activeTab === 'stock') {
+      onAddNewMovement?.();
     } else {
       console.log(`Adding new ${activeTab} record...`);
     }
-  }, [activeTab, onAddNewSale, onAddNewPurchase]);
+  }, [activeTab, onAddNewSale, onAddNewPurchase, onAddNewMovement]);
 
   const tabs = [
     {
@@ -109,7 +108,8 @@ const ProductTabs = memo(({ onAddNewSale, onAddNewPurchase, onEditSale, onDelete
       label: 'Sales',
       icon: ShoppingCart,
       color: 'green',
-      count: sales?.length || 0,
+      // Count is managed inside tab via pagination meta; omit here to avoid extra fetch
+      // count: undefined,
       component: SalesTab
     },
     {
@@ -117,7 +117,7 @@ const ProductTabs = memo(({ onAddNewSale, onAddNewPurchase, onEditSale, onDelete
       label: 'Purchases',
       icon: Package,
       color: 'blue',
-      count: purchases?.length || 0,
+      // count: undefined,
       component: PurchasesTab
     },
     {
@@ -125,7 +125,7 @@ const ProductTabs = memo(({ onAddNewSale, onAddNewPurchase, onEditSale, onDelete
       label: 'Stock Movements',
       icon: TrendingUp,
       color: 'purple',
-      count: stockMovements?.length || 0,
+      // count: undefined,
       component: StockMovementsTab
     }
   ];
@@ -209,59 +209,13 @@ const ProductTabs = memo(({ onAddNewSale, onAddNewPurchase, onEditSale, onDelete
               whileTap={{ scale: 0.95 }}
               onClick={handleAddNew}
               className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl shadow-lg transition-all duration-200 text-sm"
-              title={`Add new ${activeTab.slice(0, -1)}`}
+              title={activeTab === 'sales' ? 'New Sale' : activeTab === 'purchases' ? 'New Purchase' : 'New Adjustment'}
             >
               <Plus className="h-5 w-5" />
-              <span className="hidden sm:inline">Add New</span>
+              <span className="hidden sm:inline">{activeTab === 'sales' ? 'New Sale' : activeTab === 'purchases' ? 'New Purchase' : 'New Adjustment'}</span>
             </motion.button>
           </div>
         </div>
-
-        {/* Filters Section */}
-        <AnimatePresence>
-          {showFilters && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-              className="mt-4 pt-4 border-t border-gray-200/50 overflow-hidden"
-            >
-              <div className="flex flex-wrap gap-3">
-                <select className="px-3 py-2 bg-white/60 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                  <option value="">All Time</option>
-                  <option value="today">Today</option>
-                  <option value="week">This Week</option>
-                  <option value="month">This Month</option>
-                  <option value="quarter">This Quarter</option>
-                  <option value="year">This Year</option>
-                </select>
-
-                <select className="px-3 py-2 bg-white/60 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                  <option value="">All Amounts</option>
-                  <option value="0-100">$0 - $100</option>
-                  <option value="100-500">$100 - $500</option>
-                  <option value="500-1000">$500 - $1000</option>
-                  <option value="1000+">$1000+</option>
-                </select>
-
-                <input
-                  type="text"
-                  placeholder="Search by reference..."
-                  className="px-3 py-2 bg-white/60 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500"
-                />
-
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl text-sm font-medium transition-colors duration-200"
-                >
-                  Clear Filters
-                </motion.button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* Tab Content */}
@@ -278,6 +232,9 @@ const ProductTabs = memo(({ onAddNewSale, onAddNewPurchase, onEditSale, onDelete
               <ActiveComponent 
                 productId={product.id}
                 showFilters={showFilters}
+                onAddNewSale={onAddNewSale}
+                onAddNewPurchase={onAddNewPurchase}
+                onAddNewMovement={onAddNewMovement}
                 onEditSale={onEditSale}
                 onDeleteSale={onDeleteSale}
                 onEditPurchase={onEditPurchase}

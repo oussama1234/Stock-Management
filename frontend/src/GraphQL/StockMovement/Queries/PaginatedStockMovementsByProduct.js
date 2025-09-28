@@ -4,8 +4,30 @@ import { useQuery } from "@apollo/client/react";
 import { STOCK_MOVEMENT_FRAGMENT } from "../Fragments/StockMovementFragments";
 
 export const GET_PAGINATED_STOCK_MOVEMENTS_BY_PRODUCT = gql`
-  query GetPaginatedStockMovementsByProduct($product_id: Int!, $page: Int, $perPage: Int) {
-    paginatedStockMovementsByProduct(product_id: $product_id, page: $page, perPage: $perPage) {
+  query GetPaginatedStockMovementsByProduct(
+    $product_id: Int!,
+    $page: Int,
+    $perPage: Int,
+    $type: String,
+    $dateFrom: String,
+    $dateTo: String,
+    $userId: Int,
+    $reason: String,
+    $sortBy: String,
+    $sortOrder: String
+  ) {
+    paginatedStockMovementsByProduct(
+      product_id: $product_id,
+      page: $page,
+      perPage: $perPage,
+      type: $type,
+      dateFrom: $dateFrom,
+      dateTo: $dateTo,
+      userId: $userId,
+      reason: $reason,
+      sortBy: $sortBy,
+      sortOrder: $sortOrder
+    ) {
       data {
         ...StockMovementFragment
       }

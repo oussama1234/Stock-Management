@@ -201,21 +201,45 @@ class SalesService
                     throw new \Exception($errorMessage . implode(', ', $stockErrors));
                 }
 
-                // Delete existing items (observer will restore stock)
-                $sale->items()->delete();
+                // DIFF-BASED UPDATE: update existing items by product_id, delete removed, create new
+                $existing = $sale->items()->get()->keyBy('product_id');
+                $incoming = collect($data['items'])->map(function ($i) {
+                    return [
+                        'product_id' => (int) $i['product_id'],
+                        'quantity' => (int) $i['quantity'],
+                        'price' => (float) $i['price'],
+                    ];
+                })->keyBy('product_id');
 
-                // Create new items
-                foreach ($data['items'] as $itemData) {
-                    SaleItem::create([
-                        'sale_id' => $sale->id,
-                        'product_id' => (int) $itemData['product_id'],
-                        'quantity' => (int) $itemData['quantity'],
-                        'price' => (float) $itemData['price'],
-                    ]);
+                // Update or create
+                foreach ($incoming as $productId => $payload) {
+                    /** @var SaleItem|null $item */
+                    $item = $existing->get($productId);
+                    if ($item) {
+                        $dirty = false;
+                        if ($item->quantity !== $payload['quantity']) { $item->quantity = $payload['quantity']; $dirty = true; }
+                        if ((float) $item->price !== $payload['price']) { $item->price = $payload['price']; $dirty = true; }
+                        if ($dirty) { $item->save(); }
+                        // mark processed
+                        $existing->forget($productId);
+                    } else {
+                        // new line
+                        SaleItem::create([
+                            'sale_id' => $sale->id,
+                            'product_id' => $payload['product_id'],
+                            'quantity' => $payload['quantity'],
+                            'price' => $payload['price'],
+                        ]);
+                    }
                 }
 
-                // Recalculate total with new items
-                $totals = $this->calculateSaleTotals($data['items'], $sale->tax, $sale->discount);
+                // Delete removed items (will restore stock via observer)
+                foreach ($existing as $leftover) {
+                    $leftover->delete();
+                }
+
+                // Recalculate total based on current items (incoming is authoritative)
+                $totals = $this->calculateSaleTotals($incoming->values()->all(), $sale->tax, $sale->discount);
                 $sale->total_amount = $totals['total'];
             } else {
                 // Recalculate total if tax/discount changed but items didn't

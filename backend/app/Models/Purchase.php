@@ -103,4 +103,18 @@ class Purchase extends Model
     {
         return $query->where('user_id', $userId);
     }
+
+    /**
+     * Scope: text search by supplier name or id
+     */
+    public function scopeSearch($query, string $term)
+    {
+        $t = '%' . str_replace('%', '\\%', $term) . '%';
+        return $query->where(function ($q) use ($t) {
+            $q->where('id', 'like', $t)
+              ->orWhereHas('supplier', function ($qq) use ($t) {
+                  $qq->where('name', 'like', $t);
+              });
+        });
+    }
 }

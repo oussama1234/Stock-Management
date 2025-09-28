@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Edit, Printer, Download, RotateCcw } from 'lucide-react';
+import ExportButton from './ExportButton';
 import { useNavigate } from 'react-router-dom';
 import { useStockValidation } from '../hooks/useStockValidation';
 
@@ -10,7 +11,9 @@ const ProductHeader = memo(({
   onRefresh,
   onEdit,
   onPrint,
-  onDownload
+  onDownload,
+  onExport,
+  isExporting
 }) => {
   const navigate = useNavigate();
   const { stockStatus } = useStockValidation(product?.stock);
@@ -83,11 +86,12 @@ const ProductHeader = memo(({
             whileTap={{ scale: 0.95 }}
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRefresh?.(); }}
             disabled={isRefreshing}
-            className="p-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl shadow-lg backdrop-blur-sm transition-all duration-300 disabled:opacity-50"
-            title="Refresh data"
-            aria-label="Refresh data"
+            className="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl shadow-lg backdrop-blur-sm transition-all duration-300 disabled:opacity-50"
+            title="Reload"
+            aria-label="Reload"
           >
             <RotateCcw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Reload</span>
           </motion.button>
 
           <motion.button
@@ -95,11 +99,12 @@ const ProductHeader = memo(({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit?.(); }}
-            className="p-3 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl shadow-lg transition-all duration-300"
-            title="Edit product"
-            aria-label="Edit product"
+            className="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white rounded-xl shadow-lg transition-all duration-300"
+            title="Edit"
+            aria-label="Edit"
           >
             <Edit className="h-5 w-5" />
+            <span className="hidden sm:inline">Edit</span>
           </motion.button>
 
           <motion.button
@@ -107,11 +112,12 @@ const ProductHeader = memo(({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (typeof onPrint === 'function') onPrint(); }}
-            className="p-3 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white rounded-xl shadow-lg transition-all duration-300"
-            title="Print details"
-            aria-label="Print details"
+            className="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white rounded-xl shadow-lg transition-all duration-300"
+            title="Print"
+            aria-label="Print"
           >
             <Printer className="h-5 w-5" />
+            <span className="hidden sm:inline">Print</span>
           </motion.button>
 
           <motion.button
@@ -119,12 +125,20 @@ const ProductHeader = memo(({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownload?.(); }}
-            className="p-3 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white rounded-xl shadow-lg transition-all duration-300"
+            className="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white rounded-xl shadow-lg transition-all duration-300"
             title="Download CSV"
             aria-label="Download CSV"
           >
             <Download className="h-5 w-5" />
+            <span className="hidden sm:inline">CSV</span>
           </motion.button>
+
+          {/* Export Excel Button */}
+          <ExportButton
+            onClick={onExport}
+            disabled={!!isExporting}
+            tooltip="Export product details with all sales, purchases, and stock movement data."
+          />
         </div>
       </div>
     </motion.div>

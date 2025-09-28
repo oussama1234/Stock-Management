@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "tw-animate-css";
+/* tw-animate-css disabled for performance */
 
 @custom-variant dark (&:is(.dark *));
 
@@ -238,54 +238,37 @@
   }
 }
 
-.animate-blob {
-  animation: blob 7s infinite;
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-.animate-glow {
-  animation: glow 2s ease-in-out infinite alternate;
-}
-
-.animate-shimmer {
-  animation: shimmer 2s infinite;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  background-size: 1000px 100%;
-}
-
-.animate-slide-in-right {
-  animation: slideInFromRight 0.5s ease-out;
-}
-
-.animate-slide-in-left {
-  animation: slideInFromLeft 0.5s ease-out;
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.6s ease-out;
-}
-
-.animation-delay-2000 {
-  animation-delay: 2s;
-}
-
+.animate-blob,
+.animate-float,
+.animate-glow,
+.animate-shimmer,
+.animate-slide-in-right,
+.animate-slide-in-left,
+.animate-fade-in-up,
+.animation-delay-2000,
 .animation-delay-4000 {
-  animation-delay: 4s;
+  /* Disabled custom animations for performance */
+  animation: none !important;
+}
+
+/* Also disable shimmering background to avoid constant repaints */
+.animate-shimmer {
+  background: none !important;
+  background-size: initial !important;
 }
 
 /* Glassmorphism Effects */
 .glass {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  /* Preserve look without heavy backdrop blur */
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: none;
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .glass-dark {
-  background: rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
+  /* Preserve look without heavy backdrop blur */
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: none;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 

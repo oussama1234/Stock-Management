@@ -13,10 +13,17 @@ import SalesAnalytics from "@/pages/Admin/Sales/SalesAnalytics";
 import UsersPage from "@/pages/Admin/UsersPage";
 import Dashboard from "@/pages/DashboardHome";
 import Login from "@/pages/Login";
+import UniversalSearchPage from "@/pages/Search/UniversalSearchPage";
+import UniversalDashboard from "@/pages/Search/UniversalDashboard";
 import MyProfile from "@/pages/MyProfile";
 import NotFound from "@/pages/NotFound";
 import NotificationsPage from "@/pages/NotificationsPage";
 import SupportPage from "@/pages/SupportPage";
+import ReportsDashboard from "@/pages/Reports/ReportsDashboard";
+import InventoryDashboardPage from "@/pages/Inventory/InventoryDashboardPage";
+import InventoryListPage from "@/pages/Inventory/InventoryListPage";
+import InventoryAdjustmentsPage from "@/pages/Inventory/InventoryAdjustmentsPage";
+import LowStockAlertsPage from "@/pages/Inventory/LowStockAlertsPage";
 import { createBrowserRouter } from "react-router-dom";
 
 export const HomeRoute = "/"; // home route
@@ -30,8 +37,15 @@ export const SalesRoute = DashboardRoute + "/sales";
 export const SalesAnalyticsRoute = DashboardRoute + "/sales/analytics";
 export const PurchasesRoute = DashboardRoute + "/purchases";
 export const PurchasesAnalyticsRoute = DashboardRoute + "/purchases/analytics";
+export const ReportsRoute = DashboardRoute + "/reports";
+export const InventoryRoute = DashboardRoute + "/inventory";
+export const InventoryListRoute = DashboardRoute + "/inventory/list";
+export const InventoryAdjustmentsRoute = DashboardRoute + "/inventory/adjustments";
+export const InventoryLowStockRoute = DashboardRoute + "/inventory/low-stock";
 export const NotificationsRoute = DashboardRoute + "/notifications";
 export const SupportRoute = DashboardRoute + "/support";
+export const SearchRoute = DashboardRoute + "/search";
+export const UniversalRoute = DashboardRoute + "/universal";
 
 // dashboard route needs to follow dashboard layout
 
@@ -143,6 +157,56 @@ export const routes = [
     ),
   },
   {
+    path: ReportsRoute,
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout>
+          <ReportsDashboard />
+        </DashboardLayout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: InventoryRoute,
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout>
+          <InventoryDashboardPage />
+        </DashboardLayout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: InventoryListRoute,
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout>
+          <InventoryListPage />
+        </DashboardLayout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: InventoryAdjustmentsRoute,
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout>
+          <InventoryAdjustmentsPage />
+        </DashboardLayout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: InventoryLowStockRoute,
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout>
+          <LowStockAlertsPage />
+        </DashboardLayout>
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: NotificationsRoute,
     element: (
       <ProtectedRoute>
@@ -158,6 +222,26 @@ export const routes = [
       <ProtectedRoute>
         <DashboardLayout>
           <SupportPage />
+        </DashboardLayout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: SearchRoute,
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout>
+          <UniversalSearchPage />
+        </DashboardLayout>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: UniversalRoute,
+    element: (
+      <ProtectedRoute>
+        <DashboardLayout>
+          <UniversalDashboard />
         </DashboardLayout>
       </ProtectedRoute>
     ),

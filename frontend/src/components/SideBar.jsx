@@ -17,6 +17,7 @@ import {
   Users,
   X,
   Zap,
+  AlertTriangle,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -29,6 +30,11 @@ import {
   SalesAnalyticsRoute,
   SalesRoute,
   UsersRoute,
+  ReportsRoute,
+  InventoryRoute,
+  InventoryListRoute,
+  InventoryAdjustmentsRoute,
+  InventoryLowStockRoute,
 } from "../router/Index";
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
@@ -124,17 +130,23 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       name: "Inventory",
       icon: Database,
       link: "#",
-      hasSubmenu: false,
+      hasSubmenu: true,
       color: "from-indigo-500 to-purple-500",
       bgColor: "bg-indigo-50 hover:bg-indigo-100",
       textColor: "text-indigo-600",
       description: "Stock management",
+      submenuItems: [
+        { id: 'inv-dashboard', name: 'Dashboard', icon: Activity, link: InventoryRoute },
+        { id: 'inv-list', name: 'Inventory List', icon: Package, link: InventoryListRoute },
+        { id: 'inv-adjustments', name: 'Adjustments', icon: Settings, link: InventoryAdjustmentsRoute },
+        { id: 'inv-low-stock', name: 'Low Stock Alerts', icon: AlertTriangle, link: InventoryLowStockRoute },
+      ],
     },
     {
       id: 8,
       name: "Reports",
       icon: FileText,
-      link: "#",
+      link: ReportsRoute,
       hasSubmenu: false,
       color: "from-yellow-500 to-orange-500",
       bgColor: "bg-yellow-50 hover:bg-yellow-100",
@@ -197,7 +209,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[90] lg:hidden"
+            className="fixed inset-0 bg-black/50 z-[90] lg:hidden"
             onClick={toggleSidebar}
           />
         )}
@@ -208,7 +220,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         animate={isOpen ? "open" : "closed"}
         variants={containerVariants}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
-        className="fixed lg:relative top-0 left-0 h-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-r border-gray-200/50 dark:border-gray-700/50 shadow-2xl z-[95] overflow-hidden"
+        className="fixed lg:relative top-0 left-0 h-full bg-white/80 dark:bg-gray-800/80 border-r border-gray-200/50 dark:border-gray-700/50 shadow-2xl z-[95] overflow-hidden"
       >
         {/* Background decoration - matching navbar */}
         <div
@@ -228,7 +240,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               <div className="flex items-center space-x-3">
                 <div className="relative">
                   <div
-                    className={`absolute inset-0 ${currentTheme.gradient} rounded-2xl blur-lg opacity-30 animate-pulse`}
+className={`absolute inset-0 ${currentTheme.gradient} rounded-2xl opacity-20`}
                   />
                   <div
                     className={`relative p-2 ${currentTheme.gradient} rounded-2xl shadow-lg`}

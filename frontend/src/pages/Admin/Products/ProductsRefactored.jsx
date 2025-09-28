@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ProductsProvider, useProductsData } from './contexts/ProductsContext';
 import { useProductActions } from './hooks/useProductActions';
@@ -9,6 +9,8 @@ import ProductsFilters from './components/ProductsFilters';
 import ProductsGrid from './components/ProductsGrid';
 import { ProductModal, ProductDetailModal } from './Products'; // Reuse existing modals
 import PaginationControls from '@/components/pagination/PaginationControls';
+import ContentSpinner from '@/components/Spinners/ContentSpinner';
+import { useProductsCsvExport } from './hooks/useProductsCsvExport';
 
 const ProductsContent = memo(() => {
   const {
@@ -40,36 +42,53 @@ const ProductsContent = memo(() => {
     exportToCSV,
   } = useProductActions();
 
-  const { refreshData, categories, isLoadingCategories, ensureCategoriesLoaded, isLoading, isRefreshing } = useProductsData();
+  const { refreshData, categories, isLoadingCategories, ensureCategoriesLoaded, isLoading, isRefreshing, isInitialLoading, searchTerm, categoryFilter, stockFilter, sortBy, sortOrder } = useProductsData();
 
-  const handleAddProduct = () => {
+  const handleAddProduct = useCallback(() => {
     ensureCategoriesLoaded();
     openModal();
-  };
+  }, [ensureCategoriesLoaded, openModal]);
 
-  const handleEditProduct = (product) => {
+  const handleEditProduct = useCallback((product) => {
     ensureCategoriesLoaded();
     openModal(product);
-  };
+  }, [ensureCategoriesLoaded, openModal]);
 
-  const handleViewDetails = (product, navigate = false) => {
+  const handleViewDetails = useCallback((product, navigate = false) => {
     if (navigate) {
       navigateToDetails(product.id);
     } else {
       openDetailModal(product);
     }
-  };
+  }, [navigateToDetails, openDetailModal]);
 
-  const handleExportProducts = (products = null) => {
-    // If no products specified, export all visible products
-    exportToCSV(products);
-  };
+  // CSV export for all products (with filters)
+  const { exportProductsCsv, isExporting } = useProductsCsvExport();
+  const handleExportProducts = useCallback(() => {
+    exportProductsCsv({
+      searchTerm,
+      categoryFilter,
+      stockFilter,
+      sortBy,
+      sortOrder,
+    });
+  }, [exportProductsCsv, searchTerm, categoryFilter, stockFilter, sortBy, sortOrder]);
 
   // refreshData already extracted above from useProductsData
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     await refreshData();
-  };
+  }, [refreshData]);
+
+  if (isInitialLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/30">
+        <div className="max-w-7xl mx-auto p-6">
+          <ContentSpinner fullWidth size="large" message="Loading products..." />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/30">
@@ -81,8 +100,9 @@ const ProductsContent = memo(() => {
         <ProductsHeader
           onAddProduct={handleAddProduct}
           onRefresh={handleRefresh}
-          onExport={() => handleExportProducts()}
+          onExport={handleExportProducts}
           isRefreshing={isRefreshing}
+          isExporting={isExporting}
         />
 
         {/* Filters Section */}
@@ -96,7 +116,7 @@ const ProductsContent = memo(() => {
           onAddProduct={handleAddProduct}
           onBulkDelete={handleBulkDelete}
           onBulkEdit={handleBulkEdit}
-          onExport={handleExportProducts}
+          onExport={(subset) => exportToCSV(subset || [])}
         />
 
         {/* Pagination */}
@@ -178,7 +198,16 @@ const PaginationSection = memo(() => {
     return rangeWithDots;
   };
 
-  const pages = generatePages(metadata.lastPage, currentPage);
+  const pages = useMemo(() => generatePages(metadata.lastPage, currentPage), [metadata.lastPage, currentPage]);
+
+  const onChangePage = useCallback((p) => {
+    handlePageChange(p);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [handlePageChange]);
+
+  const onPerPageChange = useCallback((value) => {
+    handlePerPageChange(value);
+  }, [handlePerPageChange]);
 
   return (
     <motion.div
@@ -187,16 +216,13 @@ const PaginationSection = memo(() => {
       transition={{ duration: 0.6, delay: 0.8 }}
       className="mt-12"
     >
-      <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 p-6">
+      <div className="bg-white/80 rounded-2xl shadow-lg border border-white/20 p-6">
         <PaginationControls
           currentPage={currentPage}
           totalPages={metadata.lastPage}
-          onPageChange={(p) => {
-            handlePageChange(p);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
+          onPageChange={onChangePage}
           perPage={perPage}
-          onPerPageChange={handlePerPageChange}
+          onPerPageChange={onPerPageChange}
           from={metadata.from}
           to={metadata.to}
           total={metadata.total}
@@ -209,20 +235,9 @@ const PaginationSection = memo(() => {
 
 // Lightweight top progress bar shown during loading/refetch
 const TopProgressBar = memo(() => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    className="fixed top-0 left-0 right-0 z-50"
-  >
-    <motion.div
-      className="h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"
-      initial={{ width: '0%' }}
-      animate={{ width: ['0%', '60%', '85%', '100%'] }}
-      transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-      style={{ boxShadow: '0 0 10px rgba(99,102,241,0.6)' }}
-    />
-  </motion.div>
+  <div className="fixed top-0 left-0 right-0 z-50">
+    <div className="h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 animate-pulse" />
+  </div>
 ));
 
 // Main Products Component with Context Provider

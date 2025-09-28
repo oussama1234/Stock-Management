@@ -13,21 +13,34 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { usePreferences } from "../context/PreferencesContext";
-import { HomeRoute, MyProfileRoute, SupportRoute, DashboardRoute } from "../router/Index";
+import { HomeRoute, MyProfileRoute, SupportRoute, DashboardRoute, SearchRoute, ProductDetailsRoute, SalesRoute, PurchasesRoute, InventoryRoute } from "../router/Index";
 import { useToast } from "./Toaster/ToastContext";
 import { useNotificationContext } from "@/context/NotificationContext";
 import NotificationDropdown from "./Notifications/NotificationDropdown";
+import SearchDropdown from "@/components/universalSearch/SearchDropdown";
+import SearchOverlayModal from "@/components/Search/SearchOverlayModal";
+import { useUniversalSearch } from "@/hooks/useUniversalSearch";
+import SearchInput from "@/components/universalSearch/SearchInput";
+import { prefetchProduct, prefetchSale, prefetchPurchase } from "@/services/searchService";
 const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const profileRef = useRef(null);
   const notificationsRef = useRef(null);
+  const suggestRef = useRef(null);
+
+  // Universal search hook (debounced)
+  const { term, setTerm, results, loading: isSearching } = useUniversalSearch({ initialTerm: '', perPage: 5, debounceMs: 350 });
   const { logoutUser, user } = useAuth();
+  // Keyboard selection state for dropdown
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const { preferences, currentTheme, toggleDarkMode } = usePreferences();
   const navigate = useNavigate();
   const Toast = useToast();
@@ -78,6 +91,9 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
       if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
         setIsNotificationsOpen(false);
       }
+      if (suggestRef.current && !suggestRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
     }
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -86,21 +102,107 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
     };
   }, []);
 
+  // Flatten results for keyboard navigation
+  const flatItems = useMemo(() => {
+    if (!results) return [];
+    const order = [
+      'products','sales','purchases','movements','customers','suppliers','reasons'
+    ];
+    const out = [];
+    for (const key of order) {
+      const arr = results?.[key]?.data || [];
+      arr.forEach((item, idx) => {
+        const id = item?.id ?? idx;
+        out.push({ key: `${key}:${id}`, entity: key, item, index: idx });
+      });
+    }
+    return out;
+  }, [results]);
+
+  const handleSelect = useCallback(({ entity, item }) => {
+    setShowSuggestions(false);
+    switch (entity) {
+      case 'products':
+        navigate(`${ProductDetailsRoute}/${item.id}`);
+        break;
+      case 'sales':
+        navigate(SalesRoute);
+        break;
+      case 'purchases':
+        navigate(PurchasesRoute);
+        break;
+      case 'movements':
+        navigate(InventoryRoute);
+        break;
+      case 'customers':
+      case 'suppliers':
+      case 'reasons':
+      default:
+        navigate(`${SearchRoute}?q=${encodeURIComponent((searchTerm||'').trim())}`);
+        break;
+    }
+  }, [navigate, searchTerm]);
+
+  // Define onViewAll above handleEnterSelect to avoid TDZ
+  const onViewAll = useCallback(() => {
+    setShowSuggestions(false);
+    navigate(`${SearchRoute}?q=${encodeURIComponent((searchTerm||'').trim())}`);
+  }, [navigate, searchTerm]);
+
+  const handleEnterSelect = useCallback(() => {
+    if (flatItems.length === 0) {
+      onViewAll();
+      return;
+    }
+    const sel = flatItems[Math.max(0, Math.min(selectedIndex, flatItems.length - 1))];
+    if (sel) handleSelect(sel);
+  }, [flatItems, selectedIndex, handleSelect, onViewAll]);
+
+  // Prefetch details on hover (lightweight)
+  const handleHoverItem = useCallback(async (key) => {
+    const [entity, idStr] = String(key).split(":");
+    const id = Number(idStr);
+    if (entity === 'products' && id) prefetchProduct(id).catch(() => {});
+    if (entity === 'sales' && id) prefetchSale(id).catch(() => {});
+    if (entity === 'purchases' && id) prefetchPurchase(id).catch(() => {});
+  }, []);
+
+  // Wire input with hook + control dropdown visibility
+  useEffect(() => {
+    setTerm(searchTerm);
+    const trimmed = searchTerm.trim();
+    setShowSuggestions(trimmed.length >= 2);
+  }, [searchTerm, setTerm]);
+
   // Handle search
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      // Implement global search functionality here
-      Toast.success(`Searching for "${searchTerm}"`);
+      setShowSuggestions(false);
+      navigate(`${SearchRoute}?q=${encodeURIComponent(searchTerm.trim())}`);
     }
   };
+
+  // Memoized navigation callbacks for dropdown (performance)
+  const onNavigateProduct = useCallback((id) => {
+    setShowSuggestions(false);
+    navigate(`${ProductDetailsRoute}/${id}`);
+  }, [navigate]);
+  const onNavigateSupplier = useCallback(() => {
+    setShowSuggestions(false);
+    navigate(`${SearchRoute}?q=${encodeURIComponent((searchTerm||'').trim())}`);
+  }, [navigate, searchTerm]);
+  const onNavigateCustomer = useCallback(() => {
+    setShowSuggestions(false);
+    navigate(`${SearchRoute}?q=${encodeURIComponent((searchTerm||'').trim())}`);
+  }, [navigate, searchTerm]);
 
   return (
     <motion.nav 
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 shadow-lg z-[100]"
+      className="relative bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/50 dark:border-gray-700/50 shadow-lg z-[100]"
     >
       {/* Background decoration */}
       <div className={`absolute inset-0 bg-gradient-to-r ${currentTheme.primary}/5 via-purple-500/5 to-indigo-500/5 dark:from-gray-800/20 dark:via-gray-700/20 dark:to-gray-800/20`} />
@@ -142,38 +244,60 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
           </div>
 
           {/* Center Section - Enhanced Search */}
-          <div className="flex-1 max-w-2xl mx-8">
-            <motion.form
+          <div className="flex-1 max-w-3xl mx-8">
+            <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.5 }}
-              onSubmit={handleSearchSubmit}
               className="relative"
             >
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-                </div>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="🔍 Search products, orders, customers..."
-                  className="w-full pl-12 pr-12 py-3 bg-white/70 dark:bg-gray-800/70 border border-gray-200 dark:border-gray-700 rounded-2xl focus:border-blue-400 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-400/20 dark:focus:ring-blue-500/20 focus:outline-none text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-300 shadow-sm backdrop-blur-sm"
-                />
-                {searchTerm && (
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    type="button"
-                    onClick={() => setSearchTerm('')}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <X className="h-4 w-4" />
-                  </motion.button>
-                )}
-              </div>
-            </motion.form>
+              <SearchInput
+                value={searchTerm}
+                onChange={(val) => { setSearchTerm(val); if ((val||'').trim().length >= 2) setShowSuggestions(true) }}
+                onSubmit={handleSearchSubmit}
+                onEscape={() => setShowSuggestions(false)}
+                onKeyNav={(e) => {
+                  if (!showSuggestions) return
+                  if (e.key === 'ArrowDown') setSelectedIndex((i) => Math.min(i + 1, flatItems.length - 1))
+                  if (e.key === 'ArrowUp') setSelectedIndex((i) => Math.max(i - 1, 0))
+                  if (e.key === 'Enter') { e.preventDefault(); handleEnterSelect() }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setMobileSearchOpen(true)}
+                className="md:hidden w-full pl-12 pr-3 py-3 bg-white/70 dark:bg-gray-800/70 border border-gray-200 dark:border-gray-700 rounded-2xl text-left text-gray-500"
+              >
+                Search...
+              </button>
+            </motion.div>
+            {/* Suggestions dropdown (memoized component) */}
+            <SearchDropdown
+              visible={showSuggestions}
+              term={searchTerm}
+              loading={isSearching}
+              results={results}
+              selectedKey={flatItems[selectedIndex]?.key}
+              onHoverItem={(key) => {
+                const idx = flatItems.findIndex((it) => it.key === key)
+                if (idx >= 0) setSelectedIndex(idx)
+                handleHoverItem(key)
+              }}
+              onSelectItem={({ entity, item, action }) => handleSelect({ entity, item, action })}
+              onViewAll={onViewAll}
+            />
+
+            {/* Mobile full-screen search */}
+            <SearchOverlayModal
+              open={mobileSearchOpen}
+              term={searchTerm}
+              setTerm={setSearchTerm}
+              loading={isSearching}
+              results={results}
+              onClose={() => setMobileSearchOpen(false)}
+              onViewAll={onViewAll}
+              onNavigateProduct={onNavigateProduct}
+            />
           </div>
 
           {/* Right Section */}
@@ -234,7 +358,7 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center space-x-3 p-2 bg-white/70 dark:bg-gray-800/70 hover:bg-white dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500 rounded-2xl transition-all duration-300 shadow-sm hover:shadow-md backdrop-blur-sm"
+                className="flex items-center space-x-3 p-2 bg-white/70 dark:bg-gray-800/70 hover:bg-white dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500 rounded-2xl transition-all duration-300 shadow-sm hover:shadow-md"
               >
                 <div className="relative">
                   <motion.div
@@ -287,7 +411,7 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute top-full right-0 mt-3 w-72 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden z-[9999]"
+className="absolute top-full right-0 mt-3 w-72 bg-white/95 dark:bg-gray-800/95 rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden z-[9999]"
                   >
                     {/* Profile Header */}
                     <div className={`p-6 ${currentTheme.bg}/80 border-b border-gray-100 dark:border-gray-700`}>

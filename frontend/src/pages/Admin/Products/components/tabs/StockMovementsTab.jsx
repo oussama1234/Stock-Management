@@ -1,4 +1,4 @@
-import React, { memo, useState, useCallback } from 'react';
+import React, { memo, useState, useCallback, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Calendar,
@@ -16,6 +16,11 @@ import {
 } from 'lucide-react';
 import { useProductData } from '../../context/ProductDataContext';
 import { useFormatters } from '../../hooks/useFormatters';
+import useTabPagination from '../../hooks/useTabPagination';
+import useProductStockMovementsTabData from '../../hooks/useProductStockMovementsTabData';
+import FilterBar from '@/components/filters/FilterBar';
+import Pagination from '@/components/Pagination/Pagination';
+import ContentSpinner from '@/components/Spinners/ContentSpinner';
 
 const MovementRow = memo(({ 
   movement 
@@ -117,38 +122,88 @@ const MovementRow = memo(({
   );
 });
 
-const StockMovementsTab = memo(({ productId, showFilters }) => {
-  const [sortField, setSortField] = useState('movement_date');
-  const [sortDirection, setSortDirection] = useState('desc');
-  
-  const { 
-    product,
-    stockMovements,
-    isLoading,
-    error
-  } = useProductData();
+const StockMovementsTab = memo(({ productId, showFilters, onAddNewMovement }) => {
+  const { product } = useProductData();
+  const { page, perPage, setPage, setPerPage, params } = useTabPagination({ page: 1, perPage: 10 });
+  const { items, meta, loading, error, filters, setFilter, networkStatus } = useProductStockMovementsTabData(productId, params, { sortBy: 'movement_date', sortOrder: 'desc' });
+
+  const sortField = filters.sortBy;
+  const sortDirection = filters.sortOrder;
 
   const { formatNumber } = useFormatters();
-  
+
+  // Draft filters for Apply behavior
+  const [draft, setDraft] = useState({
+    type: filters.type || '',
+    reason: filters.reason || '',
+    dateFrom: filters.dateFrom || '',
+    dateTo: filters.dateTo || '',
+    sortBy: filters.sortBy || 'movement_date',
+    sortOrder: filters.sortOrder || 'desc',
+  });
+
+  useEffect(() => {
+    setDraft({
+      type: filters.type || '',
+      reason: filters.reason || '',
+      dateFrom: filters.dateFrom || '',
+      dateTo: filters.dateTo || '',
+      sortBy: filters.sortBy || 'movement_date',
+      sortOrder: filters.sortOrder || 'desc',
+    });
+  }, [filters.type, filters.reason, filters.dateFrom, filters.dateTo, filters.sortBy, filters.sortOrder]);
+
+  const applyFilters = useCallback(() => {
+    setFilter('type', draft.type || '');
+    setFilter('reason', draft.reason || '');
+    setFilter('dateFrom', draft.dateFrom || '');
+    setFilter('dateTo', draft.dateTo || '');
+    setFilter('sortBy', draft.sortBy || 'movement_date');
+    setFilter('sortOrder', draft.sortOrder || 'desc');
+    setPage(1);
+  }, [draft, setFilter, setPage]);
+
   const handleSort = useCallback((field) => {
-    if (sortField === field) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  }, [sortField]);
+    setFilter('sortBy', field);
+    setFilter('sortOrder', filters.sortBy === field && filters.sortOrder === 'asc' ? 'desc' : 'asc');
+  }, [filters.sortBy, filters.sortOrder, setFilter]);
+
+  const clearFilters = useCallback(() => {
+    const defaults = { type: '', reason: '', dateFrom: '', dateTo: '', sortBy: 'movement_date', sortOrder: 'desc' };
+    setDraft(defaults);
+    setFilter('type', '');
+    setFilter('reason', '');
+    setFilter('dateFrom', '');
+    setFilter('dateTo', '');
+    setFilter('sortBy', 'movement_date');
+    setFilter('sortOrder', 'desc');
+    setPage(1);
+  }, [setFilter, setPage]);
 
   const handleAddMovement = useCallback(() => {
+    if (onAddNewMovement) {
+      onAddNewMovement();
+      return;
+    }
     console.log('Adding new stock movement for product:', productId);
-  }, [productId]);
+  }, [productId, onAddNewMovement]);
 
-  if (isLoading) {
+  // Precompute summary stats regardless of render path to keep hooks order stable
+  const totalMovements = (items ?? []).length;
+  const inMovements = useMemo(() => (items ?? []).filter(m => m.type === 'in' || m.type === 'purchase' || m.type === 'adjustment_in').length, [items]);
+  const outMovements = useMemo(() => (items ?? []).filter(m => m.type === 'out' || m.type === 'sale' || m.type === 'adjustment_out').length, [items]);
+  const totalInQuantity = useMemo(() => (items ?? [])
+    .filter(m => m.type === 'in' || m.type === 'purchase' || m.type === 'adjustment_in')
+    .reduce((sum, m) => sum + Math.abs(m.quantity), 0), [items]);
+  const totalOutQuantity = useMemo(() => (items ?? [])
+    .filter(m => m.type === 'out' || m.type === 'sale' || m.type === 'adjustment_out')
+    .reduce((sum, m) => sum + Math.abs(m.quantity), 0), [items]);
+  const netMovement = totalInQuantity - totalOutQuantity;
+
+  if (loading) {
     return (
-      <div className="space-y-4">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className="animate-pulse h-16 bg-gray-200 rounded-xl"></div>
-        ))}
+      <div className="py-12">
+        <ContentSpinner theme="inventory" size="medium" variant="minimal" fullWidth={true} message="Loading stock movements..." />
       </div>
     );
   }
@@ -163,7 +218,7 @@ const StockMovementsTab = memo(({ productId, showFilters }) => {
     );
   }
 
-  if (!stockMovements || stockMovements.length === 0) {
+  if (!items || items.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-8 inline-block">
@@ -184,36 +239,18 @@ const StockMovementsTab = memo(({ productId, showFilters }) => {
     );
   }
 
-  // Calculate summary stats
-  const totalMovements = stockMovements.length;
-  const inMovements = stockMovements.filter(m => m.type === 'in' || m.type === 'purchase' || m.type === 'adjustment_in').length;
-  const outMovements = stockMovements.filter(m => m.type === 'out' || m.type === 'sale' || m.type === 'adjustment_out').length;
-  const totalInQuantity = stockMovements
-    .filter(m => m.type === 'in' || m.type === 'purchase' || m.type === 'adjustment_in')
-    .reduce((sum, m) => sum + Math.abs(m.quantity), 0);
-  const totalOutQuantity = stockMovements
-    .filter(m => m.type === 'out' || m.type === 'sale' || m.type === 'adjustment_out')
-    .reduce((sum, m) => sum + Math.abs(m.quantity), 0);
-  const netMovement = totalInQuantity - totalOutQuantity;
+  // Server-side sorting
+  const sortedMovements = items;
 
-  // Sort movements
-  const sortedMovements = [...stockMovements].sort((a, b) => {
-    let aValue = a[sortField];
-    let bValue = b[sortField];
-    
-    if (sortField === 'movement_date' || sortField === 'created_at') {
-      aValue = new Date(aValue);
-      bValue = new Date(bValue);
-    }
-    
-    if (sortDirection === 'asc') {
-      return aValue > bValue ? 1 : -1;
-    }
-    return aValue < bValue ? 1 : -1;
-  });
+  const isRefetching = !loading && [2,3,4,6].includes(networkStatus ?? 0);
 
   return (
-    <div className="space-y-6">
+    <div className="relative space-y-6">
+      {isRefetching && (
+        <div className="absolute inset-0 rounded-2xl bg-white/70 backdrop-blur-sm flex items-center justify-center z-10">
+          <ContentSpinner theme="inventory" size="small" variant="minimal" />
+        </div>
+      )}
       {/* Stock Movement Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-gradient-to-r from-gray-50 to-slate-50 p-4 rounded-xl border border-gray-200">
@@ -284,6 +321,81 @@ const StockMovementsTab = memo(({ productId, showFilters }) => {
           </div>
         </div>
       </div>
+
+      {/* Filters */}
+      {showFilters && (
+        <FilterBar>
+          <select
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm"
+            value={draft.type}
+            onChange={(e) => setDraft(prev => ({ ...prev, type: e.target.value }))}
+          >
+            <option value="">All Types</option>
+            <option value="in">In</option>
+            <option value="out">Out</option>
+            <option value="purchase">Purchase</option>
+            <option value="sale">Sale</option>
+            <option value="adjustment_in">Adjustment In</option>
+            <option value="adjustment_out">Adjustment Out</option>
+          </select>
+          <input
+            type="date"
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm"
+            value={draft.dateFrom}
+            onChange={(e) => setDraft(prev => ({ ...prev, dateFrom: e.target.value }))}
+          />
+          <input
+            type="date"
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm"
+            value={draft.dateTo}
+            onChange={(e) => setDraft(prev => ({ ...prev, dateTo: e.target.value }))}
+          />
+          <input
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm"
+            placeholder="Reason contains..."
+            value={draft.reason}
+            onChange={(e) => setDraft(prev => ({ ...prev, reason: e.target.value }))}
+          />
+          <select
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm"
+            value={draft.sortBy}
+            onChange={(e) => setDraft(prev => ({ ...prev, sortBy: e.target.value }))}
+          >
+            <option value="movement_date">Date</option>
+            <option value="created_at">Created</option>
+            <option value="quantity">Quantity</option>
+          </select>
+          <select
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm"
+            value={draft.sortOrder}
+            onChange={(e) => setDraft(prev => ({ ...prev, sortOrder: e.target.value }))}
+          >
+            <option value="desc">Desc</option>
+            <option value="asc">Asc</option>
+          </select>
+          <select
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm"
+            value={perPage}
+            onChange={(e) => setPerPage(Number(e.target.value))}
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+          </select>
+          <button
+            onClick={applyFilters}
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100"
+          >
+            Apply Filters
+          </button>
+          <button
+            onClick={clearFilters}
+            className="px-3 py-2 rounded-xl border border-gray-200 text-sm bg-red-50 text-red-600 hover:bg-red-100"
+          >
+            Clear Filters
+          </button>
+        </FilterBar>
+      )}
 
       {/* Stock Movements Table */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -391,6 +503,9 @@ const StockMovementsTab = memo(({ productId, showFilters }) => {
           </table>
         </div>
       </div>
+
+      {/* Pagination */}
+      <Pagination meta={meta} onPageChange={setPage} />
     </div>
   );
 });

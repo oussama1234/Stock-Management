@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useMemo, useEf
 import { useQuery } from '@apollo/client/react';
 import { PRODUCTS_QUERY } from '../../../../GraphQL/Products/Queries/Products';
 import { useCategoriesQuery } from '../../../../GraphQL/Categories/Queries/Categories';
+import { useProductsFiltering } from '../hooks/useProductsFiltering';
 
 const ProductsContext = createContext();
 
@@ -134,11 +135,11 @@ export const ProductsProvider = ({ children }) => {
     variables: {
       page: currentPage,
       limit: perPage,
-      search: debouncedSearchTerm,
-      category: categoryFilter,
-      stockFilter,
-      sortBy,
-      sortOrder
+      search: debouncedSearchTerm || null,
+      category: categoryFilter ? Number(categoryFilter) : null,
+      stockFilter: stockFilter || null,
+      sortBy: sortBy || null,
+      sortOrder: sortOrder || 'asc'
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
@@ -153,10 +154,9 @@ export const ProductsProvider = ({ children }) => {
     loading: categoriesLoading 
   }] = useCategoriesQuery();
 
-  // Memoized products data processing
-  const products = useMemo(() => {
+  // Memoized products data processing (normalize types only)
+  const productsRaw = useMemo(() => {
     if (!productsData?.products?.data) return [];
-    
     return productsData.products.data.map(product => ({
       ...product,
       price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
@@ -186,7 +186,7 @@ export const ProductsProvider = ({ children }) => {
 
   // Memoized statistics
   const statistics = useMemo(() => {
-    if (!products.length) {
+    if (!productsRaw.length) {
       return {
         total: 0,
         inStock: 0,
@@ -197,30 +197,28 @@ export const ProductsProvider = ({ children }) => {
       };
     }
 
-    const stats = products.reduce((acc, product) => {
-      acc.totalValue += product.price * product.stock;
-      
-      if (product.stock === 0) {
+    const stats = productsRaw.reduce((acc, product) => {
+      acc.totalValue += (Number(product.price) || 0) * (Number(product.stock) || 0);
+      if ((Number(product.stock) || 0) === 0) {
         acc.outOfStock += 1;
-      } else if (product.stock <= 10) {
+      } else if ((Number(product.stock) || 0) <= 10) {
         acc.lowStock += 1;
       } else {
         acc.inStock += 1;
       }
-      
       return acc;
     }, {
-      total: products.length,
+      total: productsRaw.length,
       inStock: 0,
       lowStock: 0,
       outOfStock: 0,
       totalValue: 0,
     });
 
-    stats.avgPrice = stats.total > 0 ? stats.totalValue / products.reduce((sum, p) => sum + p.stock, 0) : 0;
-    
+    const denom = productsRaw.reduce((sum, p) => sum + (Number(p.stock) || 0), 0);
+    stats.avgPrice = denom > 0 ? (stats.totalValue / denom) : 0;
     return stats;
-  }, [products]);
+  }, [productsRaw]);
 
   // Filter options for advanced filtering
   const filterOptions = useMemo(() => {
@@ -306,12 +304,12 @@ export const ProductsProvider = ({ children }) => {
   }, []);
 
   const handleSelectAll = useCallback(() => {
-    if (selectedProducts.size === products.length) {
+    if (selectedProducts.size === productsRaw.length) {
       setSelectedProducts(new Set());
     } else {
-      setSelectedProducts(new Set(products.map(p => p.id)));
+      setSelectedProducts(new Set(productsRaw.map(p => p.id)));
     }
-  }, [products, selectedProducts.size]);
+  }, [productsRaw, selectedProducts.size]);
 
   const handleClearSelection = useCallback(() => {
     setSelectedProducts(new Set());
@@ -355,13 +353,22 @@ export const ProductsProvider = ({ children }) => {
 
   // Apply optimistic updates to products
   const optimizedProducts = useMemo(() => {
-    if (optimisticUpdates.size === 0) return products;
-
-    return products.map(product => ({
+    if (optimisticUpdates.size === 0) return productsRaw;
+    return productsRaw.map(product => ({
       ...product,
       ...optimisticUpdates.get(product.id)
     }));
-  }, [products, optimisticUpdates]);
+  }, [productsRaw, optimisticUpdates]);
+
+  // Apply client-side filtering + sorting for current page results
+  // This ensures UI filters (category, stock) and sorts (name, price, stock, category, created_at)
+  // actually affect the displayed list even if the GraphQL API doesn't support them yet.
+  const filteredSortedProducts = useProductsFiltering(optimizedProducts, {
+    categoryFilter,
+    stockFilter,
+    sortBy,
+    sortOrder,
+  });
 
   // Context value with all memoized data and functions
   const contextValue = useMemo(() => {
@@ -383,7 +390,7 @@ export const ProductsProvider = ({ children }) => {
 
     return ({
       // Data
-      products: optimizedProducts,
+      products: filteredSortedProducts,
       categories,
       metadata,
       statistics,
@@ -425,7 +432,7 @@ export const ProductsProvider = ({ children }) => {
       handleSelectAll,
       handleClearSelection,
       selectedCount: selectedProducts.size,
-      isAllSelected: selectedProducts.size === products.length && products.length > 0,
+      isAllSelected: selectedProducts.size === filteredSortedProducts.length && filteredSortedProducts.length > 0,
       
       // Data management
       refreshData,
@@ -433,7 +440,7 @@ export const ProductsProvider = ({ children }) => {
       addOptimisticUpdate,
     });
   }, [
-    optimizedProducts,
+    filteredSortedProducts,
     categories,
     metadata,
     statistics,
@@ -465,7 +472,7 @@ export const ProductsProvider = ({ children }) => {
     handleSelectProduct,
     handleSelectAll,
     handleClearSelection,
-    products.length,
+    filteredSortedProducts.length,
     refreshData,
     ensureCategoriesLoaded,
     addOptimisticUpdate,

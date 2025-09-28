@@ -13,6 +13,7 @@ import {
   getSalesPeople,
   getLowStockAlerts 
 } from "@/api/SalesAnalytics";
+import ContentSpinner from "@/components/Spinners/ContentSpinner";
 
 export default function SalesAnalytics() {
   const [period, setPeriod] = useState("30");
@@ -100,15 +101,10 @@ export default function SalesAnalytics() {
             </div>
           ))}
         </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl">
-          {error}
+        
+        {/* Minimal, theme-colored spinner */}
+        <div className="py-8">
+          <ContentSpinner fullWidth size="large" message="Loading analytics..." />
         </div>
       </div>
     );

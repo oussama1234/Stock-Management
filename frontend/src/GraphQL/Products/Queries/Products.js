@@ -4,8 +4,8 @@ import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
 import { PRODUCT_FRAGMENT, PRODUCT_ANALYTICS_FRAGMENT } from "../Fragments/ProductFragments";
 export const PRODUCTS_QUERY = gql`
-  query GetProducts($page: Int, $limit: Int, $search: String) {
-    products(page: $page, limit: $limit, search: $search) {
+  query GetProducts($page: Int, $limit: Int, $search: String, $category: Int, $stockFilter: String, $sortBy: String, $sortOrder: String) {
+    products(page: $page, limit: $limit, search: $search, category: $category, stockFilter: $stockFilter, sortBy: $sortBy, sortOrder: $sortOrder) {
       data {
         ...ProductFragment
       }

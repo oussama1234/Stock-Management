@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
+use App\Models\StockMovement;
 use App\Support\CacheHelper;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +24,7 @@ class PurchasesService
 {
     public function __construct(
         protected NotificationService $notificationService,
+    ) {}
     ) {}
 
     /**
@@ -123,29 +125,23 @@ class PurchasesService
             $purchase->total_amount = $totals['total'];
             $purchase->save();
 
-            // Create items and increment stock
+            // Create items and increment stock + record stock movements
             foreach ($data['items'] as $itemData) {
-                PurchaseItem::create([
+                $purchaseItem = PurchaseItem::create([
                     'purchase_id' => $purchase->id,
                     'product_id' => (int) $itemData['product_id'],
                     'quantity' => (int) $itemData['quantity'],
                     'price' => (float) $itemData['price'],
                 ]);
 
-                $product = Product::find($itemData['product_id']);
-                if ($product) {
-                    $previousStock = (int) $product->stock;
-                    $incrementBy = (int) $itemData['quantity'];
-                    $product->increment('stock', $incrementBy);
-                    $product->refresh();
-                    $newStock = (int) $product->stock;
-
-                    // If we crossed above threshold, clear existing low-stock alerts for this product
-                    $threshold = $product->low_stock_threshold ?? 10;
-                    if ($previousStock <= $threshold && $newStock > $threshold) {
-                        $this->notificationService->clearLowStockAlertsForProduct($product->id);
-                    }
-                }
+                $this->adjustStockWithMovement(
+                    (int) $itemData['product_id'],
+                    (int) $itemData['quantity'],
+                    'in',
+                    $purchaseItem->id,
+                    'purchase_create',
+                    (int) $userId
+                );
             }
 
             $this->invalidateCaches();
@@ -182,33 +178,43 @@ class PurchasesService
             }
 
             if (isset($data['items'])) {
-                // Restore stock from existing items (reverse the original increments)
+                // Restore stock from existing items (reverse the original increments) and record OUT movements
                 foreach ($purchase->purchaseItems as $item) {
-                    $product = Product::find($item->product_id);
-                    if ($product) {
-                        $product->decrement('stock', (int) $item->quantity);
-                    }
+                    $this->adjustStockWithMovement(
+                        (int) $item->product_id,
+                        (int) $item->quantity,
+                        'out',
+                        (int) $item->id,
+                        'purchase_update_remove',
+                        $this->currentUserId()
+                    );
                 }
 
                 // Delete existing items
                 $purchase->purchaseItems()->delete();
 
-                // Create new items and increment stock
+                // Create new items and increment stock + record IN movements
                 foreach ($data['items'] as $itemData) {
-                    PurchaseItem::create([
+                    $purchaseItem = PurchaseItem::create([
                         'purchase_id' => $purchase->id,
                         'product_id' => (int) $itemData['product_id'],
                         'quantity' => (int) $itemData['quantity'],
                         'price' => (float) $itemData['price'],
                     ]);
 
-                    $product = Product::find($itemData['product_id']);
-                    if ($product) {
-                        $previousStock = (int) $product->stock;
-                        $incrementBy = (int) $itemData['quantity'];
-                        $product->increment('stock', $incrementBy);
-                        $product->refresh();
-                        $newStock = (int) $product->stock;
+                    $this->adjustStockWithMovement(
+                        (int) $itemData['product_id'],
+                        (int) $itemData['quantity'],
+                        'in',
+                        $purchaseItem->id,
+                        'purchase_update_add',
+                        $this->currentUserId()
+                    );
+                }
+                            'movement_date' => now(),
+                            'reason' => 'purchase_update_add',
+                            'user_id' => (int) (Auth::id() ?? 0),
+                        ]);
 
                         // If we crossed above threshold, clear existing low-stock alerts for this product
                         $threshold = $product->low_stock_threshold ?? 10;
@@ -255,10 +261,14 @@ class PurchasesService
             $purchase = Purchase::with('purchaseItems')->findOrFail($id);
 
             foreach ($purchase->purchaseItems as $item) {
-                $product = Product::find($item->product_id);
-                if ($product) {
-                    $product->decrement('stock', (int) $item->quantity);
-                }
+                $this->adjustStockWithMovement(
+                    (int) $item->product_id,
+                    (int) $item->quantity,
+                    'out',
+                    (int) $item->id,
+                    'purchase_delete',
+                    $this->currentUserId()
+                );
             }
 
             $purchase->purchaseItems()->delete();
@@ -440,5 +450,63 @@ class PurchasesService
         CacheHelper::bump('paginated_purchase_items');
         CacheHelper::bump('paginated_sale_items');
         CacheHelper::bump('paginated_stock_movements');
+    }
+
+    /**
+     * Adjust product stock and record a StockMovement in one place.
+     * $direction must be 'in' or 'out'.
+     */
+    private function adjustStockWithMovement(
+        int $productId,
+        int $quantity,
+        string $direction,
+        int $sourceId,
+        string $reason,
+        int $userId
+    ): void {
+        if ($quantity <= 0) {
+            return;
+        }
+
+        $product = Product::lockForUpdate()->find($productId);
+        if (!$product) {
+            return;
+        }
+
+        $previous = (int) $product->stock;
+
+        if ($direction === 'in') {
+            $new = $previous + $quantity;
+            $product->increment('stock', $quantity);
+        } else {
+            $new = max(0, $previous - $quantity);
+            $product->decrement('stock', $quantity);
+        }
+
+        StockMovement::create([
+            'product_id' => $product->id,
+            'type' => $direction === 'in' ? 'in' : 'out',
+            'quantity' => $quantity,
+            'previous_stock' => $previous,
+            'new_stock' => $new,
+            'source_type' => \App\Models\PurchaseItem::class,
+            'source_id' => $sourceId,
+            'movement_date' => now(),
+            'reason' => $reason,
+            'user_id' => $userId,
+        ]);
+
+        // Clear low-stock alerts if stock was replenished above threshold
+        if ($direction === 'in') {
+            $threshold = $product->low_stock_threshold ?? 10;
+            if ($previous <= $threshold && $new > $threshold) {
+                $this->notificationService->clearLowStockAlertsForProduct($product->id);
+            }
+        }
+    }
+
+    private function currentUserId(): int
+    {
+        return (int) (Auth::id() ?? 0);
     }
 }

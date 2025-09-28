@@ -2,11 +2,13 @@ import React, { memo, useCallback, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { usePreferences } from '@/context/PreferencesContext';
 
 // Context and Hooks
 import { ProductDataProvider, useProductData } from './context/ProductDataContext';
 import useProductTransactionActions from './hooks/useProductTransactionActions';
 import { useProductPrint } from './hooks/useProductPrint';
+import { useProductsExport } from './hooks/useProductsExport';
 import { useCategoriesQuery } from '../../../GraphQL/Categories/Queries/Categories';
 import { useUpdateProductMutation } from '../../../GraphQL/Products/Mutations/UpdateProduct';
 import { useToast } from '../../../components/Toaster/ToastContext';
@@ -22,30 +24,28 @@ import ProductPrintDocument from './components/print/ProductPrintDocument';
 import SaleModal from '../Sales/components/SaleModal';
 import PurchaseModal from '../Purchases/components/PurchaseModal';
 import { ProductModal } from './Products';
+import AdjustmentFormModal from '@/pages/Inventory/Adjustments/AdjustmentFormModal';
+import AdjustmentConfirmationModal from '@/pages/Inventory/Adjustments/AdjustmentConfirmationModal';
+import { postInventoryAdjustment } from '@/api/Inventory';
 
 // Loading Component
-const LoadingSpinner = memo(() => (
-  <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
-    <motion.div
-      initial={{ opacity: 0, scale: 0.5 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5 }}
-      className="text-center"
-    >
-      <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-12">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-          className="inline-block"
-        >
-          <RefreshCw className="h-12 w-12 text-blue-500" />
-        </motion.div>
-        <h3 className="mt-4 text-xl font-semibold text-gray-900">Loading Product Details</h3>
-        <p className="mt-2 text-gray-600">Please wait while we fetch the latest data...</p>
+const LoadingSpinner = memo(() => {
+  const { currentTheme } = usePreferences();
+  const colorClass = currentTheme?.text || 'text-blue-500';
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="bg-white/80 rounded-3xl shadow-xl border border-white/20 p-12 inline-flex flex-col items-center">
+          <div className="inline-block">
+<RefreshCw className={`h-12 w-12 ${colorClass} animate-spin`} style={{ animationDuration: '1s' }} />
+          </div>
+          <h3 className="mt-4 text-xl font-semibold text-gray-900">Loading Product Details</h3>
+          <p className="mt-2 text-gray-600">Please wait while we fetch the latest data...</p>
+        </div>
       </div>
-    </motion.div>
-  </div>
-));
+    </div>
+  );
+});
 
 // Error Component
 const ErrorDisplay = memo(({ error, onRetry }) => (
@@ -56,7 +56,7 @@ const ErrorDisplay = memo(({ error, onRetry }) => (
       transition={{ duration: 0.5 }}
       className="text-center max-w-md"
     >
-      <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-8">
+      <div className="bg-white/80 rounded-3xl shadow-xl border border-white/20 p-8">
         <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
         <h3 className="text-xl font-semibold text-gray-900 mb-2">Unable to Load Product</h3>
         <p className="text-gray-600 mb-6">
@@ -239,6 +239,46 @@ const ProductDetailsContent = memo(() => {
 
   const { printRef, handlePrint } = useProductPrint();
 
+  // Inventory adjustment modals state
+  const [adjFormOpen, setAdjFormOpen] = useState(false);
+  const [adjConfirmOpen, setAdjConfirmOpen] = useState(false);
+  const [pendingAdjustment, setPendingAdjustment] = useState(null);
+  const [savingAdjustment, setSavingAdjustment] = useState(false);
+
+  const openCreateAdjustment = useCallback(() => {
+    setAdjFormOpen(true);
+  }, []);
+
+  const onProceedAdjustment = useCallback((data) => {
+    setPendingAdjustment(data);
+    setAdjFormOpen(false);
+    setAdjConfirmOpen(true);
+  }, []);
+
+  const onConfirmAdjustment = useCallback(async () => {
+    try {
+      setSavingAdjustment(true);
+      await postInventoryAdjustment({
+        product_id: Number(pendingAdjustment.product_id),
+        new_quantity: Number(pendingAdjustment.new_quantity),
+        reason: pendingAdjustment.reason,
+        notes: pendingAdjustment.notes || undefined,
+      });
+      setAdjConfirmOpen(false);
+      setPendingAdjustment(null);
+      toast.success('Inventory adjusted successfully');
+      await refreshData();
+    } catch (e) {
+      toast.error(e?.response?.data?.message || e.message || 'Failed to save adjustment');
+    } finally {
+      setSavingAdjustment(false);
+    }
+  }, [pendingAdjustment, refreshData, toast]);
+
+  // Multi-sheet Excel export hook
+  const { exportProductsData, isExporting } = useProductsExport();
+  const memoizedExport = useCallback(() => exportProductsData(), [exportProductsData]);
+
   const handleDownload = useCallback(async () => {
     if (!product) return;
     
@@ -304,6 +344,8 @@ const ProductDetailsContent = memo(() => {
           onEdit={handleEdit}
           onPrint={handlePrint}
           onDownload={handleDownload}
+          onExport={memoizedExport}
+          isExporting={isExporting}
         />
 
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
@@ -324,6 +366,7 @@ const ProductDetailsContent = memo(() => {
           <ProductTabs 
             onAddNewSale={openCreateSale}
             onAddNewPurchase={openCreatePurchase}
+            onAddNewMovement={openCreateAdjustment}
             onEditSale={openEditSale}
             onDeleteSale={deleteSaleByItem}
             onEditPurchase={openEditPurchase}
@@ -333,6 +376,10 @@ const ProductDetailsContent = memo(() => {
       </div>
 
       {/* Modals */}
+      {/* Adjustment Modals */}
+      <AdjustmentFormModal open={adjFormOpen} onOpenChange={setAdjFormOpen} onProceed={onProceedAdjustment} initialProductId={product?.id} initialProductName={product?.name} />
+      <AdjustmentConfirmationModal open={adjConfirmOpen} onOpenChange={setAdjConfirmOpen} data={pendingAdjustment} onConfirm={onConfirmAdjustment} loading={savingAdjustment} />
+
       <SaleModal
         open={saleModalOpen}
         onClose={closeSaleModal}
@@ -392,7 +439,7 @@ const ProductDetails = memo(() => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-8">
+          <div className="bg-white/80 rounded-3xl shadow-xl border border-white/20 p-8">
             <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Invalid Product ID</h3>
             <p className="text-gray-600 mb-6">No product ID was provided in the URL.</p>

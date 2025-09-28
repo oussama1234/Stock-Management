@@ -6,6 +6,7 @@
 // - Responsive design with smooth transitions
 
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from 'react-router-dom';
 import {
   LineChart,
   Package2,
@@ -272,9 +273,11 @@ export default function DashboardHome() {
               y: -4, 
               boxShadow: "0 20px 40px -12px rgba(0, 0, 0, 0.25)" 
             }}
-            className={`group bg-gradient-to-br ${kpi.gradient} rounded-2xl shadow-lg p-5 border border-white/20 backdrop-blur-sm transform transition-all duration-300 hover:scale-102 cursor-pointer`}
-            onClick={() => { if (kpi.to) window.location.href = kpi.to; }}
+            className={`group bg-gradient-to-br ${kpi.gradient} rounded-2xl shadow-lg p-5 border border-white/20 backdrop-blur-sm transform transition-all duration-300 hover:scale-102 ${kpi.to ? 'cursor-pointer relative' : ''}`}
           >
+            {kpi.to ? (
+              <Link to={kpi.to} aria-label={kpi.label} className="absolute inset-0 z-10" />
+            ) : null}
             <div className="flex items-center justify-between mb-3">
               <div className={`bg-gradient-to-r ${kpi.iconBg} p-2.5 rounded-xl backdrop-blur-sm shadow-md group-hover:scale-110 transition-transform duration-300`}>
                 <kpi.Icon className={`h-5 w-5 ${kpi.iconColor}`} />

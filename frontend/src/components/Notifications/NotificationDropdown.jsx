@@ -86,27 +86,33 @@ const NotificationItem = memo(({
     let cancelled = false;
     async function resolveProduct() {
       if (productMeta.id) return;
-      if (notification.type === NotificationTypes.SALE_CREATED && notification?.data?.sale_id) {
+      if (notification.type === NotificationTypes.SALE_CREATED && (notification?.data?.sale_id || notification?.data?.id)) {
         try {
-          const res = await getSaleById(notification.data.sale_id);
+          const saleId = notification?.data?.sale_id || notification?.data?.id;
+          const res = await getSaleById(saleId);
           const sale = res?.data || res;
-          const firstItem = sale?.items?.[0];
-          const prod = firstItem?.product;
-          if (!cancelled && prod?.id) setProductMeta({ id: prod.id, name: prod.name || 'Product' });
+          const items = sale?.items || sale?.saleItems || sale?.sale_items || [];
+          const firstItem = items[0];
+          const prodId = firstItem?.product?.id || firstItem?.product_id;
+          const prodName = firstItem?.product?.name || notification?.data?.product_name || '';
+          if (!cancelled && prodId) setProductMeta({ id: prodId, name: prodName || 'Product' });
         } catch (_) {}
-      } else if (notification.type === NotificationTypes.PURCHASE_CREATED && notification?.data?.purchase_id) {
+      } else if (notification.type === NotificationTypes.PURCHASE_CREATED && (notification?.data?.purchase_id || notification?.data?.id)) {
         try {
-          const res = await getPurchaseById(notification.data.purchase_id);
+          const purchaseId = notification?.data?.purchase_id || notification?.data?.id;
+          const res = await getPurchaseById(purchaseId);
           const purchase = res?.data || res;
-          const firstItem = purchase?.purchaseItems?.[0] || purchase?.items?.[0];
-          const prod = firstItem?.product;
-          if (!cancelled && prod?.id) setProductMeta({ id: prod.id, name: prod.name || 'Product' });
+          const items = purchase?.purchaseItems || purchase?.items || [];
+          const firstItem = items[0];
+          const prodId = firstItem?.product?.id || firstItem?.product_id;
+          const prodName = firstItem?.product?.name || notification?.data?.product_name || '';
+          if (!cancelled && prodId) setProductMeta({ id: prodId, name: prodName || 'Product' });
         } catch (_) {}
       }
     }
     resolveProduct();
     return () => { cancelled = true; };
-  }, [notification?.data?.sale_id, notification?.data?.purchase_id, notification.type]);
+  }, [productMeta.id, notification?.data?.sale_id, notification?.data?.purchase_id, notification?.data?.id, notification?.data?.product_name, notification.type]);
 
   const handleGoToProduct = useCallback((e) => {
     e.stopPropagation();

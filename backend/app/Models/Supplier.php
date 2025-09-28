@@ -27,4 +27,16 @@ class Supplier extends Model
     }
 
     
+    /**
+     * Scope: text search by supplier fields
+     */
+    public function scopeSearch($query, string $term)
+    {
+        $t = '%' . str_replace('%', '\\%', $term) . '%';
+        return $query->where(function ($q) use ($t) {
+            $q->where('name', 'like', $t)
+              ->orWhere('email', 'like', $t)
+              ->orWhere('phone', 'like', $t);
+        });
+    }
 }

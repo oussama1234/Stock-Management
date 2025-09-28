@@ -46,7 +46,21 @@ class StockMovement extends GraphQLType
                 'type' => Type::int(),
             ],
             'movement_date' => [
+'type' => Type::string(),
+            ],
+            'reason' => [
                 'type' => Type::string(),
+            ],
+            'user_id' => [
+                'type' => Type::int(),
+            ],
+            'user_name' => [
+                'type' => Type::string(),
+                'resolve' => function ($stockMovement) {
+                    $u = \App\Models\User::find($stockMovement->user_id);
+                    if (!$u) return null;
+                    return $u->name ?? $u->full_name ?? $u->email ?? ('User #' . $u->id);
+                },
             ],
             'created_at' => [
                 'type' => Type::string(),

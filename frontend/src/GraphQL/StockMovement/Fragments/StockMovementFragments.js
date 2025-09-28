@@ -1,8 +1,7 @@
 // define the stock movement fragment
 import { gql } from "@apollo/client";
 import { PRODUCT_FRAGMENT } from "../../Products/Fragments/ProductFragments";
-import { PURCHASE_ITEM_FRAGMENT } from "../../PurchaseItem/Fragments/PurchaseItemFragments";
-import { SALE_ITEM_FRAGMENT } from "../../SaleItem/Fragments/SaleItemFragments";
+
 export const STOCK_MOVEMENT_FRAGMENT = gql`
   fragment StockMovementFragment on StockMovement {
     id
@@ -11,6 +10,9 @@ export const STOCK_MOVEMENT_FRAGMENT = gql`
     previous_stock
     new_stock
     movement_date
+    reason
+    user_id
+    user_name
     source_type
     source_id
     created_at
@@ -18,17 +20,7 @@ export const STOCK_MOVEMENT_FRAGMENT = gql`
     product {
       ...ProductFragment
     }
-    source {
-      __typename
-      ... on PurchaseItem {
-        ...PurchaseItemFragment
-      }
-      ... on SaleItem {
-        ...SaleItemFragment
-      }
-    }
+    # Removed source union selection to avoid server runtime error
   }
-  ${PURCHASE_ITEM_FRAGMENT}
-  ${SALE_ITEM_FRAGMENT}
   ${PRODUCT_FRAGMENT}
 `;

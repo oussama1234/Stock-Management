@@ -7,6 +7,7 @@ import client from "./api/Apollo/ApolloClient.js";
 import App from "./App.jsx";
 import { ConfirmProvider } from "./components/ConfirmContext/ConfirmContext.jsx";
 import { ToastProvider } from "./components/Toaster/ToastContext.jsx";
+import { MotionConfig } from "framer-motion";
 import "./index.css";
 
 createRoot(document.getElementById("root")).render(
@@ -15,7 +16,9 @@ createRoot(document.getElementById("root")).render(
       <ConfirmProvider>
         <Provider store={store}>
           <ApolloProvider client={client}>
-            <App />
+            <MotionConfig reducedMotion="always" transition={{ duration: 0 }}>
+              <App />
+            </MotionConfig>
           </ApolloProvider>
         </Provider>
       </ConfirmProvider>

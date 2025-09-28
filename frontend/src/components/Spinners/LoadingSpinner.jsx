@@ -15,17 +15,24 @@ import {
   DollarSign,
   ArrowRight
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { usePreferences } from "@/context/PreferencesContext";
 
 const LoadingSpinner = ({ 
   message = "Loading your stock data...",
   theme = "default", // default, sales, inventory, analytics, users  
-  variant = "orbital", // orbital, modern, minimal, particles
-  showProgress = true,
-  showSteps = true,
+  variant = "minimal", // minimal by default for performance; orbital/modern available explicitly
+  showProgress = false,
+  showSteps = false,
   appName = "Stock Manager",
   version = "2.0"
 }) => {
+  const { currentTheme } = usePreferences();
+  const spinnerBorderTop = useMemo(() => {
+    const accent = currentTheme?.accent || 'bg-blue-500';
+    return accent.replace(/^bg-/, 'border-t-');
+  }, [currentTheme?.accent]);
+  const spinnerBorderBase = useMemo(() => currentTheme?.border || 'border-blue-200', [currentTheme?.border]);
   const [currentStep, setCurrentStep] = useState(0);
   const [progress, setProgress] = useState(0);
   const [loadingText, setLoadingText] = useState(message);
@@ -106,66 +113,70 @@ const LoadingSpinner = ({
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center z-50 overflow-hidden">
-      {/* Animated background particles */}
-      <div className="absolute inset-0">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full"
-            style={{
-              background: `radial-gradient(circle, hsl(${200 + Math.random() * 60}, 70%, 60%) 0%, transparent 70%)`,
-              width: Math.random() * 300 + 100,
-              height: Math.random() * 300 + 100,
-            }}
-            initial={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-              scale: 0,
-              opacity: 0
-            }}
-            animate={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-              scale: [0, 0.5, 0],
-              opacity: [0, 0.1, 0],
-            }}
-            transition={{
-              duration: Math.random() * 10 + 8,
-              repeat: Infinity,
-              delay: Math.random() * 5,
-              ease: "easeInOut"
-            }}
-          />
-        ))}
-      </div>
+      {variant !== 'minimal' && (
+        <>
+          {/* Animated background particles */}
+          <div className="absolute inset-0">
+            {[...Array(20)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute rounded-full"
+                style={{
+                  background: `radial-gradient(circle, hsl(${200 + Math.random() * 60}, 70%, 60%) 0%, transparent 70%)`,
+                  width: Math.random() * 300 + 100,
+                  height: Math.random() * 300 + 100,
+                }}
+                initial={{
+                  x: Math.random() * window.innerWidth,
+                  y: Math.random() * window.innerHeight,
+                  scale: 0,
+                  opacity: 0
+                }}
+                animate={{
+                  x: Math.random() * window.innerWidth,
+                  y: Math.random() * window.innerHeight,
+                  scale: [0, 0.5, 0],
+                  opacity: [0, 0.1, 0],
+                }}
+                transition={{
+                  duration: Math.random() * 10 + 8,
+                  repeat: Infinity,
+                  delay: Math.random() * 5,
+                  ease: "easeInOut"
+                }}
+              />
+            ))}
+          </div>
 
-      {/* Floating geometric shapes */}
-      <div className="absolute inset-0">
-        {[...Array(8)].map((_, i) => (
-          <motion.div
-            key={i}
-            className={`absolute ${i % 2 === 0 ? 'bg-blue-400/10' : 'bg-purple-400/10'} backdrop-blur-sm`}
-            style={{
-              width: Math.random() * 60 + 20,
-              height: Math.random() * 60 + 20,
-              borderRadius: i % 3 === 0 ? '50%' : '20%',
-              left: `${Math.random() * 90}%`,
-              top: `${Math.random() * 90}%`,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              rotate: [0, 180, 360],
-              scale: [1, 1.2, 1]
-            }}
-            transition={{
-              duration: Math.random() * 8 + 6,
-              repeat: Infinity,
-              delay: Math.random() * 3,
-              ease: "easeInOut"
-            }}
-          />
-        ))}
-      </div>
+          {/* Floating geometric shapes */}
+          <div className="absolute inset-0">
+            {[...Array(8)].map((_, i) => (
+              <motion.div
+                key={i}
+                className={`absolute ${i % 2 === 0 ? 'bg-blue-400/10' : 'bg-purple-400/10'}`}
+                style={{
+                  width: Math.random() * 60 + 20,
+                  height: Math.random() * 60 + 20,
+                  borderRadius: i % 3 === 0 ? '50%' : '20%',
+                  left: `${Math.random() * 90}%`,
+                  top: `${Math.random() * 90}%`,
+                }}
+                animate={{
+                  y: [0, -30, 0],
+                  rotate: [0, 180, 360],
+                  scale: [1, 1.2, 1]
+                }}
+                transition={{
+                  duration: Math.random() * 8 + 6,
+                  repeat: Infinity,
+                  delay: Math.random() * 3,
+                  ease: "easeInOut"
+                }}
+              />
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Main content container */}
       <div className="relative flex flex-col items-center justify-center z-10">
@@ -173,7 +184,7 @@ const LoadingSpinner = ({
           initial={{ opacity: 0, scale: 0.8, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 p-12 flex flex-col items-center shadow-2xl"
+          className={`${variant === 'minimal' ? 'bg-white/20' : 'bg-white/10 backdrop-blur-xl'} rounded-3xl border border-white/20 p-12 flex flex-col items-center shadow-2xl`}
         >
           {/* App branding */}
           <motion.div
@@ -302,12 +313,8 @@ const LoadingSpinner = ({
               </div>
             )}
 
-            {variant === 'minimal' && (
-              <motion.div
-                className="w-24 h-24 rounded-full border-4 border-blue-300/40 border-t-blue-500"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-              />
+{variant === 'minimal' && (
+              <div className={`w-24 h-24 rounded-full border-4 border-gray-300/40 ${spinnerBorderBase} ${currentTheme?.text || ''} animate-spin`} style={{ animationDuration: '1s', borderTopColor: 'currentColor' }} />
             )}
           </div>
 
@@ -406,17 +413,14 @@ export const MiniSpinner = ({ size = "medium" }) => {
     medium: "w-8 h-8",
     large: "w-12 h-12",
   };
-
-  return (
-    <motion.div
-      animate={{ rotate: 360 }}
-      transition={{
-        duration: 1,
-        repeat: Infinity,
-        ease: "linear",
-      }}
-      className={`${sizeClasses[size]} rounded-full border-2 border-blue-200 border-t-blue-500`}
-    />
+  const { currentTheme } = usePreferences();
+  const spinnerBorderTop = useMemo(() => {
+    const accent = currentTheme?.accent || 'bg-blue-500';
+    return accent.replace(/^bg-/, 'border-t-');
+  }, [currentTheme?.accent]);
+  const spinnerBorderBase = useMemo(() => currentTheme?.border || 'border-blue-200', [currentTheme?.border]);
+return (
+    <div className={`${sizeClasses[size]} rounded-full border-2 ${spinnerBorderBase} ${currentTheme?.text || ''} animate-spin`} style={{ animationDuration: '1s', borderTopColor: 'currentColor' }} />
   );
 };
 

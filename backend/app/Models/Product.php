@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use App\Models\Notification;
 
 class Product extends Model
@@ -22,7 +23,8 @@ class Product extends Model
         'description',
         'image',
         'price',
-        'stock',
+'stock',
+        'reserved_stock',
         'low_stock_threshold',
         'category_id',
     ];
@@ -173,5 +175,40 @@ class Product extends Model
         }
 
         return (int) floor($inStockSeconds / 86400);
+    }
+
+    /**
+     * Accessor: available stock = stock - reserved_stock
+     */
+    public function getAvailableStockAttribute()
+    {
+        $reserved = (int) ($this->reserved_stock ?? 0);
+        return max(0, (int) $this->stock - $reserved);
+    }
+
+    /**
+     * Scope: stock status
+     */
+    public function scopeStockStatus($query, string $status)
+    {
+        $thresholdExpr = DB::raw('COALESCE(low_stock_threshold, 10)');
+        return match ($status) {
+            'out' => $query->where('stock', '=', 0),
+            'low' => $query->whereColumn('stock', '<=', 'low_stock_threshold'),
+            'in' => $query->where('stock', '>', 0)->whereColumn('stock', '>', 'low_stock_threshold'),
+            default => $query,
+        };
+    }
+
+    /**
+     * Scope: basic text search by name/description
+     */
+    public function scopeSearch($query, string $term)
+    {
+        $t = '%' . str_replace('%', '\\%', $term) . '%';
+        return $query->where(function ($q) use ($t) {
+            $q->where('name', 'like', $t)
+              ->orWhere('description', 'like', $t);
+        });
     }
 }

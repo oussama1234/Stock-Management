@@ -1,11 +1,11 @@
 import React, { memo } from 'react';
 import { motion } from 'framer-motion';
-import { Package, Plus, RefreshCw, Download, BarChart3 } from 'lucide-react';
+import { Package, Plus, RefreshCw, Download, BarChart3, Loader2 } from 'lucide-react';
 import { useProductsData } from '../contexts/ProductsContext';
 import { useFormatters } from '../hooks/useFormatters';
 import { useDashboardMetrics } from '../../../Dashboard/useDashboardMetrics';
 
-const ProductsHeader = memo(({ onAddProduct, onRefresh, onExport, isRefreshing }) => {
+const ProductsHeader = memo(({ onAddProduct, onRefresh, onExport, isRefreshing, isExporting }) => {
   const { statistics, metadata } = useProductsData();
   const { formatCurrency, formatNumber } = useFormatters();
   // Global metrics across entire database (cached, lightweight)
@@ -169,14 +169,15 @@ const ProductsHeader = memo(({ onAddProduct, onRefresh, onExport, isRefreshing }
             </motion.button>
             
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: isExporting ? 1 : 1.05 }}
+              whileTap={{ scale: isExporting ? 1 : 0.95 }}
               onClick={onExport}
-              className="flex items-center space-x-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all duration-200"
+              disabled={!!isExporting}
+              className={`flex items-center space-x-2 px-4 py-3 rounded-xl transition-all duration-200 ${isExporting ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
               title="Export products"
             >
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Export</span>
+              {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              <span className="hidden sm:inline">{isExporting ? 'Exporting…' : 'Export'}</span>
             </motion.button>
           </div>
 

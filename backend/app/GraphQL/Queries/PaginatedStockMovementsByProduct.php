@@ -46,6 +46,45 @@ class PaginatedStockMovementsByProduct extends Query
                 'description' => 'Number of items per page',
                 'defaultValue' => 10,
             ],
+            // Filtering
+            'type' => [
+                'name' => 'type',
+                'type' => Type::string(),
+                'description' => 'Filter by movement type (in, out, purchase, sale, adjustment_in, adjustment_out)',
+            ],
+            'dateFrom' => [
+                'name' => 'dateFrom',
+                'type' => Type::string(),
+                'description' => 'Start date (inclusive) for movement_date',
+            ],
+            'dateTo' => [
+                'name' => 'dateTo',
+                'type' => Type::string(),
+                'description' => 'End date (inclusive) for movement_date',
+            ],
+            'userId' => [
+                'name' => 'userId',
+                'type' => Type::int(),
+                'description' => 'Filter by user id',
+            ],
+            'reason' => [
+                'name' => 'reason',
+                'type' => Type::string(),
+                'description' => 'Search in reason field',
+            ],
+            // Sorting
+            'sortBy' => [
+                'name' => 'sortBy',
+                'type' => Type::string(),
+                'description' => 'Column to sort by: movement_date | created_at | quantity',
+                'defaultValue' => 'movement_date',
+            ],
+            'sortOrder' => [
+                'name' => 'sortOrder',
+                'type' => Type::string(),
+                'description' => 'Sort direction: asc | desc',
+                'defaultValue' => 'desc',
+            ],
         ];
     }
 
@@ -69,21 +108,43 @@ class PaginatedStockMovementsByProduct extends Query
         ]);
         $ttl = CacheHelper::ttlSeconds('GRAPHQL_STOCK_MOVEMENTS_TTL', 10); // Reduced from 120 to 10 seconds for real-time updates
 
-        return Cache::remember($key, now()->addSeconds($ttl), function () use ($productId, $page, $perPage, $with) {
-            // Get total count first
-            $totalQuery = StockMovement::where('product_id', $productId);
-            $total = $totalQuery->count();
-            
+        return Cache::remember($key, now()->addSeconds($ttl), function () use ($productId, $page, $perPage, $with, $args) {
+            $base = StockMovement::query()->where('product_id', $productId);
+
+            // Filters
+            if (!empty($args['type'])) {
+                $base->where('type', $args['type']);
+            }
+            if (!empty($args['dateFrom'])) {
+                $base->whereDate('movement_date', '>=', $args['dateFrom']);
+            }
+            if (!empty($args['dateTo'])) {
+                $base->whereDate('movement_date', '<=', $args['dateTo']);
+            }
+            if (!empty($args['userId'])) {
+                $base->where('user_id', (int) $args['userId']);
+            }
+            if (!empty($args['reason'])) {
+                $reason = $args['reason'];
+                $base->where('reason', 'like', "%{$reason}%");
+            }
+
+            // Count after filters
+            $total = (clone $base)->count();
             $lastPage = max(1, (int) ceil($total / $perPage));
             $currentPage = min($page, $lastPage);
             $offset = ($currentPage - 1) * $perPage;
 
-            // Get the actual data
-            $items = StockMovement::where('product_id', $productId)
-                ->with($with)
+            // Sorting
+            $sortBy = $args['sortBy'] ?? 'movement_date';
+            $sortOrder = strtolower($args['sortOrder'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
+            $allowed = ['movement_date', 'created_at', 'quantity'];
+            if (!in_array($sortBy, $allowed, true)) $sortBy = 'movement_date';
+
+            $items = (clone $base)->with($with)
+                ->orderBy($sortBy, $sortOrder)
                 ->skip($offset)
                 ->take($perPage)
-                ->orderBy('movement_date', 'desc')
                 ->get();
 
             return [

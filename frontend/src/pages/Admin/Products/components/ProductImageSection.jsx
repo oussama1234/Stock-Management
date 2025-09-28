@@ -11,7 +11,10 @@ const ProductImageSection = memo(({ product }) => {
   
   const { getImageUrl } = useImageUrl();
   
-  const images = product?.images || [];
+  // Normalize images: prefer product.images array; fallback to single product.image
+  const images = Array.isArray(product?.images) && product.images.length > 0
+    ? product.images
+    : (product?.image ? [product.image] : []);
   const hasImages = images.length > 0;
   const currentImage = hasImages ? images[selectedImageIndex] : null;
   const currentImageUrl = currentImage ? getImageUrl(currentImage) : null;

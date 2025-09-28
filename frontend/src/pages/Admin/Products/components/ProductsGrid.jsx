@@ -12,9 +12,9 @@ const EmptyState = memo(({ searchTerm, onAddProduct, onClearSearch }) => (
     transition={{ duration: 0.6 }}
     className="col-span-full"
   >
-    <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-lg border border-white/20 p-12 text-center">
+<div className="bg-white/80 rounded-3xl shadow-lg border border-white/20 p-12 text-center">
       <div className="relative mb-8">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 rounded-full blur-3xl" />
+<div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-full" />
         <div className="relative inline-flex items-center justify-center p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-full">
           <Package className="h-16 w-16 text-gray-400" />
         </div>
@@ -77,7 +77,7 @@ const BulkActionsBar = memo(({
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-gray-200 p-4"
+className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 bg-white/95 rounded-2xl shadow-xl border border-gray-200 p-4"
     >
       <div className="flex items-center space-x-4">
         <span className="text-sm font-medium text-gray-700">

@@ -74,4 +74,14 @@ class PurchaseItem extends Model
     {
         return $query->where('purchase_id', $purchaseId);
     }
+
+    /**
+     * Scope: filter by parent Purchase's purchase_date in [from, to]
+     */
+    public function scopeWithinPurchaseDateRange($query, $from, $to)
+    {
+        return $query->whereHas('purchase', function ($q) use ($from, $to) {
+            $q->whereBetween('purchase_date', [$from, $to]);
+        });
+    }
 }
