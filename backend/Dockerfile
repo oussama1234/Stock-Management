@@ -25,8 +25,9 @@ RUN composer install --no-interaction --no-dev --optimize-autoloader
 # Set Laravel storage permissions
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Expose the port Render will use
-EXPOSE 10000
+# Expose the dynamic port Render provides
+EXPOSE ${PORT}
 
-# Start Laravel dev server (for demo purposes)
-CMD php artisan serve --host=0.0.0.0 --port=${PORT}
+# Start Laravel dev server on the Render-assigned port
+CMD php artisan serve --host=0.0.0.0 --port=${PORT} --quiet
+
