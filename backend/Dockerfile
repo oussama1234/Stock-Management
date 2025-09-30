@@ -1,4 +1,4 @@
-# Use official PHP image with Composer and extensions
+# Use PHP CLI image
 FROM php:8.2-cli
 
 # Install system dependencies
@@ -16,17 +16,17 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /app
 
-# Copy only the backend folder (where composer.json lives)
+# Copy Laravel backend files only
 COPY backend/ ./
 
 # Install PHP dependencies
 RUN composer install --no-interaction --no-dev --optimize-autoloader
 
-# Laravel permissions
+# Set Laravel storage permissions
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Expose port (Render uses $PORT)
+# Expose the port Render will use
 EXPOSE 10000
 
-# Start Laravel built-in server on Render's PORT
+# Start Laravel dev server (for demo purposes)
 CMD php artisan serve --host=0.0.0.0 --port=${PORT}
