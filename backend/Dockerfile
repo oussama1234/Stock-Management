@@ -1,30 +1,32 @@
-FROM php:8.2-fpm
-
-# Set working directory
-WORKDIR /var/www/html
+# Use official PHP image with Composer and extensions
+FROM php:8.2-cli
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    libzip-dev \
-    zip \
     unzip \
     git \
     curl \
-    netcat-traditional \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+    libpq-dev \
+    libzip-dev \
+    && docker-php-ext-install pdo pdo_pgsql zip
 
 # Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Set permissions (create storage structure)
-RUN mkdir -p storage/framework/{sessions,views,cache} \
-    && chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage
+# Set working directory
+WORKDIR /app
 
-# Expose PHP-FPM port
-EXPOSE 9000
+# Copy app files
+COPY . .
 
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=${PORT}"]
+# Install PHP dependencies
+RUN composer install --no-interaction --no-dev --optimize-autoloader
+
+# Laravel permissions
+RUN chown -R www-data:www-data storage bootstrap/cache
+
+# Expose port (Render uses $PORT)
+EXPOSE 10000
+
+# Start Laravel built-in server on Render's PORT
+CMD php artisan serve --host=0.0.0.0 --port=${PORT}
