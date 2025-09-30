@@ -7,7 +7,10 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HealthController;
 
 // Health check endpoint (public - no authentication required)
-Route::get('/health', [HealthController::class, 'check']);
+//:Route::get('/health', [HealthController::class, 'check']);
+Route::get('/health', function() {
+    return response()->json(['status' => 'OK']);
+});
 
 // list of all the protected routes for authenticating users api
 Route::middleware(['auth:sanctum'])->group(function () {
