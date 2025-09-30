@@ -11,7 +11,7 @@ class UpdateCategoryRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true; // Authorization handled elsewhere
     }
 
     /**
@@ -21,8 +21,10 @@ class UpdateCategoryRequest extends FormRequest
      */
     public function rules(): array
     {
+        $id = (int) ($this->route('id') ?? $this->route('category')?->id ?? 0);
         return [
-            //
+            'name' => ['sometimes','required','string','max:150','unique:categories,name,'.$id],
+            'description' => ['nullable','string','max:2000'],
         ];
     }
 }

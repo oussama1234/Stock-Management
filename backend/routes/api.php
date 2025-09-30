@@ -4,9 +4,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HealthController;
 
-
-
+// Health check endpoint (public - no authentication required)
+Route::get('/health', [HealthController::class, 'check']);
 
 // list of all the protected routes for authenticating users api
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -122,6 +123,21 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/history', [\App\Http\Controllers\InventoryController::class, 'history']);
         Route::get('/history/export', [\App\Http\Controllers\InventoryController::class, 'export']);
         Route::get('/dashboard/kpis', [\App\Http\Controllers\InventoryController::class, 'kpis']);
+    });
+
+    // Categories CRUD + Analytics
+    Route::prefix('categories')->group(function () {
+        Route::get('/', [\App\Http\Controllers\CategoryController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\CategoryController::class, 'store']);
+        Route::get('/{id}', [\App\Http\Controllers\CategoryController::class, 'show']);
+        Route::put('/{id}', [\App\Http\Controllers\CategoryController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\CategoryController::class, 'destroy']);
+
+        Route::get('/analytics/overview', [\App\Http\Controllers\CategoryController::class, 'analytics']);
+        Route::get('/analytics/top-selling', [\App\Http\Controllers\CategoryController::class, 'topSelling']);
+        Route::get('/analytics/top-purchased', [\App\Http\Controllers\CategoryController::class, 'topPurchased']);
+        Route::get('/analytics/profit-distribution', [\App\Http\Controllers\CategoryController::class, 'profitDistribution']);
+        Route::get('/analytics/metrics', [\App\Http\Controllers\CategoryController::class, 'metrics']);
     });
 
     // Universal Search endpoint

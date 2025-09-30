@@ -24,8 +24,8 @@ import ProductPrintDocument from './components/print/ProductPrintDocument';
 import SaleModal from '../Sales/components/SaleModal';
 import PurchaseModal from '../Purchases/components/PurchaseModal';
 import { ProductModal } from './Products';
-import AdjustmentFormModal from '@/pages/Inventory/Adjustments/AdjustmentFormModal';
-import AdjustmentConfirmationModal from '@/pages/Inventory/Adjustments/AdjustmentConfirmationModal';
+import AdjustmentFormModal from '@/pages/Inventory/components/modals/AdjustmentFormModal';
+import AdjustmentConfirmationModal from '@/pages/Inventory/components/modals/AdjustmentConfirmationModal';
 import { postInventoryAdjustment } from '@/api/Inventory';
 
 // Loading Component
@@ -334,8 +334,7 @@ const ProductDetailsContent = memo(() => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8 no-print">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6 no-print">
         {/* Product Header */}
         <ProductHeader
           product={product}
@@ -373,7 +372,6 @@ const ProductDetailsContent = memo(() => {
             onDeletePurchase={deletePurchaseByItem}
           />
         </div>
-      </div>
 
       {/* Modals */}
       {/* Adjustment Modals */}

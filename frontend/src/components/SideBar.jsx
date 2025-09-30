@@ -10,6 +10,7 @@ import {
   Home,
   Package,
   Phone,
+  Search,
   Settings,
   ShoppingCart,
   Sparkles,
@@ -18,6 +19,7 @@ import {
   X,
   Zap,
   AlertTriangle,
+  Layers,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -35,6 +37,8 @@ import {
   InventoryListRoute,
   InventoryAdjustmentsRoute,
   InventoryLowStockRoute,
+  CategoriesRoute,
+  CategoriesAnalyticsRoute,
 } from "../router/Index";
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
@@ -75,6 +79,17 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       bgColor: "bg-green-50 hover:bg-green-100",
       textColor: "text-green-600",
       description: "User management",
+    },
+    {
+      id: 3.5,
+      name: "Categories",
+      icon: Layers,
+      link: CategoriesRoute,
+      hasSubmenu: false,
+      color: "from-fuchsia-500 to-pink-500",
+      bgColor: "bg-fuchsia-50 hover:bg-fuchsia-100",
+      textColor: "text-fuchsia-600",
+      description: "Manage categories",
     },
     {
       id: 4,
@@ -122,7 +137,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           icon: ShoppingCart,
           link: PurchasesAnalyticsRoute,
           description: "Purchase insights",
-        },
+        }
       ],
     },
     {
@@ -146,23 +161,28 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       id: 8,
       name: "Reports",
       icon: FileText,
-      link: ReportsRoute,
-      hasSubmenu: false,
+      link: "#",
+      hasSubmenu: true,
       color: "from-yellow-500 to-orange-500",
       bgColor: "bg-yellow-50 hover:bg-yellow-100",
       textColor: "text-yellow-600",
       description: "Custom reports",
-    },
-    {
-      id: 9,
-      name: "Settings",
-      icon: Settings,
-      link: "#",
-      hasSubmenu: false,
-      color: "from-gray-500 to-slate-500",
-      bgColor: "bg-gray-50 hover:bg-gray-100",
-      textColor: "text-gray-600",
-      description: "App configuration",
+      submenuItems: [
+        {
+          id: 'reports-products',
+          name: 'Products Reports',
+          icon: Package,
+          link: ReportsRoute,
+          description: 'Product KPIs & reports',
+        },
+        {
+          id: 'reports-categories',
+          name: 'Categories Reports',
+          icon: Layers,
+          link: CategoriesAnalyticsRoute,
+          description: 'Category KPIs & reports',
+        },
+      ],
     },
   ];
 

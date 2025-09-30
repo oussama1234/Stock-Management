@@ -1,0 +1,50 @@
+services:
+  - type: web
+    name: stock-management-backend
+    runtime: php
+    env: php
+    buildCommand: |
+      cd backend &&
+      composer install --optimize-autoloader --no-dev &&
+      php artisan config:cache &&
+      php artisan route:cache &&
+      php artisan view:cache
+    startCommand: |
+      cd backend &&
+      php artisan migrate --force &&
+      php artisan serve --host=0.0.0.0 --port=$PORT
+    plan: free
+    environmentGroup: stock-management-env
+    autoDeploy: false
+    rootDir: .
+    healthCheckPath: /api/health
+    
+databases:
+  - name: stock-management-db
+    databaseName: stock_db
+    user: laravel
+    plan: free
+
+envVarGroups:
+  - name: stock-management-env
+    envVars:
+      - key: APP_NAME
+        value: "Stock Management"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: info
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: CORS_SUPPORTS_CREDENTIALS
+        value: true

@@ -36,3 +36,44 @@ export const getInventoryKpis = async (params = {}) => {
   const res = await AxiosClient.get("/inventory/dashboard/kpis", { params });
   return res.data;
 };
+
+// Low Stock Alerts specific endpoints
+export const getLowStockAlerts = async (params = {}) => {
+  const cleanParams = {};
+  if (typeof params.page === 'number') cleanParams.page = params.page;
+  if (typeof params.per_page === 'number') cleanParams.per_page = params.per_page;
+  if (typeof params.search === 'string' && params.search.trim() !== '') cleanParams.search = params.search.trim();
+  if (typeof params.category_id === 'number') cleanParams.category_id = params.category_id;
+  if (typeof params.supplier_id === 'number') cleanParams.supplier_id = params.supplier_id;
+  if (typeof params.threshold === 'number') cleanParams.threshold = params.threshold;
+  if (typeof params.severity === 'string') cleanParams.severity = params.severity;
+  if (typeof params.sort_by === 'string') cleanParams.sort_by = params.sort_by;
+  if (typeof params.sort_order === 'string') cleanParams.sort_order = params.sort_order;
+  
+  const config = { params: { ...cleanParams, stock_status: 'low' } };
+  if (params.signal) config.signal = params.signal;
+  
+  const res = await AxiosClient.get("/inventory", config);
+  return res.data;
+};
+
+export const getLowStockAlertsKpis = async (params = {}) => {
+  const res = await AxiosClient.get("/inventory/alerts/kpis", { params });
+  return res.data;
+};
+
+export const exportLowStockAlerts = async (params = {}) => {
+  const cleanParams = {};
+  if (typeof params.search === 'string' && params.search.trim() !== '') cleanParams.search = params.search.trim();
+  if (typeof params.category_id === 'number') cleanParams.category_id = params.category_id;
+  if (typeof params.threshold === 'number') cleanParams.threshold = params.threshold;
+  if (typeof params.severity === 'string') cleanParams.severity = params.severity;
+  
+  const config = { 
+    params: { ...cleanParams, stock_status: 'low' },
+    responseType: 'blob'
+  };
+  
+  const res = await AxiosClient.get("/inventory/export", config);
+  return res.data;
+};

@@ -21,11 +21,11 @@ import { HomeRoute, MyProfileRoute, SupportRoute, DashboardRoute, SearchRoute, P
 import { useToast } from "./Toaster/ToastContext";
 import { useNotificationContext } from "@/context/NotificationContext";
 import NotificationDropdown from "./Notifications/NotificationDropdown";
-import SearchDropdown from "@/components/universalSearch/SearchDropdown";
+import NavbarSearchDropdown from "@/components/Search/NavbarSearchDropdown";
 import SearchOverlayModal from "@/components/Search/SearchOverlayModal";
 import { useUniversalSearch } from "@/hooks/useUniversalSearch";
-import SearchInput from "@/components/universalSearch/SearchInput";
-import { prefetchProduct, prefetchSale, prefetchPurchase } from "@/services/searchService";
+import NavbarSearchInput from "@/components/Search/NavbarSearchInput";
+import { prefetchProduct, prefetchSale, prefetchPurchase } from "@/api/SearchService";
 const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -106,15 +106,19 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
   const flatItems = useMemo(() => {
     if (!results) return [];
     const order = [
-      'products','sales','purchases','movements','customers','suppliers','reasons'
+      'products','sales','purchases','movements','customers','suppliers','users','reasons'
     ];
     const out = [];
     for (const key of order) {
       const arr = results?.[key]?.data || [];
-      arr.forEach((item, idx) => {
-        const id = item?.id ?? idx;
-        out.push({ key: `${key}:${id}`, entity: key, item, index: idx });
-      });
+      if (Array.isArray(arr)) {
+        arr.forEach((item, idx) => {
+          if (item) { // Only add valid items
+            const id = item?.id ?? item?.user_id ?? item?.customer_id ?? item?.supplier_id ?? idx;
+            out.push({ key: `${key}:${id}`, entity: key, item, index: idx });
+          }
+        });
+      }
     }
     return out;
   }, [results]);
@@ -251,7 +255,7 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
               transition={{ delay: 0.3, duration: 0.5 }}
               className="relative"
             >
-              <SearchInput
+              <NavbarSearchInput
                 value={searchTerm}
                 onChange={(val) => { setSearchTerm(val); if ((val||'').trim().length >= 2) setShowSuggestions(true) }}
                 onSubmit={handleSearchSubmit}
@@ -272,7 +276,7 @@ const Navbar = ({ toggleSidebar, isSidebarOpen }) => {
               </button>
             </motion.div>
             {/* Suggestions dropdown (memoized component) */}
-            <SearchDropdown
+            <NavbarSearchDropdown
               visible={showSuggestions}
               term={searchTerm}
               loading={isSearching}

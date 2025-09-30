@@ -80,7 +80,7 @@ export default function SalesAnalytics() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/50 p-6">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center">
             <div className="inline-flex items-center justify-center p-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl mr-4">
@@ -111,7 +111,7 @@ export default function SalesAnalytics() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/50 p-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}

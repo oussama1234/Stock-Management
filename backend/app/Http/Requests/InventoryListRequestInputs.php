@@ -17,7 +17,7 @@ class InventoryListRequestInputs extends FormRequest
             'category_id' => 'sometimes|integer|exists:categories,id',
             'supplier_id' => 'sometimes|integer|exists:suppliers,id',
             'stock_status' => 'sometimes|string|in:low,out,in',
-            'sort_by' => 'sometimes|string|in:name,stock,reserved_stock,updated_at,created_at',
+            'sort_by' => 'sometimes|string|in:name,stock,reserved_stock,available_stock,updated_at,created_at',
             'sort_order' => 'sometimes|string|in:asc,desc',
         ];
     }

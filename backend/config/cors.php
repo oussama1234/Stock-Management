@@ -19,7 +19,19 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [env('FRONTEND_URL', 'http://localhost:5173')],
+    'allowed_origins' => function() {
+        $origins = [env('FRONTEND_URL', 'http://localhost:5173')];
+        
+        if (env('VERCEL_URL')) {
+            $origins[] = 'https://' . env('VERCEL_URL');
+        }
+        
+        if (env('CORS_ALLOWED_ORIGINS')) {
+            $origins = array_merge($origins, explode(',', env('CORS_ALLOWED_ORIGINS')));
+        }
+        
+        return array_unique(array_filter($origins));
+    }(),
 
     'allowed_origins_patterns' => [],
 

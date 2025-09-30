@@ -37,7 +37,7 @@ class InventoryService
         $sortBy = $filters['sort_by'] ?? 'updated_at';
         $sortOrder = in_array(($filters['sort_order'] ?? 'desc'), ['asc','desc'], true) ? $filters['sort_order'] : 'desc';
 
-        $allowedSort = ['name','stock','reserved_stock','updated_at','created_at'];
+        $allowedSort = ['name','stock','reserved_stock','available_stock','updated_at','created_at'];
         if (!in_array($sortBy, $allowedSort, true)) $sortBy = 'updated_at';
 
         $cacheKey = CacheHelper::key('inventory', 'overview', compact('page','perPage','search','categoryId','supplierId','stockStatus','sortBy','sortOrder'));
@@ -54,9 +54,16 @@ class InventoryService
                 ->when($supplierId, function ($q) use ($supplierId) {
                     $q->whereHas('purchaseItems.purchase', fn($p) => $p->where('supplier_id', (int) $supplierId));
                 })
-                ->when($stockStatus, fn($q) => $q->stockStatus($stockStatus))
-                ->orderBy($sortBy, $sortOrder)
-                ->orderBy('id', $sortOrder);
+                ->when($stockStatus, fn($q) => $q->stockStatus($stockStatus));
+
+            // Handle sorting
+            if ($sortBy === 'available_stock') {
+                $query->orderByRaw("(stock - COALESCE(reserved_stock, 0)) {$sortOrder}")
+                      ->orderBy('id', $sortOrder);
+            } else {
+                $query->orderBy($sortBy, $sortOrder)
+                      ->orderBy('id', $sortOrder);
+            }
 
             $paginator = $query->paginate($perPage, ['*'], 'page', $page);
 

@@ -262,7 +262,6 @@ const MyProfile = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50/80 via-blue-50/40 to-indigo-50/60 dark:from-gray-900/80 dark:via-gray-800/40 dark:to-gray-900/60 p-4">
-      <div className="max-w-6xl mx-auto">
         {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -1038,7 +1037,6 @@ const MyProfile = () => {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
     </div>
   );
 };

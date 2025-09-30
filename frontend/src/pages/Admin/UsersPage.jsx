@@ -389,7 +389,7 @@ const UsersPageNew = () => {
 
   if (loading && users.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-purple-50/20 p-6">
         <ContentSpinner size="large" message="Loading users..." fullWidth />
       </div>
     );
@@ -397,7 +397,6 @@ const UsersPageNew = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50/80 via-blue-50/40 to-indigo-50/60 p-6">
-      <div className="max-w-7xl mx-auto">
         {/* Beautiful Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -1122,7 +1121,6 @@ const UsersPageNew = () => {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
     </div>
   );
 };

@@ -82,17 +82,14 @@ const ProductsContent = memo(() => {
 
   if (isInitialLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/30">
-        <div className="max-w-7xl mx-auto p-6">
-          <ContentSpinner fullWidth size="large" message="Loading products..." />
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/30 p-6">
+        <ContentSpinner fullWidth size="large" message="Loading products..." />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/30">
-      <div className="max-w-7xl mx-auto p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/30 p-6">
         {/* Global top progress bar while queries load/refresh */}
         {(isLoading || isRefreshing) && <TopProgressBar />}
 
@@ -149,7 +146,6 @@ const ProductsContent = memo(() => {
             />
           )}
         </AnimatePresence>
-      </div>
     </div>
   );
 });

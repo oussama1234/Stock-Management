@@ -21,6 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/Toaster/ToastContext";
 import { useAuth } from "../context/AuthContext";
 import { DashboardRoute } from "../router/Index";
+import { MiniSpinner } from "../components/Spinners/LoadingSpinner";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -369,27 +370,19 @@ const Login = () => {
                     transition={{ delay: 0.8 }}
                   >
                     <motion.button
-                      type="button"
+                      type="submit"
                       onClick={handleSubmit}
                       disabled={isLoading}
                       whileHover={!isLoading ? { scale: 1.02 } : {}}
                       whileTap={!isLoading ? { scale: 0.98 } : {}}
-                      className={`w-full py-3 px-4 rounded-xl font-semibold shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
-                        isLoading 
-                          ? 'bg-gradient-to-r from-blue-400 to-purple-400 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 cursor-pointer'
-                      } text-white`}
+                      className={`w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 
+                        ${isLoading ? 'bg-gradient-to-r from-blue-400 to-indigo-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 cursor-pointer'} text-white`}
                     >
                       {isLoading ? (
-                        <>
-                          {/* Custom loading spinner */}
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                            className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                          />
+                        <div className="flex items-center gap-2">
+                          <MiniSpinner size="small" />
                           <span>Authenticating...</span>
-                        </>
+                        </div>
                       ) : (
                         <>
                           <LogIn className="w-5 h-5" />

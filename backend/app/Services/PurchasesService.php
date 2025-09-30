@@ -25,7 +25,6 @@ class PurchasesService
     public function __construct(
         protected NotificationService $notificationService,
     ) {}
-    ) {}
 
     /**
      * Get paginated list of purchases with filters and caching
@@ -210,18 +209,6 @@ class PurchasesService
                         'purchase_update_add',
                         $this->currentUserId()
                     );
-                }
-                            'movement_date' => now(),
-                            'reason' => 'purchase_update_add',
-                            'user_id' => (int) (Auth::id() ?? 0),
-                        ]);
-
-                        // If we crossed above threshold, clear existing low-stock alerts for this product
-                        $threshold = $product->low_stock_threshold ?? 10;
-                        if ($previousStock <= $threshold && $newStock > $threshold) {
-                            $this->notificationService->clearLowStockAlertsForProduct($product->id);
-                        }
-                    }
                 }
 
                 // Recalculate totals with new items

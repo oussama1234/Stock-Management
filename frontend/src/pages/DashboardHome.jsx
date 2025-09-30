@@ -41,7 +41,6 @@ import { ProductsRoute, UsersRoute, SalesRoute, PurchasesRoute } from "@/router/
 // Reusable components
 import CategoryDistribution from "@/pages/Dashboard/components/CategoryDistribution";
 import KpiCard from "@/pages/Dashboard/components/KpiCard";
-import LowStockList from "@/pages/Dashboard/components/LowStockList";
 import SectionCard from "@/pages/Dashboard/components/SectionCard";
 import SparkLine from "@/pages/Dashboard/components/SparkLine";
 import StockMovement from "@/pages/Dashboard/components/StockMovement";
@@ -100,7 +99,7 @@ export default function DashboardHome() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-indigo-50/30 p-6">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -142,7 +141,7 @@ export default function DashboardHome() {
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-indigo-50/30 p-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -228,7 +227,7 @@ export default function DashboardHome() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-indigo-50/30 p-6 space-y-8">
       {/* Beautiful Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -653,10 +652,57 @@ export default function DashboardHome() {
               Low Stock Alerts
             </h3>
           </div>
-          <LowStockList 
-            products={lowStockAlerts.length > 0 ? lowStockAlerts : (data?.low_stock || [])} 
-            showVelocity={true} 
-          />
+          <div className="space-y-4">
+            {(() => {
+              const products = lowStockAlerts.length > 0 ? lowStockAlerts : (data?.low_stock || []);
+              
+              if (products.length === 0) {
+                return (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                      <Package className="h-8 w-8 text-green-600 dark:text-green-400" />
+                    </div>
+                    <h4 className="font-medium text-gray-700 dark:text-gray-300">All Good!</h4>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">No low stock alerts at the moment</p>
+                  </div>
+                );
+              }
+              
+              return products.slice(0, 6).map((product, idx) => (
+                <motion.div
+                  key={product.id || idx}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/10 dark:to-orange-900/10 rounded-2xl border border-red-100 dark:border-red-800/30 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                      <Package className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-800 dark:text-gray-200 truncate max-w-40">
+                        {product.product_name || product.name}
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Stock: {product.stock || product.current_stock || 0}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="px-3 py-1 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-full text-xs font-medium">
+                      {product.stock === 0 ? 'Out of Stock' : 'Low Stock'}
+                    </span>
+                    {product.velocity && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Velocity: {Number(product.velocity).toFixed(1)}/day
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
+              ));
+            })()}
+          </div>
         </motion.div>
         
         <motion.div

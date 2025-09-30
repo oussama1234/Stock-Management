@@ -162,6 +162,23 @@
   @apply bg-gray-400 dark:bg-gray-500;
 }
 
+/* Thin custom scrollbar for specific components */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-gray-300/50 rounded-full;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400/70;
+}
+
 /* Custom Notification Animations */
 @keyframes blob {
   0% {

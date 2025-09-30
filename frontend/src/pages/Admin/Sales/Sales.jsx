@@ -191,7 +191,7 @@ export default function Sales() {
   // Loading & error states with beautiful animations
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-purple-50/20 p-6">
         <div className="flex justify-between items-center mb-8">
           <div className="inline-flex items-center justify-center p-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl shadow-lg">
             <ShoppingCart className="h-8 w-8 text-white" />
@@ -208,7 +208,7 @@ export default function Sales() {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-7xl mx-auto p-6"
+        className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-purple-50/20 p-6"
       >
         <div className="bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-200 text-rose-700 p-6 rounded-2xl shadow-lg">
           <div className="flex items-center">
@@ -226,7 +226,7 @@ export default function Sales() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/20 to-purple-50/20 p-6 space-y-8">
       {/* Header with beautiful gradient */}
       <div className="flex items-center justify-between">
         <div className="flex items-center">

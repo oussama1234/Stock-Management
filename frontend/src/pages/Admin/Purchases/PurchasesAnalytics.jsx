@@ -228,7 +228,7 @@ export default function PurchasesAnalytics() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/30 to-pink-50/50 p-6">
         <div className="flex justify-between items-center mb-8">
           <div className="inline-flex items-center justify-center p-3 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 rounded-2xl shadow-lg">
             <BarChart3 className="h-8 w-8 text-white" />
@@ -241,7 +241,7 @@ export default function PurchasesAnalytics() {
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/30 to-pink-50/50 p-6">
         <div className="bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-200 text-rose-700 p-6 rounded-2xl shadow-lg">
           <div className="flex items-center">
             <div>
@@ -264,7 +264,7 @@ export default function PurchasesAnalytics() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/30 to-pink-50/50 p-6 space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center">

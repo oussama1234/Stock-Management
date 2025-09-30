@@ -1,6 +1,6 @@
 // src/hooks/useUniversalSearch.js
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { searchAll } from '@/api/Search';
+import { EnhancedSearchService } from '@/api/EnhancedSearch';
 
 export function useUniversalSearch({ initialTerm = '', perPage = 5, debounceMs = 350 } = {}) {
   const [term, setTerm] = useState(initialTerm);
@@ -18,9 +18,14 @@ export function useUniversalSearch({ initialTerm = '', perPage = 5, debounceMs =
     try {
       setLoading(true); setError(null);
       if (!q || q.trim().length < 2) { setResults(null); return; }
-      const data = await searchAll({ q: q.trim(), per_page: perPage });
+      const data = await EnhancedSearchService.universalSearch(q.trim(), { 
+        page: 1, 
+        limit: perPage,
+        categories: ['products', 'sales', 'purchases', 'customers', 'suppliers', 'users', 'movements', 'reasons', 'categories']
+      });
+      console.log('useUniversalSearch - API Response:', data);
       if (lastKeyRef.current !== key) return; // ignore stale
-      setResults(data?.results || null);
+      setResults(data || null);
     } catch (e) {
       if (lastKeyRef.current === key) setError(e?.response?.data?.message || e.message);
     } finally {

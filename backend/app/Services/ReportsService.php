@@ -446,6 +446,7 @@ class ReportsService
                     'to' => $to->toDateString(),
                     'days' => $days,
                     'threshold' => $threshold,
+                    'count' => count($rows),
                 ],
                 'items' => $rows,
             ];
