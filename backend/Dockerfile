@@ -16,8 +16,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /app
 
-# Copy app files
-COPY . .
+# Copy only the backend folder (where composer.json lives)
+COPY backend/ ./
 
 # Install PHP dependencies
 RUN composer install --no-interaction --no-dev --optimize-autoloader
